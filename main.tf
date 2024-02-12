@@ -6,11 +6,20 @@ terraform {
       source  = "vultr/vultr"
       version = "2.19.0"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = ">= 1.7.0"
+    }
   }
 }
 
 provider "kubernetes" {
   config_path    = module.kubernetes_cluster.kubeconfig_path
+}
+
+provider "kubectl" {
+  config_path = module.kubernetes_cluster.kubeconfig_path
+  load_config_file       = true
 }
 
 provider "helm" {
@@ -35,4 +44,11 @@ module "kubernetes_cluster" {
 module "argocd" {
   depends_on = [module.kubernetes_cluster]
   source = "./modules/argocd"
+  argo_chart_repository = "https://github.com/ixofoundation/ixo-helm-charts"
+  applications = [
+    {
+      name = "cellnode"
+      namespace = "ixo-cellnode"
+    }
+  ]
 }
