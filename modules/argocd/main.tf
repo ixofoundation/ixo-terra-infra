@@ -59,6 +59,7 @@ resource "kubectl_manifest" "application" {
     {
       name           = each.value["name"]
       namespace      = each.value["namespace"]
+      owner          = each.value["owner"]
       argo_namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
       workspace      = terraform.workspace
       repository     = var.argo_chart_repository

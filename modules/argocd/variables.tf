@@ -13,6 +13,7 @@ variable "applications" {
       {
         name = string
         namespace = string
+        owner = string
       }
     )
   )
