@@ -49,6 +49,7 @@ module "argocd" {
     {
       name = "cellnode"
       namespace = "ixo-cellnode"
+      owner = "ixofoundation"
     }
   ]
 }

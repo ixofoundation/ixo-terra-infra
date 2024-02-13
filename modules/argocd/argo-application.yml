@@ -12,7 +12,7 @@ spec:
     helm:
       valueFiles:
         - values.yaml
-    path: charts/devnet/${namespace}
+    path: charts/${workspace}/${owner}/${namespace}
     repoURL: ${repository}
     targetRevision: HEAD
   syncPolicy:
