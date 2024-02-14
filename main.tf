@@ -14,12 +14,12 @@ terraform {
 }
 
 provider "kubernetes" {
-  config_path    = module.kubernetes_cluster.kubeconfig_path
+  config_path = module.kubernetes_cluster.kubeconfig_path
 }
 
 provider "kubectl" {
-  config_path = module.kubernetes_cluster.kubeconfig_path
-  load_config_file       = true
+  config_path      = module.kubernetes_cluster.kubeconfig_path
+  load_config_file = true
 }
 
 provider "helm" {
@@ -43,32 +43,32 @@ module "kubernetes_cluster" {
 
 module "argocd" {
   depends_on = [module.kubernetes_cluster]
-  source = "./modules/argocd"
+  source     = "./modules/argocd"
   git_repositories = [
     {
-      name = "ixofoundation"
+      name       = "ixofoundation"
       repository = local.ixo_helm_chart_repository
     },
     {
-      name = "matrix-server"
+      name       = "matrix-server"
       repository = "https://gitlab.com/ananace/charts.git"
     }
   ]
   applications = [
     {
-      name = "cellnode"
-      namespace = "ixo-cellnode"
-      owner = "ixofoundation"
+      name       = "cellnode"
+      namespace  = "ixo-cellnode"
+      owner      = "ixofoundation"
       repository = local.ixo_helm_chart_repository
     }
   ]
   applications_helm = [
     {
-      name = "cert-manager"
-      namespace = "cert-manager"
-      chart = "cert-manager"
-      repository = local.cert_manager_helm_chart_repository
-      revision = "1.14.2"
+      name            = "cert-manager"
+      namespace       = "cert-manager"
+      chart           = "cert-manager"
+      repository      = local.cert_manager_helm_chart_repository
+      revision        = "1.14.2"
       values_override = templatefile("${path.root}/argo_helm_yamls/cert-manager-values.yml", {})
     }
   ]
