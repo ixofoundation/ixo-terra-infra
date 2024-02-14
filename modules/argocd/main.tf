@@ -29,9 +29,10 @@ resource "kubernetes_namespace_v1" "app-argocd" {
   }
 }
 
-resource "kubernetes_secret_v1" "github" {
+resource "kubernetes_secret_v1" "repository" {
+  for_each = { for repo in var.git_repositories : repo.name => repo }
   metadata {
-    name      = "github-repo"
+    name      = each.value["name"]
     namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
     labels = {
       "argocd.argoproj.io/secret-type" : "repository"
@@ -39,30 +40,58 @@ resource "kubernetes_secret_v1" "github" {
   }
   data = {
     type : "git"
-    url : var.argo_chart_repository
+    url : each.value["repository"]
     githubAppID : 1
     githubAppInstallationID : 2
   }
 }
 
+# Git Applications Create Namespaces
 resource "kubernetes_namespace_v1" "application" {
   for_each = { for app in var.applications : app.name => app }
   metadata {
-    name = each.value["namespace"]
+    name = each.value.namespace
   }
 }
 
+# Helm Applications Create Namespaces
+resource "kubernetes_namespace_v1" "application_helm" {
+  for_each = { for app in var.applications_helm : app.name => app }
+  metadata {
+    name = each.value.namespace
+  }
+}
+
+# Create Argo Git Applications
 resource "kubectl_manifest" "application" {
   depends_on = [kubernetes_namespace_v1.application]
   for_each   = { for app in var.applications : app.name => app }
   yaml_body = templatefile("${path.module}/argo-application.yml",
     {
-      name           = each.value["name"]
-      namespace      = each.value["namespace"]
-      owner          = each.value["owner"]
+      name           = each.value.name
+      namespace      = each.value.namespace
+      owner          = each.value.owner
       argo_namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
       workspace      = terraform.workspace
-      repository     = var.argo_chart_repository
+      repository     = each.value.repository
+      path           = each.value.path != null ? each.value.path : "charts/${terraform.workspace}/${each.value.owner}/${each.value.namespace}"
+    }
+  )
+}
+
+# Create Argo Helm Applications
+resource "kubectl_manifest" "application_helm" {
+  depends_on = [kubernetes_namespace_v1.application]
+  for_each   = { for app in var.applications_helm : app.name => app }
+  yaml_body = templatefile("${path.module}/argo-application-helm.yml",
+    {
+      name           = each.value.name
+      namespace      = each.value.namespace
+      repository     = each.value.repository
+      revision       = each.value.revision
+      chart          = each.value.chart
+      helm_values    = each.value.values_override
+      argo_namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
     }
   )
 }

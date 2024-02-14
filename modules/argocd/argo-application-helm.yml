@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${name}
+  namespace: ${argo_namespace}
+spec:
+  project: default
+  source:
+    chart: ${chart}
+    repoURL: ${repository}
+    targetRevision: ${revision}
+    helm:
+      releaseName: ${chart}
+      values: |
+        ${indent(8, helm_values)}
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: ${namespace}
