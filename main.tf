@@ -44,12 +44,32 @@ module "kubernetes_cluster" {
 module "argocd" {
   depends_on = [module.kubernetes_cluster]
   source = "./modules/argocd"
-  argo_chart_repository = "https://github.com/ixofoundation/ixo-helm-charts"
+  git_repositories = [
+    {
+      name = "ixofoundation"
+      repository = local.ixo_helm_chart_repository
+    },
+    {
+      name = "matrix-server"
+      repository = "https://gitlab.com/ananace/charts.git"
+    }
+  ]
   applications = [
     {
       name = "cellnode"
       namespace = "ixo-cellnode"
       owner = "ixofoundation"
+      repository = local.ixo_helm_chart_repository
+    }
+  ]
+  applications_helm = [
+    {
+      name = "cert-manager"
+      namespace = "cert-manager"
+      chart = "cert-manager"
+      repository = local.cert_manager_helm_chart_repository
+      revision = "1.14.2"
+      values_override = templatefile("${path.root}/argo_helm_yamls/cert-manager-values.yml", {})
     }
   ]
 }
