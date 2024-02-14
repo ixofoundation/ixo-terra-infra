@@ -66,7 +66,7 @@ resource "kubernetes_namespace_v1" "application_helm" {
 resource "kubectl_manifest" "application" {
   depends_on = [kubernetes_namespace_v1.application]
   for_each   = { for app in var.applications : app.name => app }
-  yaml_body = templatefile("${path.module}/argo-application.yml",
+  yaml_body = templatefile("${path.module}/crds/argo-application.yml",
     {
       name           = each.value.name
       namespace      = each.value.namespace
@@ -83,7 +83,7 @@ resource "kubectl_manifest" "application" {
 resource "kubectl_manifest" "application_helm" {
   depends_on = [kubernetes_namespace_v1.application]
   for_each   = { for app in var.applications_helm : app.name => app }
-  yaml_body = templatefile("${path.module}/argo-application-helm.yml",
+  yaml_body = templatefile("${path.module}/crds/argo-application-helm.yml",
     {
       name           = each.value.name
       namespace      = each.value.namespace
