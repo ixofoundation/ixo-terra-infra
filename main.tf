@@ -53,3 +53,7 @@ module "argocd" {
     }
   ]
 }
+
+module "matrix" {
+  source = "./modules/matrix"
+}
