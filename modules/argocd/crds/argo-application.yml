@@ -10,6 +10,8 @@ spec:
   project: default
   source:
     helm:
+      values: |
+        ${indent(8, helm_values)}
       valueFiles:
         - values.yaml
     path: ${path}

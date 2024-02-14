@@ -74,6 +74,7 @@ resource "kubectl_manifest" "application" {
       argo_namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
       workspace      = terraform.workspace
       repository     = each.value.repository
+      helm_values    = each.value.values_override != null ? each.value.values_override : ""
       path           = each.value.path != null ? each.value.path : "charts/${terraform.workspace}/${each.value.owner}/${each.value.namespace}"
     }
   )
@@ -90,7 +91,7 @@ resource "kubectl_manifest" "application_helm" {
       repository     = each.value.repository
       revision       = each.value.revision
       chart          = each.value.chart
-      helm_values    = each.value.values_override
+      helm_values    = each.value.values_override != null ? each.value.values_override : ""
       argo_namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
     }
   )

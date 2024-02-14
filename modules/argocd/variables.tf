@@ -7,11 +7,12 @@ variable "applications" {
   type = list(
     object(
       {
-        name       = string
-        namespace  = string
-        owner      = string
-        repository = string
-        path       = optional(string)
+        name            = string
+        namespace       = string
+        owner           = string
+        repository      = string
+        path            = optional(string)
+        values_override = optional(string)
       }
     )
   )
@@ -21,11 +22,11 @@ variable "applications_helm" {
   type = list(
     object(
       {
-        name = string
-        namespace = string
-        repository = string
-        chart = string
-        revision = string
+        name            = string
+        namespace       = string
+        repository      = string
+        chart           = string
+        revision        = string
         values_override = optional(string)
       }
     )

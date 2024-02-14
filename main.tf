@@ -56,10 +56,11 @@ module "argocd" {
   ]
   applications = [
     {
-      name       = "cellnode"
-      namespace  = "ixo-cellnode"
-      owner      = "ixofoundation"
-      repository = local.ixo_helm_chart_repository
+      name            = "cellnode"
+      namespace       = "ixo-cellnode"
+      owner           = "ixofoundation"
+      repository      = local.ixo_helm_chart_repository
+      values_override = templatefile("${path.root}/argo_helm_yamls/ixo-common.yml", { environment = terraform.workspace })
     }
   ]
   applications_helm = [
@@ -70,6 +71,13 @@ module "argocd" {
       repository      = local.jetstack_helm_chart_repository
       revision        = "1.14.2"
       values_override = templatefile("${path.root}/argo_helm_yamls/cert-manager-values.yml", {})
+    },
+    {
+      name       = "nginx-ingress-controller"
+      namespace  = "ingress-nginx"
+      chart      = "ingress-nginx"
+      revision   = "4.9.1"
+      repository = "https://kubernetes.github.io/ingress-nginx"
     }
   ]
 }
