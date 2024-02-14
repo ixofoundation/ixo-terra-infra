@@ -67,7 +67,7 @@ module "argocd" {
       name            = "cert-manager"
       namespace       = "cert-manager"
       chart           = "cert-manager"
-      repository      = local.cert_manager_helm_chart_repository
+      repository      = local.jetstack_helm_chart_repository
       revision        = "1.14.2"
       values_override = templatefile("${path.root}/argo_helm_yamls/cert-manager-values.yml", {})
     }
