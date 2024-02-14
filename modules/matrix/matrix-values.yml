@@ -1,0 +1,57 @@
+## Override part of the installed name, will still keep release name.
+##
+# nameOverride: ""
+
+## Override the full name of the installed chart.
+##
+# fullnameOverride: ""
+
+
+## The Matrix domain name, this is what will be used for the domain part in
+## your MXIDs.
+##
+serverName: 'ixo.world'
+
+## The public Matrix server name, this will be used for any public URLs
+## in config as well as for client API links in the ingress.
+publicServerName: 'matrix.ixo.world'
+
+postgresql:
+  enabled: true
+
+  auth:
+    # XXX Change me!
+    password: synapse
+
+    ## Or use existing secret with "password" key
+    ## instead of static password
+    ##
+    # existingSecret: postgresql-secret
+
+    username: synapse
+    database: synapse
+
+  primary:
+    persistence:
+      # storageClass: "-"
+      size: 40Gi
+
+## Persistence configuration for the media repository function.
+## This PVC will be mounted in either Synapse or a media_repo worker.
+##
+## NB; If you want to be able to scale this, you will have to set the
+## accessMode to RWX/ReadWriteMany.
+##
+persistence:
+  enabled: true
+  # existingClaim: synapse-data
+  size: 40Gi
+
+## Configuration for the main Synapse service.
+## To use TLS inside Synapse itself, add an TLS listener, and change the ports
+## configured in here.
+##
+service:
+  type: NodePort
+  port: 8008
+  targetPort: http
