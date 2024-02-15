@@ -9,7 +9,13 @@ module "matrix_release" {
     deploy       = 1
   }
   values = [
-    templatefile("${path.module}/matrix-values.yml", {})
+    templatefile("${path.module}/matrix-values.yml",
+      {
+        pg_host     = "ixo-devnet-cluster-ha.postgres-operator.svc.cluster.local"
+        pg_username = "synapse"
+        pg_password = "synapse"
+      }
+    )
   ]
   namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
   repository = "https://ananace.gitlab.io/charts"

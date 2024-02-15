@@ -6,6 +6,8 @@ metadata:
 spec:
   image: ${pg_image}:${pg_image_tag}
   postgresVersion: ${pg_version}
+  users:
+    ${indent(4, pg_users)}
   instances:
     ${indent(4, pg_instances)}
   backups:

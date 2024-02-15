@@ -15,6 +15,7 @@ resource "kubectl_manifest" "cluster" {
       pg_image_tag         = var.cluster.pg_image_tag
       pg_version           = var.cluster.pg_version
       pg_instances         = var.cluster.pg_instances
+      pg_users             = var.cluster.pg_users
       pgbackrest_image     = var.cluster.pgbackrest_image
       pgbackrest_image_tag = var.cluster.pgbackrest_image_tag
       pgbackrest_repos     = var.cluster.pgbackrest_repos

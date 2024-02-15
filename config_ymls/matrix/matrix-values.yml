@@ -17,24 +17,39 @@ serverName: 'ixo.world'
 publicServerName: 'matrix.ixo.world'
 
 postgresql:
-  enabled: true
-
+  enabled: false
   auth:
-    # XXX Change me!
     password: synapse
-
-    ## Or use existing secret with "password" key
-    ## instead of static password
-    ##
-    # existingSecret: postgresql-secret
-
     username: synapse
     database: synapse
-
   primary:
     persistence:
       # storageClass: "-"
       size: 40Gi
+
+## An externally configured Postgres server to use for Synapse's database, note
+## that the database needs to have both COLLATE and CTYPE set to "C".
+##
+externalPostgresql:
+  host: ${pg_host}
+  port: 5432
+  username: ${pg_username}
+#  password: ${pg_password}
+
+  ## The name of an existing secret with postgresql credentials
+  existingSecret: ixo-devnet-cluster-pguser-synapse
+
+  ## Password key to be retrieved from existing secret
+  existingSecretPasswordKey: password
+
+  database: synapse
+  # sslmode: prefer
+
+  ## Extra arguments for the database connection
+  ## ref: https://github.com/matrix-org/synapse/blob/develop/docs/postgres.md#synapse-config
+  ##
+  extraArgs: {}
+
 
 ## Persistence configuration for the media repository function.
 ## This PVC will be mounted in either Synapse or a media_repo worker.

@@ -1,0 +1,4 @@
+- name: synapse
+  options: 'SUPERUSER'
+  databases:
+    - synapse
