@@ -61,6 +61,20 @@ module "argocd" {
       owner           = "ixofoundation"
       repository      = local.ixo_helm_chart_repository
       values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml", { environment = terraform.workspace })
+    },
+    {
+      name       = "matrix"
+      namespace  = "matrix-synapse"
+      owner      = "ananace"
+      path       = "charts/matrix-synapse"
+      repository = "https://gitlab.com/ananace/charts"
+      values_override = templatefile("${path.root}/config_ymls/matrix/matrix-values.yml",
+        {
+          pg_host     = "ixo-devnet-cluster-ha.postgres-operator.svc.cluster.local"
+          pg_username = "synapse"
+          pg_password = "synapse"
+        }
+      )
     }
   ]
   applications_helm = [
@@ -105,12 +119,13 @@ module "postgres-operator" {
     pg_image_tag         = "ubi8-15.5-0"
     pg_version           = 15
     pg_instances         = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
+    pg_users             = file("${local.postgres_operator_config_path}/ixo-postgres-users.yml")
     pgbackrest_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
     pgbackrest_image_tag = "ubi8-2.47-2"
     pgbackrest_repos     = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
   }
 }
 
-module "matrix" {
-  source = "./modules/matrix"
-}
+#module "matrix" {
+#  source = "./modules/matrix"
+#}
