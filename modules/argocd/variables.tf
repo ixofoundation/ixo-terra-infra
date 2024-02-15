@@ -28,6 +28,7 @@ variable "applications_helm" {
         chart           = string
         revision        = string
         values_override = optional(string)
+        oci             = optional(bool)
       }
     )
   )
