@@ -60,7 +60,7 @@ module "argocd" {
       namespace       = "ixo-cellnode"
       owner           = "ixofoundation"
       repository      = local.ixo_helm_chart_repository
-      values_override = templatefile("${path.root}/argo_helm_yamls/ixo-common.yml", { environment = terraform.workspace })
+      values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml", { environment = terraform.workspace })
     }
   ]
   applications_helm = [
@@ -70,7 +70,7 @@ module "argocd" {
       chart           = "cert-manager"
       repository      = local.jetstack_helm_chart_repository
       revision        = "1.14.2"
-      values_override = templatefile("${path.root}/argo_helm_yamls/cert-manager-values.yml", {})
+      values_override = templatefile("${local.helm_values_config_path}/cert-manager-values.yml", {})
     },
     {
       name       = "nginx-ingress-controller"
@@ -78,8 +78,37 @@ module "argocd" {
       chart      = "ingress-nginx"
       revision   = "4.9.1"
       repository = "https://kubernetes.github.io/ingress-nginx"
+    },
+    {
+      name       = "postgres-operator"
+      namespace  = "postgres-operator"
+      chart      = "pgo"
+      revision   = "5.5.0"
+      repository = "registry.developers.crunchydata.com/crunchydata"
+      oci        = true
     }
   ]
+}
+
+module "cert-issuer" {
+  depends_on = [module.argocd]
+  source     = "./modules/cert-manager"
+}
+
+module "postgres-operator" {
+  depends_on = [module.argocd]
+  source     = "./modules/postgres-operator"
+  cluster = {
+    pg_cluster_name      = "ixo-${terraform.workspace}-cluster"
+    pg_cluster_namespace = module.argocd.namespaces["postgres-operator"].metadata[0].name
+    pg_image             = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres"
+    pg_image_tag         = "ubi8-15.5-0"
+    pg_version           = 15
+    pg_instances         = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
+    pgbackrest_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
+    pgbackrest_image_tag = "ubi8-2.47-2"
+    pgbackrest_repos     = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
+  }
 }
 
 module "matrix" {

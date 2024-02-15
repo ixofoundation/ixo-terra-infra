@@ -93,6 +93,7 @@ resource "kubectl_manifest" "application_helm" {
       chart          = each.value.chart
       helm_values    = each.value.values_override != null ? each.value.values_override : ""
       argo_namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
+      isOci          = each.value.oci != null ? each.value.oci : false
     }
   )
 }

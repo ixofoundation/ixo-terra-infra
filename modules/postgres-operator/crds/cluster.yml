@@ -1,0 +1,15 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: ${pg_cluster_name}
+  namespace: ${pg_namespace}
+spec:
+  image: ${pg_image}:${pg_image_tag}
+  postgresVersion: ${pg_version}
+  instances:
+    ${indent(4, pg_instances)}
+  backups:
+    pgbackrest:
+      image: ${pgbackrest_image}:${pgbackrest_image_tag}
+      repos:
+        ${indent(8, pgbackrest_repos)}
