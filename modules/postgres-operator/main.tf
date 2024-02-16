@@ -6,7 +6,19 @@ terraform {
   }
 }
 
+resource "kubernetes_config_map_v1" "init_sql" {
+  metadata {
+    name      = "${var.cluster.pg_cluster_name}-init-sql"
+    namespace = var.cluster.pg_cluster_namespace
+  }
+
+  data = {
+    "init.sql" = var.cluster.initSql != null ? var.cluster.initSql : ""
+  }
+}
+
 resource "kubectl_manifest" "cluster" {
+  depends_on = [kubernetes_config_map_v1.init_sql]
   yaml_body = templatefile("${path.module}/crds/cluster.yml",
     {
       pg_cluster_name      = var.cluster.pg_cluster_name

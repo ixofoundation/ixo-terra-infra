@@ -37,7 +37,7 @@ externalPostgresql:
 #  password: ${pg_password}
 
   ## The name of an existing secret with postgresql credentials
-  existingSecret: ixo-devnet-cluster-pguser-synapse
+  existingSecret: synapse-pguser-synapse
 
   ## Password key to be retrieved from existing secret
   existingSecretPasswordKey: password

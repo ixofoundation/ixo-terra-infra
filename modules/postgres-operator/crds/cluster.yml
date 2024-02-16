@@ -15,3 +15,12 @@ spec:
       image: ${pgbackrest_image}:${pgbackrest_image_tag}
       repos:
         ${indent(8, pgbackrest_repos)}
+  databaseInitSQL:
+    key: init.sql
+    name: ${pg_cluster_name}-init-sql
+  patroni:
+    dynamicConfiguration:
+      bootstrap:
+        initdb:
+          - locale: C
+          - encoding: C
