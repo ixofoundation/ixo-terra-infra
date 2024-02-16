@@ -11,6 +11,7 @@ variable "cluster" {
       pgbackrest_image     = string
       pgbackrest_image_tag = string
       pgbackrest_repos     = string
+      initSql              = optional(string)
     }
   )
 }
