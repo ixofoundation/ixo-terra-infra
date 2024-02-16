@@ -1,5 +1,5 @@
-variable "cluster" {
-  type = object(
+variable "clusters" {
+  type = list(object(
     {
       pg_cluster_name      = string
       pg_cluster_namespace = string
@@ -13,5 +13,6 @@ variable "cluster" {
       pgbackrest_repos     = string
       initSql              = optional(string)
     }
+    )
   )
 }

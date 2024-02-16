@@ -68,11 +68,11 @@ module "argocd" {
       owner      = "ananace"
       path       = "charts/matrix-synapse"
       repository = "https://gitlab.com/ananace/charts"
-      values_override = templatefile("${path.root}/config_ymls/matrix/matrix-values.yml",
+      values_override = templatefile("${path.root}/config/yml/matrix/matrix-values.yml",
         {
-          pg_host     = "synapse-primary.matrix-synapse.svc.cluster.local"
-          pg_username = "synapse"
-          pg_password = "synapse"
+          pg_host         = "synapse-primary.matrix-synapse.svc.cluster.local"
+          pg_username     = "synapse"
+          pg_cluster_name = "synapse"
         }
       )
     }
@@ -112,19 +112,22 @@ module "cert-issuer" {
 module "postgres-operator" {
   depends_on = [module.argocd]
   source     = "./modules/postgres-operator"
-  cluster = {
-    pg_cluster_name      = "synapse"
-    pg_cluster_namespace = module.argocd.namespaces_git["matrix"].metadata[0].name
-    pg_image             = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres"
-    pg_image_tag         = "ubi8-15.5-0"
-    pg_version           = 15
-    pg_instances         = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
-    pg_users             = file("${local.postgres_operator_config_path}/ixo-postgres-users.yml")
-    pgbackrest_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
-    pgbackrest_image_tag = "ubi8-2.47-2"
-    pgbackrest_repos     = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
-    initSql              = file("${path.root}/config_sql/matrix-init.sql")
-  }
+  clusters = [
+    {
+      # Matrix Postgres Cluster
+      pg_cluster_name      = "synapse"
+      pg_cluster_namespace = module.argocd.namespaces_git["matrix"].metadata[0].name
+      pg_image             = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres"
+      pg_image_tag         = "ubi8-15.5-0"
+      pg_version           = 15
+      pg_instances         = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
+      pg_users             = file("${local.postgres_operator_config_path}/ixo-postgres-users.yml")
+      pgbackrest_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
+      pgbackrest_image_tag = "ubi8-2.47-2"
+      pgbackrest_repos     = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
+      initSql              = file("${path.root}/config/sql/matrix-init.sql")
+    } # TODO IXO Cluster
+  ]
 }
 
 #module "matrix" {
