@@ -37,7 +37,7 @@ variable "initial_node_pool_plan" {
 variable "initial_node_pool_quantity" {
   description = "Initial Node Pool Quantity for the Kubernetes cluster"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "initial_node_pool_label" {
