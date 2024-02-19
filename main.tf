@@ -46,6 +46,7 @@ module "kubernetes_cluster" {
   cluster_firewall        = lookup(var.environments[terraform.workspace], "cluster_firewall", false)
   cluster_label           = "ixo-cluster-${terraform.workspace}"
   initial_node_pool_label = "ixo-${terraform.workspace}"
+  cluster_region          = local.region_ids["Amsterdam"]
 }
 
 module "argocd" {

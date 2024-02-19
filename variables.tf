@@ -48,3 +48,41 @@ variable "pg_ixo" {
     }
   )
 }
+
+variable "region_ids" {
+  type = map(string)
+  default = {
+    ams = "Amsterdam"
+    atl = "Atlanta"
+    blr = "Bangalore"
+    bom = "Mumbai"
+    cdg = "Paris"
+    del = "Delhi NCR"
+    dfw = "Dallas"
+    ewr = "New Jersey"
+    fra = "Frankfurt"
+    hnl = "Honolulu"
+    icn = "Seoul"
+    itm = "Osaka"
+    jnb = "Johannesburg"
+    lax = "Los Angeles"
+    lhr = "London"
+    mad = "Madrid"
+    man = "Manchester"
+    mel = "Melbourne"
+    mex = "Mexico City"
+    mia = "Miami"
+    nrt = "Tokyo"
+    ord = "Chicago"
+    sao = "São Paulo"
+    scl = "Santiago"
+    sea = "Seattle"
+    sgp = "Singapore"
+    sjc = "Silicon Valley"
+    sto = "Stockholm"
+    syd = "Sydney"
+    tlv = "Tel Aviv"
+    waw = "Warsaw"
+    yto = "Toronto"
+  }
+}
