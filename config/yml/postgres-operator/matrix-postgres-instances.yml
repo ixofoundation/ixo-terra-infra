@@ -1,4 +1,4 @@
-- name: ixo-postgresql-0
+- name: matrix-postgresql-0
   dataVolumeClaimSpec:
     accessModes:
       - "ReadWriteOnce"
