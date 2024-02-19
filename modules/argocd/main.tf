@@ -64,7 +64,7 @@ resource "kubernetes_namespace_v1" "application_helm" {
 
 # Create Argo Git Applications
 resource "kubectl_manifest" "application" {
-  depends_on = [kubernetes_namespace_v1.application]
+  depends_on = [kubernetes_namespace_v1.application, module.argocd_release]
   for_each   = { for app in var.applications : app.name => app }
   yaml_body = templatefile("${path.module}/crds/argo-application.yml",
     {
@@ -82,7 +82,7 @@ resource "kubectl_manifest" "application" {
 
 # Create Argo Helm Applications
 resource "kubectl_manifest" "application_helm" {
-  depends_on = [kubernetes_namespace_v1.application]
+  depends_on = [kubernetes_namespace_v1.application, module.argocd_release]
   for_each   = { for app in var.applications_helm : app.name => app }
   yaml_body = templatefile("${path.module}/crds/argo-application-helm.yml",
     {

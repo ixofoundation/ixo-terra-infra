@@ -5,6 +5,10 @@ metadata:
   namespace: ${argo_namespace}
 spec:
   project: default
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+    automated: { }
   source:
     chart: ${chart}
     repoURL: ${repository}
