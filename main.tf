@@ -34,6 +34,13 @@ provider "vultr" {
   retry_limit = 3
 }
 
+resource "kubernetes_namespace_v1" "ixo-postgres" {
+  depends_on = [module.kubernetes_cluster]
+  metadata {
+    name = "ixo-postgres"
+  }
+}
+
 module "kubernetes_cluster" {
   source                  = "./modules/kubernetes_cluster"
   cluster_firewall        = lookup(var.environments[terraform.workspace], "cluster_firewall", false)
@@ -64,15 +71,15 @@ module "argocd" {
     },
     {
       name       = "matrix"
-      namespace  = "matrix-synapse"
+      namespace  = var.pg_matrix.namespace
       owner      = "ananace"
       path       = "charts/matrix-synapse"
       repository = "https://gitlab.com/ananace/charts"
       values_override = templatefile("${path.root}/config/yml/matrix/matrix-values.yml",
         {
-          pg_host         = "synapse-primary.matrix-synapse.svc.cluster.local"
+          pg_host         = "${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local"
           pg_username     = "synapse"
-          pg_cluster_name = "synapse"
+          pg_cluster_name = var.pg_matrix.pg_cluster_name
         }
       )
     }
@@ -115,21 +122,30 @@ module "postgres-operator" {
   clusters = [
     {
       # Matrix Postgres Cluster
-      pg_cluster_name      = "synapse"
+      pg_cluster_name      = var.pg_matrix.pg_cluster_name
       pg_cluster_namespace = module.argocd.namespaces_git["matrix"].metadata[0].name
-      pg_image             = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres"
-      pg_image_tag         = "ubi8-15.5-0"
-      pg_version           = 15
+      pg_image             = var.pg_matrix.pg_image
+      pg_image_tag         = var.pg_matrix.pg_image_tag
+      pg_version           = var.pg_matrix.pg_version
+      pg_instances         = file("${local.postgres_operator_config_path}/matrix-postgres-instances.yml")
+      pg_users             = file("${local.postgres_operator_config_path}/matrix-postgres-users.yml")
+      pgbackrest_image     = var.pg_matrix.pgbackrest_image
+      pgbackrest_image_tag = var.pg_matrix.pgbackrest_image_tag
+      pgbackrest_repos     = file("${local.postgres_operator_config_path}/matrix-postgres-backups-repos.yml")
+      initSql              = file("${path.root}/config/sql/matrix-init.sql")
+    },
+    {
+      # IXO Cluster
+      pg_cluster_name      = var.pg_ixo.pg_cluster_name
+      pg_cluster_namespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+      pg_image             = var.pg_ixo.pg_image
+      pg_image_tag         = var.pg_ixo.pg_image_tag
+      pg_version           = var.pg_ixo.pg_version
       pg_instances         = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
       pg_users             = file("${local.postgres_operator_config_path}/ixo-postgres-users.yml")
-      pgbackrest_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
-      pgbackrest_image_tag = "ubi8-2.47-2"
+      pgbackrest_image     = var.pg_ixo.pgbackrest_image
+      pgbackrest_image_tag = var.pg_ixo.pgbackrest_image_tag
       pgbackrest_repos     = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
-      initSql              = file("${path.root}/config/sql/matrix-init.sql")
-    } # TODO IXO Cluster
+    }
   ]
 }
-
-#module "matrix" {
-#  source = "./modules/matrix"
-#}
