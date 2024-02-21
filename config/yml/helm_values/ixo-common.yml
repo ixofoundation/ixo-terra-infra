@@ -7,3 +7,14 @@ ingress:
       paths:
         - path: /${environment}
           pathType: ImplementationSpecific
+service:
+  port: 5000
+env:
+  - name: PORT
+    value: '5000'
+  - name: WEB3_STORAGE_EMAIL
+    value: 'web3@ixo.world'
+  - name: WEB3_STORAGE_SPACE
+    value: 'ixoCellnodeDevnet'
+  - name: DATABASE_URL
+    value: ${DB_ENDPOINT}

@@ -39,9 +39,17 @@ variable "pg_matrix" {
 variable "pg_ixo" {
   type = object(
     {
-      pg_cluster_name      = string
-      pg_image             = string
-      pg_image_tag         = string
+      pg_cluster_name = string
+      pg_image        = string
+      pg_image_tag    = string
+      pg_users = list(
+        object(
+          {
+            username  = string
+            databases = list(string)
+          }
+        )
+      )
       pg_version           = number
       pgbackrest_image     = string
       pgbackrest_image_tag = string
