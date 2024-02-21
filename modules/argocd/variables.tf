@@ -1,6 +1,6 @@
 variable "argo_version" {
   type    = string
-  default = "6.0.3"
+  default = "6.2.1"
 }
 
 variable "applications" {
@@ -16,6 +16,7 @@ variable "applications" {
       }
     )
   )
+  default = []
 }
 
 variable "applications_helm" {

@@ -36,3 +36,19 @@ resource "kubectl_manifest" "cluster" {
     }
   )
 }
+
+resource "time_sleep" "wait_for_secret" {
+  for_each        = { for cluster_key, cluster in var.clusters : cluster_key => yamldecode(cluster.pg_users) if cluster.pg_users != "" }
+  depends_on      = [kubectl_manifest.cluster]
+  create_duration = "5s"
+}
+
+data "kubernetes_secret_v1" "user_secret" {
+  depends_on = [time_sleep.wait_for_secret]
+  for_each   = { for idx, count in local.iterate_usernames : idx => count }
+  //noinspection HILUnresolvedReference
+  metadata {
+    name      = "${each.value.pg_cluster_name}-pguser-${each.value.username}"
+    namespace = each.value.pg_cluster_namespace
+  }
+}

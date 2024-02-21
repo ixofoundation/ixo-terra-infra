@@ -8,6 +8,7 @@ variable "clusters" {
       pg_version           = string
       pg_instances         = string
       pg_users             = string
+      pg_usernames         = list(string)
       pgbackrest_image     = string
       pgbackrest_image_tag = string
       pgbackrest_repos     = string

@@ -1,3 +1,19 @@
 server:
-  service:
-    type: NodePort
+  replicas: 2
+  pdb:
+    enabled: true
+    labels:
+      app: argocd-server
+    minAvailable: 2
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+  podLabels:
+    app: argocd-server
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          app: argocd-server
