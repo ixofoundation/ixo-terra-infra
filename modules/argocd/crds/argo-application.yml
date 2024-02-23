@@ -4,6 +4,10 @@ metadata:
   name: ${name}
   namespace: ${argo_namespace}
 spec:
+  ignoreDifferences:
+    - kind: Secret
+      jsonPointers:
+        - /data
   destination:
     namespace: ${namespace}
     server: https://kubernetes.default.svc

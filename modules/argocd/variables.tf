@@ -35,6 +35,10 @@ variable "applications_helm" {
   )
 }
 
+variable "hostnames" {
+  type = map(string)
+}
+
 variable "git_repositories" {
   type = list(
     object(

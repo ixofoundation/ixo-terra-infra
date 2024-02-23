@@ -1,4 +1,34 @@
+configs:
+  params:
+    server.rootpath: /argocd
+applicationSet:
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+controller:
+  resources:
+    limits:
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
 server:
+  certificate:
+    enabled: true
+    domain: ${host}
+    issuer:
+      group: cert-manager.io
+      kind: ClusterIssuer
+      name: letsencrypt-staging
+  resources:
+    limits:
+      memory: 256Mi
+    requests:
+      cpu: 125m
+      memory: 128Mi
   replicas: 2
   pdb:
     enabled: true
@@ -7,7 +37,15 @@ server:
     minAvailable: 2
   ingress:
     enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      ingress.kubernetes.io/proxy-body-size: 100M
     ingressClassName: nginx
+    hostname: ${host}
+    path: /argocd
+    tls: true
   podLabels:
     app: argocd-server
   topologySpreadConstraints:

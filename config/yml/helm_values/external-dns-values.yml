@@ -1,0 +1,5 @@
+provider:
+  name: vultr
+env:
+  - name: VULTR_API_KEY
+    value: ${VULTR_API_KEY}
