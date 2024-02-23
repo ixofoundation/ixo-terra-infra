@@ -18,7 +18,9 @@ pg_ixo = {
       databases = ["cellnode"]
     }
   ]
-  pg_version           = 15
-  pgbackrest_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
-  pgbackrest_image_tag = "ubi8-2.47-2"
+  pg_version             = 15
+  pgbackrest_image       = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
+  pgbackrest_image_tag   = "ubi8-2.47-2"
+  pgmonitoring_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres-exporter"
+  pgmonitoring_image_tag = "ubi8-5.5.0-0"
 }

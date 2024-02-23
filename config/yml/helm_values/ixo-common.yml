@@ -2,19 +2,33 @@ ingress:
   enabled: true
   annotations:
     kubernetes.io/ingress.class: nginx
+    ingress.kubernetes.io/proxy-body-size: 100M
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ${app_name}-tls
   hosts:
-    - host: ixo.world
+    - host: ${host}
       paths:
-        - path: /${environment}
+        - path: /${app_name}(/|$)(.*)
           pathType: ImplementationSpecific
 service:
   port: 5000
 env:
   - name: PORT
     value: '5000'
-  - name: WEB3_STORAGE_EMAIL
-    value: 'web3@ixo.world'
-  - name: WEB3_STORAGE_SPACE
-    value: 'ixoCellnodeDevnet'
+  - name: WEB3_KEY
+    valueFrom:
+      secretKeyRef:
+        name: ${app_name}-${app_namespace}
+        key: WEB3_KEY
+  - name: WEB3_PROOF
+    valueFrom:
+      secretKeyRef:
+        name: ${app_name}-${app_namespace}
+        key: WEB3_PROOF
   - name: DATABASE_URL
     value: ${DB_ENDPOINT}

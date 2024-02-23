@@ -22,6 +22,16 @@ variable "environments" {
   }
 }
 
+variable "hostnames" {
+  description = "Environment specific hostnames configurations"
+  type        = map(string)
+  default = {
+    devnet = "devnetkb.ixo.earth"
+    test   = "testkb.ixo.earth"
+    main   = "mainkb.ixo.earth"
+  }
+}
+
 variable "pg_matrix" {
   type = object(
     {
@@ -50,9 +60,11 @@ variable "pg_ixo" {
           }
         )
       )
-      pg_version           = number
-      pgbackrest_image     = string
-      pgbackrest_image_tag = string
+      pg_version             = number
+      pgbackrest_image       = string
+      pgbackrest_image_tag   = string
+      pgmonitoring_image     = optional(string)
+      pgmonitoring_image_tag = optional(string)
     }
   )
 }

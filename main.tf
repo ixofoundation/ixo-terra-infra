@@ -46,13 +46,14 @@ module "kubernetes_cluster" {
   cluster_firewall        = lookup(var.environments[terraform.workspace], "cluster_firewall", false)
   cluster_label           = "ixo-cluster-${terraform.workspace}"
   initial_node_pool_label = "ixo-${terraform.workspace}"
-  initial_node_pool_plan  = "vhp-2c-2gb-amd"
+  initial_node_pool_plan  = "vc2-2c-4gb"
   cluster_region          = local.region_ids["Amsterdam"]
 }
 
 module "argocd" {
   depends_on = [module.kubernetes_cluster]
   source     = "./modules/argocd"
+  hostnames  = var.hostnames
   git_repositories = [
     {
       name       = "ixofoundation"
@@ -92,6 +93,11 @@ module "argocd" {
       chart      = "ingress-nginx"
       revision   = "4.9.1"
       repository = "https://kubernetes.github.io/ingress-nginx"
+      values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
+        {
+          host = var.hostnames[terraform.workspace]
+        }
+      )
     },
     {
       name            = "postgres-operator"
@@ -99,15 +105,26 @@ module "argocd" {
       chart           = "pgo"
       revision        = "5.5.0"
       repository      = "registry.developers.crunchydata.com/crunchydata"
-      values_override = templatefile("${local.postgres_operator_config_path}/postgres-operator-values.yml", {})
+      values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
       oci             = true
     },
     {
-      name       = "prometheus-stack"
-      namespace  = "prometheus"
-      chart      = "kube-prometheus-stack"
-      revision   = "56.8.0"
-      repository = "https://prometheus-community.github.io/helm-charts"
+      name            = "prometheus-stack"
+      namespace       = "prometheus"
+      chart           = "kube-prometheus-stack"
+      revision        = "56.8.0"
+      repository      = "https://prometheus-community.github.io/helm-charts"
+      values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {})
+    },
+    {
+      name       = "external-dns"
+      namespace  = "external-dns"
+      chart      = "external-dns"
+      revision   = "1.14.3"
+      repository = "https://kubernetes-sigs.github.io/external-dns/"
+      values_override = templatefile("${local.helm_values_config_path}/external-dns-values.yml", {
+        VULTR_API_KEY = var.vultr_api_key
+      })
     }
   ]
 }
@@ -121,8 +138,11 @@ module "ixo_celnode" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
       {
-        environment = terraform.workspace
-        DB_ENDPOINT = "postgresql://${var.pg_ixo.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[0].username]}@${var.pg_ixo.pg_cluster_name}.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local"
+        environment   = terraform.workspace
+        app_name      = "cellnode"
+        host          = var.hostnames[terraform.workspace]
+        app_namespace = "ixo-cellnode"
+        DB_ENDPOINT   = "postgresql://${var.pg_ixo.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[0].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local"
       }
     )
   }
@@ -154,17 +174,19 @@ module "postgres-operator" {
     #    },
     {
       # IXO Cluster
-      pg_cluster_name      = var.pg_ixo.pg_cluster_name
-      pg_cluster_namespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-      pg_image             = var.pg_ixo.pg_image
-      pg_image_tag         = var.pg_ixo.pg_image_tag
-      pg_version           = var.pg_ixo.pg_version
-      pg_instances         = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
-      pg_users             = local.pg_users_yaml
-      pg_usernames         = local.pg_users_usernames
-      pgbackrest_image     = var.pg_ixo.pgbackrest_image
-      pgbackrest_image_tag = var.pg_ixo.pgbackrest_image_tag
-      pgbackrest_repos     = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
+      pg_cluster_name        = var.pg_ixo.pg_cluster_name
+      pg_cluster_namespace   = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+      pg_image               = var.pg_ixo.pg_image
+      pg_image_tag           = var.pg_ixo.pg_image_tag
+      pg_version             = var.pg_ixo.pg_version
+      pg_instances           = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
+      pg_users               = local.pg_users_yaml
+      pg_usernames           = local.pg_users_usernames
+      pgbackrest_image       = var.pg_ixo.pgbackrest_image
+      pgbackrest_image_tag   = var.pg_ixo.pgbackrest_image_tag
+      pgbackrest_repos       = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
+      pgmonitoring_image     = var.pg_ixo.pgmonitoring_image
+      pgmonitoring_image_tag = var.pg_ixo.pgmonitoring_image_tag
     }
   ]
 }

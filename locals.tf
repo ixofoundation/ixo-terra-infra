@@ -10,7 +10,7 @@ locals {
       for user in var.pg_ixo.pg_users : {
         name      = user.username
         databases = user.databases
-        options   = "INSERT UPDATE DELETE SELECT CREATE ALTER"
+        options   = "NOSUPERUSER"
       }
     ]
   )

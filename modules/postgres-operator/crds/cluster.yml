@@ -6,6 +6,10 @@ metadata:
 spec:
   image: ${pg_image}:${pg_image_tag}
   postgresVersion: ${pg_version}
+  monitoring:
+    pgmonitor:
+      exporter:
+        image: ${pgmonitoring_image}:${pgmonitoring_image_tag}
   users:
     ${indent(4, pg_users)}
   instances:
