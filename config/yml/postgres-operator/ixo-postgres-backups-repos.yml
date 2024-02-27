@@ -1,8 +1,9 @@
 - name: repo1
   volume:
     volumeClaimSpec:
+      storageClassName: "vultr-block-storage-hdd"
       accessModes:
         - "ReadWriteOnce"
       resources:
         requests:
-          storage: 40Gi
+          storage: 200Gi

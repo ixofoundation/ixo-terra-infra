@@ -18,7 +18,8 @@ module "argocd_release" {
   }
   values = [
     templatefile("${path.module}/argo-values.yml", {
-      host = var.hostnames[terraform.workspace]
+      host        = var.hostnames[terraform.workspace]
+      AVP_VERSION = "1.16.1"
     })
   ]
   namespace  = kubernetes_namespace_v1.app-argocd.metadata[0].name
