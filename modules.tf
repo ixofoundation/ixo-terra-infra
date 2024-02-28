@@ -66,12 +66,14 @@ module "argocd" {
       oci             = true
     },
     {
-      name            = "prometheus-stack"
-      namespace       = "prometheus"
-      chart           = "kube-prometheus-stack"
-      revision        = "56.8.0"
-      repository      = "https://prometheus-community.github.io/helm-charts"
-      values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {})
+      name       = "prometheus-stack"
+      namespace  = "prometheus"
+      chart      = "kube-prometheus-stack"
+      revision   = "56.8.0"
+      repository = "https://prometheus-community.github.io/helm-charts"
+      values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {
+        host = var.hostnames[terraform.workspace]
+      })
     },
     {
       name       = "external-dns"
@@ -89,6 +91,13 @@ module "argocd" {
       chart      = "vault"
       revision   = "0.27.0"
       repository = "https://helm.releases.hashicorp.com"
+    },
+    {
+      name       = "loki"
+      namespace  = "loki"
+      chart      = "loki"
+      revision   = "5.43.3"
+      repository = "https://grafana.github.io/helm-charts"
     }
   ]
 }
