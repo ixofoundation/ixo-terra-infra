@@ -76,3 +76,23 @@ prometheus:
               selectors:
                 - role: pod
                   label: app.kubernetes.io/component=crunchy-alertmanager
+grafana:
+  grafana.ini:
+    server:
+      domain: ${host}
+      protocol: http
+      root_url: "%(protocol)s://%(domain)s/grafana/"
+      serve_from_sub_path: true
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - ${host}
+    path: /grafana(/|$)(.*)
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - ${host}
