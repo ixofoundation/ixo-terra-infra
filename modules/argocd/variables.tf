@@ -23,13 +23,14 @@ variable "applications_helm" {
   type = list(
     object(
       {
-        name            = string
-        namespace       = string
-        repository      = string
-        chart           = string
-        revision        = string
-        values_override = optional(string)
-        oci             = optional(bool)
+        name              = string
+        namespace         = string
+        repository        = string
+        chart             = string
+        revision          = string
+        values_override   = optional(string)
+        oci               = optional(bool)
+        ignoreDifferences = optional(string)
       }
     )
   )

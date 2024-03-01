@@ -14,3 +14,19 @@ variable "init_params" {
     }
   )
 }
+
+variable "kube_config_path" {
+  type = string
+}
+
+variable "kubernetes_host" {
+  type = string
+}
+
+variable "argo_namespace" {
+  type = string
+}
+
+variable "argo_policy" {
+  type = string
+}

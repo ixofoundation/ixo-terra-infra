@@ -1,5 +1,6 @@
 - name: ixo-postgresql-0
   dataVolumeClaimSpec:
+    storageClassName: "vultr-block-storage"
     accessModes:
       - "ReadWriteOnce"
     resources:

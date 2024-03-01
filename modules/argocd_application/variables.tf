@@ -14,3 +14,7 @@ variable "application" {
 variable "argo_namespace" {
   type = string
 }
+
+variable "vault_mount_path" {
+  type = string
+}

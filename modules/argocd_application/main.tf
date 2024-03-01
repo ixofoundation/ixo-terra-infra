@@ -6,6 +6,22 @@ terraform {
   }
 }
 
+resource "vault_kv_secret_v2" "this" {
+  mount               = var.vault_mount_path
+  name                = var.application.namespace
+  cas                 = 1
+  delete_all_versions = true
+  data_json = jsonencode(
+    {
+      WEB3_KEY   = "",
+      WEB3_PROOF = "",
+    }
+  )
+  custom_metadata {
+    max_versions = 5
+  }
+}
+
 resource "kubernetes_secret_v1" "repository" {
   metadata {
     name      = var.application.name
