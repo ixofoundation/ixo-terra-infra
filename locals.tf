@@ -14,4 +14,10 @@ locals {
       }
     ]
   )
+  vault_ignore_differences = <<EOT
+- group: apps
+  kind: StatefulSet
+  jqPathExpressions:
+    - '.spec.volumeClaimTemplates[]?'
+EOT
 }

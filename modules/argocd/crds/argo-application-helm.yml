@@ -4,6 +4,8 @@ metadata:
   name: ${name}
   namespace: ${argo_namespace}
 spec:
+  ignoreDifferences:
+    ${indent(4, ignoreDifferences)}
   project: default
   syncPolicy:
     syncOptions:

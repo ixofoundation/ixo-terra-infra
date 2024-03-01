@@ -22,13 +22,26 @@ variable "environments" {
   }
 }
 
+
+
+variable "gcp_project_ids" {
+  description = "Project IDs for GCP"
+  type        = map(string)
+  default = {
+    devnet = "devsecops-415617"
+    test   = ""
+    main   = ""
+  }
+}
+
 variable "hostnames" {
   description = "Environment specific hostnames configurations"
   type        = map(string)
   default = {
-    devnet = "devnetkb.ixo.earth"
-    test   = "testkb.ixo.earth"
-    main   = "mainkb.ixo.earth"
+    devnet       = "devnetkb.ixo.earth"
+    devnet_vault = "vault.devnet.ixo.earth"
+    test         = "testkb.ixo.earth"
+    main         = "mainkb.ixo.earth"
   }
 }
 

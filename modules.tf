@@ -86,18 +86,30 @@ module "argocd" {
       })
     },
     {
-      name       = "vault"
-      namespace  = "vault"
-      chart      = "vault"
-      revision   = "0.27.0"
-      repository = "https://helm.releases.hashicorp.com"
+      name              = "vault"
+      namespace         = "vault"
+      chart             = "vault"
+      revision          = "0.27.0"
+      repository        = "https://helm.releases.hashicorp.com"
+      ignoreDifferences = local.vault_ignore_differences
+      values_override = templatefile("${local.helm_values_config_path}/vault-values.yml",
+        {
+          project         = var.gcp_project_ids[terraform.workspace]
+          key_ring        = module.gcp_kms_vault.key_ring_name
+          crypto_key      = module.gcp_kms_vault.crypto_key_name
+          gcp_secret_name = module.gcp_kms_vault.gcp_key_secret_name
+          replicas        = 2
+          host            = var.hostnames["${terraform.workspace}_vault"]
+        }
+      )
     },
     {
-      name       = "loki"
-      namespace  = "loki"
-      chart      = "loki"
-      revision   = "5.43.3"
-      repository = "https://grafana.github.io/helm-charts"
+      name            = "loki"
+      namespace       = "loki"
+      chart           = "loki"
+      revision        = "5.43.3"
+      repository      = "https://grafana.github.io/helm-charts"
+      values_override = templatefile("${local.helm_values_config_path}/loki-values.yml", {})
     }
   ]
 }
@@ -116,10 +128,12 @@ module "ixo_celnode" {
         host          = var.hostnames[terraform.workspace]
         app_namespace = "ixo-cellnode"
         DB_ENDPOINT   = "postgresql://${var.pg_ixo.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[0].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local"
+        kv_mount      = vault_mount.ixo.path
       }
     )
   }
-  argo_namespace = module.argocd.argo_namespace
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
 }
 
 module "cert-issuer" {
@@ -162,4 +176,36 @@ module "postgres-operator" {
       pgmonitoring_image_tag = var.pg_ixo.pgmonitoring_image_tag
     }
   ]
+}
+
+module "ixo_loki_logs" {
+  source = "./modules/loki_logs"
+
+  matchNamespaces = [
+    module.ixo_celnode.namespace
+  ]
+  name      = "ixo"
+  namespace = "ixo-loki"
+}
+
+module "gcp_kms_vault" {
+  source    = "./modules/gcp_kms"
+  name      = "vault-${terraform.workspace}"
+  namespace = "vault"
+}
+
+module "vault_init" {
+  depends_on = [module.argocd]
+  source     = "./modules/vault"
+
+  init_params = {
+    key_shares    = 3
+    key_threshold = 2
+  }
+  name             = "vault"
+  namespace        = "vault"
+  kube_config_path = module.kubernetes_cluster.kubeconfig_path
+  kubernetes_host  = module.kubernetes_cluster.endpoint
+  argo_namespace   = module.argocd.argo_namespace
+  argo_policy      = file("${path.root}/config/vault/argocd_policy.hcl")
 }

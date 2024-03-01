@@ -1,4 +1,6 @@
 repoServer:
+  serviceAccount:
+    name: argocd-repo-server
   volumes:
     - configMap:
         name: argocd-cmp-cm
@@ -9,6 +11,17 @@ repoServer:
     - name: avp
       command: [ /var/run/argocd/argocd-cmp-server ]
       image: registry.access.redhat.com/ubi8
+      env:
+        - name: VAULT_ADDR
+          value: http://vault-active.vault.svc.cluster.local:8200
+        - name: AVP_TYPE
+          value: vault
+        - name: AVP_AUTH_TYPE
+          value: k8s
+        - name: AVP_K8S_ROLE
+          value: argocd
+        - name: AVP_K8S_TOKEN_PATH
+          value: /var/run/secrets/kubernetes.io/serviceaccount/token
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
@@ -29,6 +42,10 @@ repoServer:
         - name: custom-tools
           subPath: argocd-vault-plugin
           mountPath: /usr/local/bin/argocd-vault-plugin
+
+        - name: custom-tools
+          subPath: helm
+          mountPath: /usr/local/bin/helm
   initContainers:
     - name: download-tools
       image: registry.access.redhat.com/ubi8
@@ -41,6 +58,10 @@ repoServer:
           curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v$(AVP_VERSION)/argocd-vault-plugin_$(AVP_VERSION)_linux_amd64 -o argocd-vault-plugin &&
           chmod +x argocd-vault-plugin &&
           mv argocd-vault-plugin /custom-tools/
+          
+          curl -L https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz -o helm.tar.gz && tar -xvzf helm.tar.gz &&
+          chmod +x linux-amd64/helm && 
+          mv linux-amd64/helm /custom-tools/
       volumeMounts:
         - mountPath: /custom-tools
           name: custom-tools
@@ -61,8 +82,9 @@ configs:
             - sh
             - "-c"
             - |
-              helm template $ARGOCD_APP_NAME --include-crds . |
-              argocd-vault-plugin generate -
+              echo "$ARGOCD_ENV_HELM_VALUES" > /tmp/helm_values.yaml
+              helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f /tmp/helm_values.yaml . > generated_manifests.yaml
+              argocd-vault-plugin generate generated_manifests.yaml
         lockRepo: false
   params:
     server.rootpath: /argocd

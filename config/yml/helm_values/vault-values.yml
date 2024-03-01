@@ -13,10 +13,66 @@ csi:
     limits:
       memory: 128Mi
 server:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      ingress.kubernetes.io/proxy-body-size: 100M
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    tls:
+      - hosts:
+          - ${host}
+        secretName: vault-tls
+    hosts:
+      - host: ${host}
+        paths:
+          - /
+  standalone:
+    enabled: false
+  volumes:
+    - name: ${gcp_secret_name}
+      secret:
+        secretName: ${gcp_secret_name}
+  volumeMounts:
+    - name: ${gcp_secret_name}
+      mountPath: /vault/${gcp_secret_name}
+      readOnly: true
   ha:
+    enabled: true
+    replicas: ${replicas}
     raft:
       enabled: true
       setNodeId: true
+      config: |
+        ui = true
+        
+        listener "tcp" {
+          tls_disable = 1
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          # Enable unauthenticated metrics access (necessary for Prometheus Operator)
+          #telemetry {
+          #  unauthenticated_metrics_access = "true"
+          #}
+        }
+        
+        storage "raft" {
+          path = "/vault/data"
+          retry_join {
+            leader_api_addr = "http://vault-0.vault-internal:8200"
+          }
+        }
+        
+        service_registration "kubernetes" {}
+        
+        seal "gcpckms" {
+          project     = "${project}"
+          region      = "global"
+          key_ring    = "${key_ring}"
+          crypto_key  = "${crypto_key}"
+          credentials = "/vault/gcp-key-secret/key.json"
+        }
   resources:
     requests:
       memory: 256Mi

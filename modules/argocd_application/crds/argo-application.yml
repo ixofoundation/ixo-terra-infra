@@ -13,11 +13,12 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    helm:
-      values: |
-        ${indent(8, helm_values)}
-      valueFiles:
-        - values.yaml
+    plugin:
+      name: avp
+      env:
+        - name: HELM_VALUES
+          value: |
+            ${indent(12, helm_values)}
     path: ${path}
     repoURL: ${repository}
     targetRevision: HEAD

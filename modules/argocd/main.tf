@@ -18,12 +18,27 @@ module "argocd_release" {
   }
   values = [
     templatefile("${path.module}/argo-values.yml", {
-      host        = var.hostnames[terraform.workspace]
-      AVP_VERSION = "1.16.1"
+      host         = var.hostnames[terraform.workspace]
+      AVP_VERSION  = "1.16.1"
+      HELM_VERSION = "3.14.2"
     })
   ]
   namespace  = kubernetes_namespace_v1.app-argocd.metadata[0].name
   repository = "https://argoproj.github.io/argo-helm"
+}
+
+resource "kubernetes_secret_v1" "repo_server" {
+  metadata {
+    annotations = {
+      "kubernetes.io/service-account.name" = "argocd-repo-server"
+    }
+    namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
+
+    generate_name = "argocd-repo-server-"
+  }
+
+  type                           = "kubernetes.io/service-account-token"
+  wait_for_service_account_token = true
 }
 
 resource "kubernetes_namespace_v1" "app-argocd" {
@@ -89,14 +104,15 @@ resource "kubectl_manifest" "application_helm" {
   for_each   = { for app in var.applications_helm : app.name => app }
   yaml_body = templatefile("${path.module}/crds/argo-application-helm.yml",
     {
-      name           = each.value.name
-      namespace      = each.value.namespace
-      repository     = each.value.repository
-      revision       = each.value.revision
-      chart          = each.value.chart
-      helm_values    = each.value.values_override != null ? each.value.values_override : ""
-      argo_namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
-      isOci          = each.value.oci != null ? each.value.oci : false
+      name              = each.value.name
+      namespace         = each.value.namespace
+      repository        = each.value.repository
+      revision          = each.value.revision
+      chart             = each.value.chart
+      helm_values       = each.value.values_override != null ? each.value.values_override : ""
+      argo_namespace    = kubernetes_namespace_v1.app-argocd.metadata[0].name
+      isOci             = each.value.oci != null ? each.value.oci : false
+      ignoreDifferences = each.value.ignoreDifferences != null ? each.value.ignoreDifferences : "[]"
     }
   )
 }
