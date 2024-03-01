@@ -33,6 +33,7 @@ These instructions will help you set up and deploy the Terraform project.
 Set the following environment variable before running Terraform commands:
 
 - `TF_VAR_vultr_api_key`: Your Vultr API key.
+- `TERRAFORM_VAULT_PASSWORD`: Your Vault Password.
 
 ### Usage
 
@@ -40,6 +41,9 @@ Set the following environment variable before running Terraform commands:
 2. Run `terraform plan` to see the execution plan.
 3. If the plan looks good, run `terraform apply` to apply the changes.
 
+
+### Additional Config After Apply
+- `gcp-key-secret` key.json should be set to a GCP Service Account key for Vault auto-sealing.
 ### Cleanup
 
 To tear down the infrastructure created by Terraform:
