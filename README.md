@@ -43,7 +43,10 @@ Set the following environment variable before running Terraform commands:
 
 
 ### Additional Config After Apply
+### GCP:
 - `gcp-key-secret` key.json should be set to a GCP Service Account key for Vault auto-sealing.
+### Vault:
+- A userpass with username `Terraform` will need to be created manually with policy in `config/vault/terraform_policy_manual.hcl` for the env var `TERRAFORM_VAULT_PASSWORD`
 ### Cleanup
 
 To tear down the infrastructure created by Terraform:
