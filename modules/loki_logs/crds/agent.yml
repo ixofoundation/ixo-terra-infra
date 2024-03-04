@@ -1,0 +1,16 @@
+apiVersion: monitoring.grafana.com/v1alpha1
+kind: GrafanaAgent
+metadata:
+  name: ${name}
+  namespace: ${namespace}
+  labels:
+    instance: ${name}-logs
+spec:
+  disableReporting: false
+  disableSupportBundle: false
+  enableConfigReadAPI: false
+  logs:
+    instanceSelector:
+      matchLabels:
+        app.kubernetes.io/instance: ${name}-logs
+  serviceAccountName: ${name}

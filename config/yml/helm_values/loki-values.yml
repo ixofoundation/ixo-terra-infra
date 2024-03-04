@@ -1,0 +1,45 @@
+loki:
+  commonConfig:
+    replication_factor: 1
+  auth_enabled: false
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+singleBinary:
+  replicas: 1
+read:
+  replicas: 2
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 256Mi
+backend:
+  replicas: 2
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+write:
+  replicas: 2
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 256Mi
+monitoring:
+  selfMonitoring:
+    enabled: true
+    grafanaAgent:
+      resources:
+        limits:
+          memory: 200Mi
+        requests:
+          cpu: 50m
+          memory: 100Mi

@@ -1,0 +1,16 @@
+apiVersion: monitoring.grafana.com/v1alpha1
+kind: LogsInstance
+metadata:
+  name: ${name}-logs
+  namespace: ${namespace}
+  labels:
+    app.kubernetes.io/instance: ${name}-logs
+spec:
+  clients:
+    - externalLabels:
+        cluster: ${name}-logs
+      url: http://loki.loki.svc.cluster.local:3100/loki/api/v1/push
+  podLogsNamespaceSelector: {}
+  podLogsSelector:
+    matchLabels:
+      instance: ${name}-logs
