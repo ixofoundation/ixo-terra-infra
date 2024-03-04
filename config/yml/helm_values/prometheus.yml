@@ -96,3 +96,8 @@ grafana:
       - secretName: grafana-tls
         hosts:
           - ${host}
+  additionalDataSources:
+    - name: loki
+      access: proxy
+      type: loki
+      url: http://loki-gateway.loki.svc.cluster.local
