@@ -77,6 +77,8 @@ prometheus:
                 - role: pod
                   label: app.kubernetes.io/component=crunchy-alertmanager
 grafana:
+  plugins:
+    - grafana-synthetic-monitoring-app
   grafana.ini:
     server:
       domain: ${host}

@@ -65,7 +65,7 @@ resource "kubernetes_namespace_v1" "ixo-postgres" {
 # TODO Migrate Vault to OIDC issuer for root token to have Terraform create Mounts securely when moving to CI/CD.
 resource "vault_mount" "ixo" {
   depends_on = [module.gcp_kms_vault, module.vault_init, module.argocd]
-  path       = "ixo_core"
+  path       = local.vault_core_mount
   type       = "kv-v2"
   options = {
     version = "2"

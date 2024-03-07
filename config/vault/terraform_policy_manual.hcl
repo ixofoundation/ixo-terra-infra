@@ -17,6 +17,11 @@ path "sys/auth/*" {
   capabilities = ["create", "update", "read", "delete", "patch", "list", "sudo"]
 }
 
+# Allow access to login using the userpass method for Terraform
+path "auth/userpass/login/terraform" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
 path "auth/kubernetes/role/argocd" {
   capabilities = ["create", "update", "delete", "read"]
 }
