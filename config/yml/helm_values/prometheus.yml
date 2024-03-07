@@ -3,6 +3,20 @@ prometheus:
   prometheusSpec:
     #https://github.com/CrunchyData/postgres-operator-examples/blob/main/kustomize/monitoring/prometheus/config/prometheus.yml
     additionalScrapeConfigs:
+      - job_name: blackbox
+        metrics_path: /probe
+        params:
+          module: [ http_2xx ]
+        static_configs:
+          - targets:
+              ${indent(14, blackbox_targets)}
+        relabel_configs:
+          - source_labels: [ __address__ ]
+            target_label: __param_target
+          - source_labels: [ __param_target ]
+            target_label: target
+          - target_label: __address__
+            replacement: prometheus-blackbox-exporter.prometheus-blackbox-exporter:9115
       - job_name: 'crunchy-postgres-exporter'
         kubernetes_sd_configs:
           - role: pod

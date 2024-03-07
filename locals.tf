@@ -6,6 +6,10 @@ locals {
   helm_values_config_path        = "${path.root}/config/yml/helm_values"
   region_ids                     = { for city, id in var.region_ids : id => city }
   pg_users_usernames             = [for user in var.pg_ixo.pg_users : user.username]
+  synthetic_monitoring_endpoints = [ #TODO investigate if this can be auto configured.
+    "https://${var.hostnames[terraform.workspace]}/cellnode",
+    "https://${var.hostnames[terraform.workspace]}/blocksync"
+  ]
   pg_users_yaml = yamlencode(
     [
       for user in var.pg_ixo.pg_users : {

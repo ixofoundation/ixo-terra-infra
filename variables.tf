@@ -22,7 +22,10 @@ variable "environments" {
   }
 }
 
-
+variable "argo_helm_revisions" {
+  description = "Helm Revisions for all ArgoCD Helm Applications"
+  type        = map(string)
+}
 
 variable "gcp_project_ids" {
   description = "Project IDs for GCP"
