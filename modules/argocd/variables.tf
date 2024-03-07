@@ -50,3 +50,15 @@ variable "git_repositories" {
     )
   )
 }
+
+variable "github_client_id" {
+  type = string
+}
+
+variable "github_client_secret" {
+  type = string
+}
+
+variable "org" {
+  type = string
+}

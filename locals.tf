@@ -1,5 +1,6 @@
 locals {
   ixo_helm_chart_repository      = "https://github.com/ixofoundation/ixo-helm-charts"
+  vault_core_mount               = "ixo_core"
   jetstack_helm_chart_repository = "https://charts.jetstack.io"
   postgres_operator_config_path  = "${path.root}/config/yml/postgres-operator"
   helm_values_config_path        = "${path.root}/config/yml/helm_values"

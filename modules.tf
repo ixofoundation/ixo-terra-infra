@@ -8,9 +8,12 @@ module "kubernetes_cluster" {
 }
 
 module "argocd" {
-  depends_on = [module.kubernetes_cluster]
-  source     = "./modules/argocd"
-  hostnames  = var.hostnames
+  depends_on           = [module.kubernetes_cluster]
+  source               = "./modules/argocd"
+  hostnames            = var.hostnames
+  github_client_id     = var.oidc.clientId
+  github_client_secret = var.oidc.clientSecret
+  org                  = var.org
   git_repositories = [
     {
       name       = "ixofoundation"

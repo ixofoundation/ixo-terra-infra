@@ -1,3 +1,14 @@
+global:
+  domain: ${host}/argocd
+dex:
+  enabled: true
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
 repoServer:
   serviceAccount:
     name: argocd-repo-server
@@ -66,6 +77,19 @@ repoServer:
         - mountPath: /custom-tools
           name: custom-tools
 configs:
+  cm:
+    create: true
+    dex.config: |
+      connectors:
+        - type: github
+          id: github
+          name: GitHub
+          config:
+            clientID: ${github_client_id}
+            clientSecret: ${github_client_secret}
+            orgs:
+              - name: ${org}
+
   cmp:
     create: true
     plugins:

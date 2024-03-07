@@ -45,6 +45,19 @@ variable "hostnames" {
   }
 }
 
+variable "org" {
+  type    = string
+  default = "ixofoundation"
+}
+
+variable "oidc" {
+  type = map(string)
+  default = {
+    clientId     = ""
+    clientSecret = ""
+  }
+}
+
 variable "pg_matrix" {
   type = object(
     {
