@@ -4,6 +4,7 @@ module "kubernetes_cluster" {
   cluster_label           = "ixo-cluster-${terraform.workspace}"
   initial_node_pool_label = "ixo-${terraform.workspace}"
   initial_node_pool_plan  = "vc2-2c-4gb"
+  k8_version              = var.versions["kubernetes_cluster"]
   cluster_region          = local.region_ids["Amsterdam"]
 }
 
@@ -44,14 +45,14 @@ module "argocd" {
       namespace       = "cert-manager"
       chart           = "cert-manager"
       repository      = local.jetstack_helm_chart_repository
-      revision        = var.argo_helm_revisions["cert-manager"]
+      revision        = var.versions["cert-manager"]
       values_override = templatefile("${local.helm_values_config_path}/cert-manager-values.yml", {})
     },
     {
       name       = "nginx-ingress-controller"
       namespace  = "ingress-nginx"
       chart      = "ingress-nginx"
-      revision   = var.argo_helm_revisions["nginx-ingress-controller"]
+      revision   = var.versions["nginx-ingress-controller"]
       repository = "https://kubernetes.github.io/ingress-nginx"
       values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
         {
@@ -63,7 +64,7 @@ module "argocd" {
       name            = "postgres-operator"
       namespace       = "postgres-operator"
       chart           = "pgo"
-      revision        = var.argo_helm_revisions["postgres-operator"]
+      revision        = var.versions["postgres-operator"]
       repository      = "registry.developers.crunchydata.com/crunchydata"
       values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
       oci             = true
@@ -72,7 +73,7 @@ module "argocd" {
       name       = "prometheus-stack"
       namespace  = "prometheus"
       chart      = "kube-prometheus-stack"
-      revision   = var.argo_helm_revisions["prometheus-stack"]
+      revision   = var.versions["prometheus-stack"]
       repository = "https://prometheus-community.github.io/helm-charts"
       values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {
         host             = var.hostnames[terraform.workspace]
@@ -83,7 +84,7 @@ module "argocd" {
       name       = "external-dns"
       namespace  = "external-dns"
       chart      = "external-dns"
-      revision   = var.argo_helm_revisions["external-dns"]
+      revision   = var.versions["external-dns"]
       repository = "https://kubernetes-sigs.github.io/external-dns/"
       values_override = templatefile("${local.helm_values_config_path}/external-dns-values.yml", {
         VULTR_API_KEY = var.vultr_api_key
@@ -93,7 +94,7 @@ module "argocd" {
       name              = "vault"
       namespace         = "vault"
       chart             = "vault"
-      revision          = var.argo_helm_revisions["vault"]
+      revision          = var.versions["vault"]
       repository        = "https://helm.releases.hashicorp.com"
       ignoreDifferences = local.vault_ignore_differences
       values_override = templatefile("${local.helm_values_config_path}/vault-values.yml",
@@ -111,7 +112,7 @@ module "argocd" {
       name            = "loki"
       namespace       = "loki"
       chart           = "loki"
-      revision        = var.argo_helm_revisions["loki"]
+      revision        = var.versions["loki"]
       repository      = "https://grafana.github.io/helm-charts"
       values_override = templatefile("${local.helm_values_config_path}/loki-values.yml", {})
     },
@@ -119,7 +120,7 @@ module "argocd" {
       name            = "prometheus-blackbox-exporter"
       namespace       = "prometheus-blackbox-exporter"
       chart           = "prometheus-blackbox-exporter"
-      revision        = var.argo_helm_revisions["prometheus-blackbox-exporter"]
+      revision        = var.versions["prometheus-blackbox-exporter"]
       repository      = "https://prometheus-community.github.io/helm-charts"
       values_override = templatefile("${local.helm_values_config_path}/prometheus-blackbox.yml", {})
     }
