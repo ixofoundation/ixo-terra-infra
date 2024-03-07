@@ -1,5 +1,6 @@
-# Argo Helm Revisions
-argo_helm_revisions = {
+# Versioning for all services.
+versions = {
+  kubernetes_cluster           = "v1.29.2+1"
   cert-manager                 = "1.14.2"
   nginx-ingress-controller     = "4.9.1"
   postgres-operator            = "5.5.0"

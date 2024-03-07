@@ -91,8 +91,17 @@ prometheus:
                 - role: pod
                   label: app.kubernetes.io/component=crunchy-alertmanager
 grafana:
-  plugins:
-    - grafana-synthetic-monitoring-app
+  deploymentStrategy:
+    type: Recreate
+  persistence:
+    enabled: true
+    type: pvc
+    storageClassName: "vultr-block-storage-hdd"
+    accessModes:
+      - ReadWriteOnce
+    size: 40Gi
+    finalizers:
+      - kubernetes.io/pvc-protection
   grafana.ini:
     server:
       domain: ${host}

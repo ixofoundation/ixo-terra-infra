@@ -22,8 +22,8 @@ variable "environments" {
   }
 }
 
-variable "argo_helm_revisions" {
-  description = "Helm Revisions for all ArgoCD Helm Applications"
+variable "versions" {
+  description = "Versions for all services"
   type        = map(string)
 }
 
