@@ -1,4 +1,17 @@
 controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 90Mi
+    limits:
+      memory: 90Mi
   service:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: ${host}
+defaultBackend:
+  resources:
+    limits:
+      cpu: 10m
+      memory: 20Mi
+    requests:
+      memory: 20Mi

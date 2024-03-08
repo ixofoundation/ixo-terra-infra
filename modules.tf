@@ -127,7 +127,7 @@ module "argocd" {
   ]
 }
 
-module "ixo_celnode" {
+module "ixo_cellnode" {
   source = "./modules/argocd_application"
   application = {
     name       = "cellnode"
@@ -195,7 +195,7 @@ module "ixo_loki_logs" {
   source = "./modules/loki_logs"
 
   matchNamespaces = [
-    module.ixo_celnode.namespace
+    module.ixo_cellnode.namespace
   ]
   name      = "ixo"
   namespace = "ixo-loki"
