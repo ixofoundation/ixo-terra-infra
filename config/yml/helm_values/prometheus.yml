@@ -126,3 +126,10 @@ grafana:
       access: proxy
       type: loki
       url: http://loki-gateway.loki.svc.cluster.local
+prometheusOperator:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      memory: 100Mi

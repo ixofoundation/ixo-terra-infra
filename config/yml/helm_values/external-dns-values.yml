@@ -3,3 +3,9 @@ provider:
 env:
   - name: VULTR_API_KEY
     value: ${VULTR_API_KEY}
+resources:
+  limits:
+    memory: 50Mi
+  requests:
+    memory: 50Mi
+    cpu: 10m
