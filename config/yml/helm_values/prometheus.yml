@@ -127,9 +127,19 @@ grafana:
       type: loki
       url: http://loki-gateway.loki.svc.cluster.local
 prometheusOperator:
+  tls:
+    enabled: true
   resources:
     limits:
       cpu: 200m
       memory: 200Mi
     requests:
       memory: 100Mi
+  admissionWebhooks:
+    annotations:
+      argocd.argoproj.io/hook: PreSync
+      argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    patch:
+      annotations:
+        argocd.argoproj.io/hook: PreSync
+        argocd.argoproj.io/hook-delete-policy: HookSucceeded
