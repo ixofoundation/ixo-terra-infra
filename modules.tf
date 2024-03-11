@@ -44,7 +44,7 @@ module "argocd" {
       name            = "cert-manager"
       namespace       = "cert-manager"
       chart           = "cert-manager"
-      repository      = local.jetstack_helm_chart_repository
+      repository      = "https://charts.jetstack.io"
       revision        = var.versions["cert-manager"]
       values_override = templatefile("${local.helm_values_config_path}/cert-manager-values.yml", {})
     },
@@ -70,11 +70,12 @@ module "argocd" {
       oci             = true
     },
     {
-      name       = "prometheus-stack"
-      namespace  = "prometheus"
-      chart      = "kube-prometheus-stack"
-      revision   = var.versions["prometheus-stack"]
-      repository = "https://prometheus-community.github.io/helm-charts"
+      name              = "prometheus-stack"
+      namespace         = "prometheus"
+      chart             = "kube-prometheus-stack"
+      revision          = var.versions["prometheus-stack"]
+      repository        = "https://prometheus-community.github.io/helm-charts"
+      ignoreDifferences = local.prometheus_stack_ignore_differences
       values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {
         host             = var.hostnames[terraform.workspace]
         blackbox_targets = yamlencode(local.synthetic_monitoring_endpoints)
@@ -109,12 +110,13 @@ module "argocd" {
       )
     },
     {
-      name            = "loki"
-      namespace       = "loki"
-      chart           = "loki"
-      revision        = var.versions["loki"]
-      repository      = "https://grafana.github.io/helm-charts"
-      values_override = templatefile("${local.helm_values_config_path}/loki-values.yml", {})
+      name              = "loki"
+      namespace         = "loki"
+      chart             = "loki"
+      revision          = var.versions["loki"]
+      repository        = "https://grafana.github.io/helm-charts"
+      values_override   = templatefile("${local.helm_values_config_path}/loki-values.yml", {})
+      ignoreDifferences = local.loki_ignore_differences
     },
     {
       name            = "prometheus-blackbox-exporter"

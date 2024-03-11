@@ -8,6 +8,8 @@ controller:
   service:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: ${host}
+  admissionWebhooks:
+    failurePolicy: Ignore
 defaultBackend:
   resources:
     limits:
