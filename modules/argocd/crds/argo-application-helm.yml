@@ -10,6 +10,9 @@ spec:
   syncPolicy:
     syncOptions:
       - ServerSideApply=true
+    automated:
+      prune: true
+      selfHeal: true
   source:
     chart: ${chart}
     repoURL: ${repository}
