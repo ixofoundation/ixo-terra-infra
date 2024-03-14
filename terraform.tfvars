@@ -1,15 +1,15 @@
 # Versioning for all services.
 versions = {
   kubernetes_cluster           = "v1.29.2+1"
-  cert-manager                 = "1.14.2"
-  nginx-ingress-controller     = "4.9.1"
-  postgres-operator            = "5.5.0"
-  prometheus-stack             = "56.8.0"
-  external-dns                 = "1.14.3"
-  vault                        = "0.27.0"
-  loki                         = "5.43.3"
-  prometheus-blackbox-exporter = "8.12.0"
-  dex                          = "0.16.0"
+  cert-manager                 = "1.14.2" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
+  nginx-ingress-controller     = "4.10.0" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
+  postgres-operator            = "5.5.0"  # https://access.crunchydata.com/documentation/postgres-operator/5.5/installation/helm
+  prometheus-stack             = "56.8.0" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
+  external-dns                 = "1.14.3" # https://artifacthub.io/packages/helm/external-dns/external-dns
+  vault                        = "0.27.0" # https://artifacthub.io/packages/helm/hashicorp/vault
+  loki                         = "5.43.3" # https://artifacthub.io/packages/helm/grafana/loki
+  prometheus-blackbox-exporter = "8.12.0" # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
+  dex                          = "0.16.0" # https://artifacthub.io/packages/helm/dex/dex
 }
 
 # Postgres Matrix Synapse
