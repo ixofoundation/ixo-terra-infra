@@ -53,7 +53,7 @@ path "sys/health"
 }
 
 path "*" {
-  capabilities = ["create", "update", "patch", "read", "delete"]
+  capabilities = ["create", "update", "patch", "read", "list", "delete"]
 }
 
 # List, create, update, and delete key/value secrets
