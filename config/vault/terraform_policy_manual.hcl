@@ -26,6 +26,14 @@ path "auth/kubernetes/role/argocd" {
   capabilities = ["create", "update", "delete", "read"]
 }
 
+path "auth/oidc/role/reader" {
+  capabilities = ["create", "update", "delete", "read"]
+}
+
+path "auth/oidc/role/admin" {
+  capabilities = ["create", "update", "delete", "read"]
+}
+
 # List, create, update, and delete key/value secrets
 path "*" {
   capabilities = ["create", "update", "patch", "read", "delete"]

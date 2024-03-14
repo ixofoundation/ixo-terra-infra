@@ -19,6 +19,7 @@ module "argocd_release" {
   values = [
     templatefile("${path.module}/argo-values.yml", {
       host                 = var.hostnames[terraform.workspace]
+      environment          = terraform.workspace
       AVP_VERSION          = "1.16.1"
       HELM_VERSION         = "3.14.2"
       github_client_id     = var.github_client_id
