@@ -1,0 +1,37 @@
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    ingress.kubernetes.io/proxy-body-size: 100M
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: dex-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+config:
+  issuer: https://${host}
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+  staticClients:
+    - id: vault-client
+      redirectURIs:
+        - 'https://${vault_host}/ui/vault/auth/oidc/oidc/callback'
+      name: vault-client
+      secret: ${vault_oidc_secret}
+  connectors:
+    - type: github
+      id: github-connector
+      name: GitHub
+      config:
+        clientID: ${github_client_id}
+        clientSecret: ${github_client_secret}
+        redirectURI: https://${host}/callback
+        orgs:
+          - name: ${org}

@@ -43,6 +43,7 @@ variable "hostnames" {
   default = {
     devnet       = "devnetkb.ixo.earth"
     devnet_vault = "vault.devnet.ixo.earth"
+    devnet_dex   = "dex.devnet.ixo.earth"
     test         = "testkb.ixo.earth"
     main         = "mainkb.ixo.earth"
   }
@@ -53,7 +54,15 @@ variable "org" {
   default = "ixofoundation"
 }
 
-variable "oidc" {
+variable "oidc_argo" {
+  type = map(string)
+  default = {
+    clientId     = ""
+    clientSecret = ""
+  }
+}
+
+variable "oidc_vault" {
   type = map(string)
   default = {
     clientId     = ""

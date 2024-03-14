@@ -30,3 +30,19 @@ variable "argo_namespace" {
 variable "argo_policy" {
   type = string
 }
+
+variable "dex_host" {
+  type = string
+}
+
+variable "oidc_client_secret" {
+  type = string
+}
+
+variable "vault_host" {
+  type = string
+}
+
+variable "org" {
+  type = string
+}

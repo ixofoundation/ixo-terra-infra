@@ -12,8 +12,8 @@ module "argocd" {
   depends_on           = [module.kubernetes_cluster]
   source               = "./modules/argocd"
   hostnames            = var.hostnames
-  github_client_id     = var.oidc.clientId
-  github_client_secret = var.oidc.clientSecret
+  github_client_id     = var.oidc_argo.clientId
+  github_client_secret = var.oidc_argo.clientSecret
   org                  = var.org
   git_repositories = [
     {
@@ -90,6 +90,23 @@ module "argocd" {
       values_override = templatefile("${local.helm_values_config_path}/external-dns-values.yml", {
         VULTR_API_KEY = var.vultr_api_key
       })
+    },
+    {
+      name       = "dex"
+      namespace  = "dex"
+      chart      = "dex"
+      revision   = var.versions["dex"]
+      repository = "https://charts.dexidp.io"
+      values_override = templatefile("${local.helm_values_config_path}/dex-values.yml",
+        {
+          vault_host           = var.hostnames["${terraform.workspace}_vault"]
+          host                 = var.hostnames["${terraform.workspace}_dex"]
+          github_client_id     = var.oidc_vault.clientId
+          github_client_secret = var.oidc_vault.clientSecret
+          vault_oidc_secret    = random_password.vault_dex_oidc_secret.result
+          org                  = var.org
+        }
+      )
     },
     {
       name              = "vault"
@@ -217,10 +234,14 @@ module "vault_init" {
     key_shares    = 3
     key_threshold = 2
   }
-  name             = "vault"
-  namespace        = "vault"
-  kube_config_path = module.kubernetes_cluster.kubeconfig_path
-  kubernetes_host  = module.kubernetes_cluster.endpoint
-  argo_namespace   = module.argocd.argo_namespace
-  argo_policy      = file("${path.root}/config/vault/argocd_policy.hcl")
+  name               = "vault"
+  namespace          = "vault"
+  kube_config_path   = module.kubernetes_cluster.kubeconfig_path
+  kubernetes_host    = module.kubernetes_cluster.endpoint
+  argo_namespace     = module.argocd.argo_namespace
+  argo_policy        = file("${path.root}/config/vault/argocd_policy.hcl")
+  dex_host           = var.hostnames["${terraform.workspace}_dex"]
+  oidc_client_secret = random_password.vault_dex_oidc_secret.result
+  vault_host         = var.hostnames["${terraform.workspace}_vault"]
+  org                = var.org
 }

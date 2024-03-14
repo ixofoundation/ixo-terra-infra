@@ -34,7 +34,8 @@ Set the following environment variable before running Terraform commands:
 
 - `TF_VAR_vultr_api_key`: Your Vultr API key.
 - `TERRAFORM_VAULT_PASSWORD`: Your Vault Password.
-- `TF_VAR_oidc` { clientId: "", clientSecret: ""}: (OIDC)
+- `TF_VAR_oidc_argo` { clientId: "", clientSecret: ""}: (Dex -> Github for ArgoCD)
+- `TF_VAR_oidc_vault` { clientId: "", clientSecret: ""}: (Dex -> Github for Vault)
 
 ### Usage
 

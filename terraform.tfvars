@@ -9,6 +9,7 @@ versions = {
   vault                        = "0.27.0"
   loki                         = "5.43.3"
   prometheus-blackbox-exporter = "8.12.0"
+  dex                          = "0.16.0"
 }
 
 # Postgres Matrix Synapse
