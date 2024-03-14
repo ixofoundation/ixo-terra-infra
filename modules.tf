@@ -77,8 +77,12 @@ module "argocd" {
       repository        = "https://prometheus-community.github.io/helm-charts"
       ignoreDifferences = local.prometheus_stack_ignore_differences
       values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {
-        host             = var.hostnames[terraform.workspace]
-        blackbox_targets = yamlencode(local.synthetic_monitoring_endpoints)
+        host                = var.hostnames[terraform.workspace]
+        blackbox_targets    = yamlencode(local.synthetic_monitoring_endpoints)
+        grafana_oidc_secret = random_password.grafana_dex_oidc_secret.result
+        dex_host            = var.hostnames["${terraform.workspace}_dex"]
+        org                 = var.org
+        environment         = terraform.workspace
       })
     },
     {
@@ -104,6 +108,8 @@ module "argocd" {
           github_client_id     = var.oidc_vault.clientId
           github_client_secret = var.oidc_vault.clientSecret
           vault_oidc_secret    = random_password.vault_dex_oidc_secret.result
+          grafana_oidc_secret  = random_password.grafana_dex_oidc_secret.result
+          grafana_host         = "${var.hostnames[terraform.workspace]}/grafana"
           org                  = var.org
         }
       )

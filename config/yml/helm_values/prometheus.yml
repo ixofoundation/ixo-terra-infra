@@ -91,6 +91,8 @@ prometheus:
                 - role: pod
                   label: app.kubernetes.io/component=crunchy-alertmanager
 grafana:
+  env:
+    CLIENT_SECRET: ${grafana_oidc_secret}
   deploymentStrategy:
     type: Recreate
   persistence:
@@ -103,6 +105,19 @@ grafana:
     finalizers:
       - kubernetes.io/pvc-protection
   grafana.ini:
+    auth.generic_oauth:
+      client_id: grafana-client
+      client_secret: $__env{CLIENT_SECRET}
+      auth_url: https://${dex_host}/auth
+      api_url: https://${dex_host}/userinfo
+      token_url: https://${dex_host}/token
+      scopes: 'openid profile email groups'
+      use_refresh_token: true
+      groups_attribute_path: 'groups'
+      allowed_groups: '${org}:ixo_core, ${org}:${environment}-devsecops'
+      role_attribute_path: contains(groups[*], '${org}:${environment}-devsecops') && 'GrafanaAdmin'
+      allow_assign_grafana_admin: false
+      enabled: true
     server:
       domain: ${host}
       protocol: http
