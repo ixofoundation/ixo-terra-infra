@@ -21,6 +21,7 @@ These instructions will help you set up and deploy the Terraform project.
 
 - Terraform installed on your local machine.
 - Vultr Cloud Provider
+- Google Cloud Platform (Optional, for unsealing Vault)
 
 ### Installation
 
@@ -34,8 +35,8 @@ Set the following environment variable before running Terraform commands:
 
 - `TF_VAR_vultr_api_key`: Your Vultr API key.
 - `TERRAFORM_VAULT_PASSWORD`: Your Vault Password.
-- `TF_VAR_oidc_argo` { clientId: "", clientSecret: ""}: (Dex -> Github for ArgoCD)
-- `TF_VAR_oidc_vault` { clientId: "", clientSecret: ""}: (Dex -> Github for Vault)
+- `TF_VAR_oidc_argo` { clientId: "", clientSecret: ""}: (Dex -> Github clientId/secret for ArgoCD)
+- `TF_VAR_oidc_vault` { clientId: "", clientSecret: ""}: (Dex -> Github clientId/secret for Vault)
 
 ### Usage
 
