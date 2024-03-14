@@ -78,3 +78,8 @@ resource "random_password" "vault_dex_oidc_secret" {
   length  = 16
   special = false
 }
+
+resource "random_password" "grafana_dex_oidc_secret" {
+  length  = 16
+  special = false
+}

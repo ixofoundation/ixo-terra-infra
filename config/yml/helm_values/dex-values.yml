@@ -25,6 +25,12 @@ config:
         - 'https://${vault_host}/ui/vault/auth/oidc/oidc/callback'
       name: vault-client
       secret: ${vault_oidc_secret}
+    - id: grafana-client
+      redirectURIs:
+        - 'https://${grafana_host}/login/generic_oauth'
+        - 'http://${grafana_host}/login/generic_oauth'
+      name: grafana-client
+      secret: ${grafana_oidc_secret}
   connectors:
     - type: github
       id: github-connector
