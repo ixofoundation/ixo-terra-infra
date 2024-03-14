@@ -1,13 +1,13 @@
 # Allow managing leases
 path "sys/leases/*"
 {
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+  capabilities = ["create", "read", "update", "patch", "delete", "list", "sudo"]
 }
 
 # Manage auth methods broadly across Vault
 path "auth/*"
 {
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+  capabilities = ["create", "read", "update", "patch", "delete", "list", "sudo"]
 }
 
 # Create, update, and delete auth methods
@@ -31,19 +31,13 @@ path "sys/policies/acl"
 # Create and manage ACL policies
 path "sys/policies/acl/*"
 {
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
-}
-
-# List, create, update, and delete key/value secrets
-path "secret/*"
-{
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+  capabilities = ["create", "read", "update", "patch", "delete", "list", "sudo"]
 }
 
 # Manage secret engines
 path "sys/mounts/*"
 {
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+  capabilities = ["create", "read", "update", "patch", "delete", "list", "sudo"]
 }
 
 # List existing secret engines.
@@ -62,15 +56,16 @@ path "*" {
   capabilities = ["create", "update", "patch", "read", "delete"]
 }
 
-# Full access to all secret engines
-path "secret/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+# List, create, update, and delete key/value secrets
+path "secret/*"
+{
+  capabilities = ["create", "read", "update", "patch", "delete", "list", "sudo"]
 }
 
 path "kv/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+  capabilities = ["create", "read", "update", "patch", "delete", "list"]
 }
 
 path "identity/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+  capabilities = ["create", "read", "update", "patch", "delete", "list"]
 }
