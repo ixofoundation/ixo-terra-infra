@@ -115,7 +115,7 @@ grafana:
       use_refresh_token: true
       groups_attribute_path: 'groups'
       allowed_groups: '${org}:ixo_core, ${org}:${environment}-devsecops'
-      role_attribute_path: contains(groups[*], '${org}:${environment}-devsecops') && 'GrafanaAdmin'
+      role_attribute_path: contains(groups[*], '${org}:${environment}-devsecops') && 'GrafanaAdmin' || 'Viewer'
       allow_assign_grafana_admin: false
       enabled: true
     server:
