@@ -55,6 +55,13 @@ provider "google" {
   credentials = file("${path.root}/credentials.json")
 }
 
+resource "kubernetes_namespace_v1" "ixo_core" {
+  depends_on = [module.kubernetes_cluster]
+  metadata {
+    name = "core"
+  }
+}
+
 resource "kubernetes_namespace_v1" "ixo-postgres" {
   depends_on = [module.kubernetes_cluster]
   metadata {
