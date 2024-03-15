@@ -8,7 +8,7 @@ terraform {
 
 resource "vault_kv_secret_v2" "this" {
   mount               = var.vault_mount_path
-  name                = var.application.namespace
+  name                = var.application.name
   cas                 = 1
   delete_all_versions = true
   data_json = jsonencode(
@@ -38,16 +38,8 @@ resource "kubernetes_secret_v1" "repository" {
   }
 }
 
-# Git Application Create Namespaces
-resource "kubernetes_namespace_v1" "application" {
-  metadata {
-    name = var.application.namespace
-  }
-}
-
 # Create Argo Git Application
 resource "kubectl_manifest" "application" {
-  depends_on = [kubernetes_namespace_v1.application]
   yaml_body = templatefile("${path.module}/crds/argo-application.yml",
     {
       name           = var.application.name
@@ -57,7 +49,7 @@ resource "kubectl_manifest" "application" {
       workspace      = terraform.workspace
       repository     = var.application.repository
       helm_values    = var.application.values_override != null ? var.application.values_override : ""
-      path           = var.application.path != null ? var.application.path : "charts/${terraform.workspace}/${var.application.owner}/${var.application.namespace}"
+      path           = var.application.path != null ? var.application.path : "charts/${terraform.workspace}/${var.application.owner}/${var.application.name}"
     }
   )
 }

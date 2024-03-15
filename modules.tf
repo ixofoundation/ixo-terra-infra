@@ -155,18 +155,17 @@ module "argocd" {
 module "ixo_cellnode" {
   source = "./modules/argocd_application"
   application = {
-    name       = "cellnode"
-    namespace  = "ixo-cellnode"
+    name       = "ixo-cellnode"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     owner      = "ixofoundation"
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
       {
-        environment   = terraform.workspace
-        app_name      = "cellnode"
-        host          = var.hostnames[terraform.workspace]
-        app_namespace = "ixo-cellnode"
-        DB_ENDPOINT   = "postgresql://${var.pg_ixo.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[0].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local"
-        kv_mount      = vault_mount.ixo.path
+        environment = terraform.workspace
+        app_name    = "ixo-cellnode"
+        host        = var.hostnames[terraform.workspace]
+        DB_ENDPOINT = "postgresql://${var.pg_ixo.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[0].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local"
+        kv_mount    = vault_mount.ixo.path
       }
     )
   }
@@ -220,7 +219,7 @@ module "ixo_loki_logs" {
   source = "./modules/loki_logs"
 
   matchNamespaces = [
-    module.ixo_cellnode.namespace
+    kubernetes_namespace_v1.ixo_core.metadata[0].name
   ]
   name      = "ixo"
   namespace = "ixo-loki"

@@ -21,9 +21,9 @@ env:
   - name: PORT
     value: '5000'
   - name: WEB3_KEY
-    value: <path:${kv_mount}/data/${app_namespace}#WEB3_KEY>
+    value: <path:${kv_mount}/data/${app_name}#WEB3_KEY>
   - name: WEB3_PROOF
-    value: <path:${kv_mount}/data/${app_namespace}#WEB3_PROOF>
+    value: <path:${kv_mount}/data/${app_name}#WEB3_PROOF>
   - name: DATABASE_URL
     value: ${DB_ENDPOINT}
 resources:
