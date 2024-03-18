@@ -146,10 +146,10 @@ prometheusOperator:
     enabled: true
   resources:
     limits:
-      cpu: 200m
       memory: 200Mi
     requests:
       memory: 100Mi
+      cpu: 100m
   admissionWebhooks:
     annotations:
       argocd.argoproj.io/hook: PreSync
