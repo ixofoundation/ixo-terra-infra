@@ -1,0 +1,52 @@
+# https://github.com/tailscale/tailscale/blob/main/cmd/k8s-operator/deploy/chart/values.yaml
+
+# Operator oauth credentials. If set a Kubernetes Secret with the provided
+# values will be created in the operator namespace. If unset a Secret named
+# operator-oauth must be precreated.
+oauth:
+  clientId: ${clientId}
+  clientSecret: ${clientSecret}
+
+# installCRDs determines whether tailscale.com CRDs should be installed as part
+# of chart installation. We do not use Helm's CRD installation mechanism as that
+# does not allow for upgrading CRDs.
+# https://helm.sh/docs/chart_best_practices/custom_resource_definitions/
+installCRDs: "true"
+
+operatorConfig:
+  # ACL tag that operator will be tagged with. Operator must be made owner of
+  # these tags
+  # https://tailscale.com/kb/1236/kubernetes-operator/?q=operator#setting-up-the-kubernetes-operator
+  # Multiple tags are defined as array items and passed to the operator as a comma-separated string
+  defaultTags:
+    - "tag:k8s-operator-${environment}"
+
+  hostname: "k8cluster-${environment}"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      memory: 150Mi
+
+  #podAnnotations: {}
+
+  #tolerations: []
+
+  #affinity: {}
+
+  #podSecurityContext: {}
+
+  #securityContext: {}
+
+# apiServerProxyConfig allows to configure whether the operator should expose
+# Kubernetes API server.
+# https://tailscale.com/kb/1236/kubernetes-operator/#accessing-the-kubernetes-control-plane-using-an-api-server-proxy
+apiServerProxyConfig:
+  mode: "false" # "true", "false", "noauth"
+
+proxyConfig:
+  defaultTags: "tag:k8s-${environment}"
+
+#imagePullSecrets: []

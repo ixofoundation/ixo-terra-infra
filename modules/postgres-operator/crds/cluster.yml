@@ -6,6 +6,10 @@ metadata:
 spec:
   image: ${pg_image}:${pg_image_tag}
   postgresVersion: ${pg_version}
+  service:
+    metadata:
+      annotations:
+        tailscale.com/expose: "true"
   monitoring:
     pgmonitor:
       exporter:

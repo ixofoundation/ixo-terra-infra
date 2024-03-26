@@ -4,12 +4,13 @@ versions = {
   cert-manager                 = "1.14.4" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
   nginx-ingress-controller     = "4.10.0" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
   postgres-operator            = "5.5.0"  # https://access.crunchydata.com/documentation/postgres-operator/5.5/installation/helm
-  prometheus-stack             = "57.0.3" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
+  prometheus-stack             = "57.1.1" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
   external-dns                 = "1.14.3" # https://artifacthub.io/packages/helm/external-dns/external-dns
   vault                        = "0.27.0" # https://artifacthub.io/packages/helm/hashicorp/vault
-  loki                         = "5.43.7" # https://artifacthub.io/packages/helm/grafana/loki
+  loki                         = "5.47.1" # https://artifacthub.io/packages/helm/grafana/loki
   prometheus-blackbox-exporter = "8.12.0" # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
-  dex                          = "0.16.0" # https://artifacthub.io/packages/helm/dex/dex
+  dex                          = "0.17.0" # https://artifacthub.io/packages/helm/dex/dex
+  tailscale                    = "1.62.0" # https://pkgs.tailscale.com/helmcharts/index.yaml
 }
 
 # Postgres Matrix Synapse
