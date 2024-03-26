@@ -148,6 +148,20 @@ module "argocd" {
       revision        = var.versions["prometheus-blackbox-exporter"]
       repository      = "https://prometheus-community.github.io/helm-charts"
       values_override = templatefile("${local.helm_values_config_path}/prometheus-blackbox.yml", {})
+    },
+    {
+      name       = "tailscale"
+      namespace  = "tailscale"
+      chart      = "tailscale-operator"
+      revision   = var.versions["tailscale"]
+      repository = "https://pkgs.tailscale.com/helmcharts"
+      values_override = templatefile("${local.helm_values_config_path}/tailscale-values.yml",
+        {
+          clientId     = var.oidc_tailscale.clientId
+          clientSecret = var.oidc_tailscale.clientSecret
+          environment  = terraform.workspace
+        }
+      )
     }
   ]
 }

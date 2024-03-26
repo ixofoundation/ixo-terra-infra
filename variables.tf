@@ -70,6 +70,14 @@ variable "oidc_vault" {
   }
 }
 
+variable "oidc_tailscale" {
+  type = map(string)
+  default = {
+    clientId     = ""
+    clientSecret = ""
+  }
+}
+
 variable "pg_matrix" {
   type = object(
     {
