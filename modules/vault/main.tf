@@ -1,6 +1,12 @@
+resource "time_sleep" "wait_for_vault_creation" {
+  create_duration = "20s"
+}
+
+# NB vault-1 (dependent on replicas) may need to be manually unsealed on after initialization
 resource "null_resource" "init" {
+  depends_on = [time_sleep.wait_for_vault_creation]
   provisioner "local-exec" {
-    command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault operator init -format=json > cluster-keys-for-kms-vault.json || true"
+    command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault operator init -format=json > cluster-keys-for-kms-vault.json"
   }
 }
 
@@ -44,11 +50,11 @@ resource "vault_kubernetes_auth_backend_config" "vault_kubernetes_config" {
 }
 
 # Create role for ArgoCD to read secrets on sync
-resource "null_resource" "vault_argocd_role" {
-  depends_on = [vault_auth_backend.kubernetes, vault_kubernetes_auth_backend_config.vault_kubernetes_config]
-  provisioner "local-exec" {
-    command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault write auth/kubernetes/role/argocd bound_service_account_names=argocd-repo-server bound_service_account_namespaces=${var.argo_namespace} policies=argocd ttl=1h"
-  }
+resource "vault_kubernetes_auth_backend_role" "vault_argocd_role" {
+  bound_service_account_names      = ["argocd-repo-server"]
+  bound_service_account_namespaces = [var.argo_namespace]
+  role_name                        = "argocd"
+  token_policies                   = ["argocd"]
 }
 
 # Vault -> Dex OIDC

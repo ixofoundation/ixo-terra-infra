@@ -99,13 +99,13 @@ signingkey:
   ## After the initial install, the job should be disabled to speed up subsequent upgrades.
   ##
   job:
-    enabled: true
+    enabled: false
 
     ## Annotations to apply to the signing-key-job.
     ##
-    annotations:
-      argocd.argoproj.io/hook: PostSync
-      argocd.argoproj.io/hook-delete-policy: HookSucceeded
+#    annotations:
+#      argocd.argoproj.io/hook: PostSync
+#      argocd.argoproj.io/hook-delete-policy: HookSucceeded
 
 ingress:
   enabled: true
