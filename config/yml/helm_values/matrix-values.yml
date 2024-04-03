@@ -9,6 +9,9 @@ config:
   enableRegistration: true
   macaroonSecretKey: <path:${kv_mount}/data/${app_name}#MACAROON_SECRET_KEY>
 
+extraConfig:
+  dynamic_thumbnails: true
+  registration_requires_token: true
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##
