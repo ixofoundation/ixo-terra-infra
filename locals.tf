@@ -1,7 +1,8 @@
 locals {
   # IXO
-  ixo_helm_chart_repository = "https://github.com/ixofoundation/ixo-helm-charts"
-  vault_core_mount          = "ixo_core"
+  ixo_helm_chart_repository  = "https://github.com/ixofoundation/ixo-helm-charts"
+  ixo_terra_infra_repository = "https://github.com/ixofoundation/ixo-terra-infra"
+  vault_core_mount           = "ixo_core"
   synthetic_monitoring_endpoints = [ #TODO investigate if this can be auto configured.
     "https://${var.hostnames[terraform.workspace]}/cellnode",
     "https://${var.hostnames[terraform.workspace]}/blocksync"

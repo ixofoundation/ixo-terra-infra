@@ -11,6 +11,11 @@ variable "application" {
   )
 }
 
+variable "create_kv" {
+  type    = bool
+  default = false
+}
+
 variable "argo_namespace" {
   type = string
 }

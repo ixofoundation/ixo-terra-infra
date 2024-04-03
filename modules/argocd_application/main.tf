@@ -7,6 +7,7 @@ terraform {
 }
 
 resource "vault_kv_secret_v2" "this" {
+  count               = var.create_kv ? 1 : 0
   mount               = var.vault_mount_path
   name                = var.application.name
   cas                 = 1
