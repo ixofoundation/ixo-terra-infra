@@ -9,7 +9,13 @@ loki:
       rules_directory: /var/loki/rules
 singleBinary:
   replicas: 1
+  persistence:
+    storageClass: vultr-block-storage-hdd
+    size: 40Gi
 read:
+  persistence:
+    storageClass: vultr-block-storage-hdd
+    size: 40Gi
   replicas: 2
   resources:
     requests:
@@ -18,6 +24,9 @@ read:
     limits:
       memory: 256Mi
 backend:
+  persistence:
+    storageClass: vultr-block-storage-hdd
+    size: 40Gi
   replicas: 2
   resources:
     requests:
@@ -26,6 +35,9 @@ backend:
     limits:
       memory: 512Mi
 write:
+  persistence:
+    storageClass: vultr-block-storage-hdd
+    size: 40Gi
   replicas: 2
   resources:
     requests:

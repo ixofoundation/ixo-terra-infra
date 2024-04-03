@@ -30,6 +30,14 @@ path "auth/oidc/role/reader" {
   capabilities = ["create", "update", "delete", "read"]
 }
 
+path "auth/kubernetes/config" {
+  capabilities = ["create", "update", "patch", "read", "delete", "sudo"]
+}
+
+path "auth/kubernetes/config/*" {
+  capabilities = ["create", "update", "patch", "read", "delete", "sudo"]
+}
+
 path "auth/oidc/role/admin" {
   capabilities = ["create", "update", "delete", "read"]
 }

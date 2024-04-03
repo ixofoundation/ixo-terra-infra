@@ -11,6 +11,9 @@ resource "google_kms_crypto_key" "this" {
 }
 
 resource "kubernetes_secret_v1" "gcp_secret" {
+  lifecycle {
+    ignore_changes = [data]
+  }
   metadata {
     name      = "gcp-key-secret"
     namespace = var.namespace

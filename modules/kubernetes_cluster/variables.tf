@@ -59,5 +59,5 @@ variable "initial_node_pool_min_nodes" {
 variable "initial_node_pool_max_nodes" {
   description = "Initial Node Pool Max Nodes for the Kubernetes cluster"
   type        = number
-  default     = 2
+  default     = 3
 }

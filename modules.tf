@@ -19,24 +19,10 @@ module "argocd" {
     {
       name       = "ixofoundation"
       repository = local.ixo_helm_chart_repository
-    },
+    }
     #    {
     #      name       = "matrix-server"
     #      repository = "https://gitlab.com/ananace/charts.git"
-    #    }
-    #    {
-    #      name       = "matrix"
-    #      namespace  = var.pg_matrix.namespace
-    #      owner      = "ananace"
-    #      path       = "charts/matrix-synapse"
-    #      repository = "https://gitlab.com/ananace/charts"
-    #      values_override = templatefile("${path.root}/config/yml/matrix/matrix-values.yml",
-    #        {
-    #          pg_host         = "${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local"
-    #          pg_username     = "synapse"
-    #          pg_cluster_name = var.pg_matrix.pg_cluster_name
-    #        }
-    #      )
     #    }
   ]
   applications_helm = [
@@ -162,6 +148,23 @@ module "argocd" {
           environment  = terraform.workspace
         }
       )
+    },
+    {
+      name       = "matrix"
+      namespace  = var.pg_matrix.namespace
+      chart      = "matrix-synapse"
+      revision   = "3.8.4"
+      repository = "https://ananace.gitlab.io/charts"
+      values_override = templatefile("${local.helm_values_config_path}/matrix-values.yml",
+        {
+          pg_host         = "${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local"
+          pg_username     = "synapse"
+          pg_cluster_name = var.pg_matrix.pg_cluster_name
+          host            = var.hostnames["${terraform.workspace}_matrix"]
+          kv_mount        = local.vault_core_mount
+          app_name        = "matrix"
+        }
+      )
     }
   ]
 }
@@ -230,7 +233,8 @@ module "postgres-operator" {
 }
 
 module "ixo_loki_logs" {
-  source = "./modules/loki_logs"
+  depends_on = [module.argocd]
+  source     = "./modules/loki_logs"
 
   matchNamespaces = [
     kubernetes_namespace_v1.ixo_core.metadata[0].name
@@ -253,14 +257,24 @@ module "vault_init" {
     key_shares    = 3
     key_threshold = 2
   }
-  name               = "vault"
-  namespace          = "vault"
-  kube_config_path   = module.kubernetes_cluster.kubeconfig_path
-  kubernetes_host    = module.kubernetes_cluster.endpoint
-  argo_namespace     = module.argocd.argo_namespace
-  argo_policy        = file("${path.root}/config/vault/argocd_policy.hcl")
-  dex_host           = var.hostnames["${terraform.workspace}_dex"]
-  oidc_client_secret = random_password.vault_dex_oidc_secret.result
-  vault_host         = var.hostnames["${terraform.workspace}_vault"]
-  org                = var.org
+  name                     = "vault"
+  namespace                = "vault"
+  kube_config_path         = module.kubernetes_cluster.kubeconfig_path
+  kubernetes_host          = module.kubernetes_cluster.endpoint
+  argo_namespace           = module.argocd.argo_namespace
+  argo_policy              = file("${path.root}/config/vault/argocd_policy.hcl")
+  dex_host                 = var.hostnames["${terraform.workspace}_dex"]
+  oidc_client_secret       = random_password.vault_dex_oidc_secret.result
+  vault_host               = var.hostnames["${terraform.workspace}_vault"]
+  vault_terraform_password = var.vultr_api_key
+  org                      = var.org
 }
+
+#module "cosmos" {
+#  source          = "./modules/cosmos_operator"
+#  kubeconfig_path = abspath(module.kubernetes_cluster.kubeconfig_path)
+#  cosmos_operator = {
+#    image = "ghcr.io/strangelove-ventures/cosmos-operator"
+#    tag   = "v0.21.8"
+#  }
+#}
