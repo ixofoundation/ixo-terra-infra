@@ -165,6 +165,13 @@ module "argocd" {
           app_name        = "matrix"
         }
       )
+    },
+    {
+      name       = "matrix-admin"
+      namespace  = "${var.pg_matrix.namespace}-admin"
+      chart      = "maxxblow"
+      revision   = "0.1.6"
+      repository = "https://maxxblow.de/charts"
     }
   ]
 }
