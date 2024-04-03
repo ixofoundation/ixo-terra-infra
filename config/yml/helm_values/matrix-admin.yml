@@ -1,0 +1,35 @@
+server:
+  replicaCount: 1
+
+  image:
+    repository: awesometechnologies/synapse-admin
+    pullPolicy: IfNotPresent
+    tag: latest
+
+  env:
+    - name: REACT_APP_SERVER
+      value: "https://matrix.${matrix_host}"
+
+  resources:
+    requests:
+      memory: 50Mi
+      cpu: "100m"
+    limits:
+      memory: 150Mi
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    ingress.kubernetes.io/proxy-body-size: 100M
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - admin.${matrix_host}
+      secretName: ${app_name}-tls
+  hosts:
+    - host: admin.${matrix_host}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific

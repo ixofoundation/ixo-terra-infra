@@ -11,6 +11,7 @@ versions = {
   prometheus-blackbox-exporter = "8.12.0" # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
   dex                          = "0.17.0" # https://artifacthub.io/packages/helm/dex/dex
   tailscale                    = "1.62.0" # https://pkgs.tailscale.com/helmcharts/index.yaml
+  matrix                       = "3.9.0"  # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
 }
 
 # Postgres Matrix Synapse

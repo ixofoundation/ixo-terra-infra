@@ -153,7 +153,7 @@ module "argocd" {
       name       = "matrix"
       namespace  = var.pg_matrix.namespace
       chart      = "matrix-synapse"
-      revision   = "3.8.4"
+      revision   = var.versions["matrix"]
       repository = "https://ananace.gitlab.io/charts"
       values_override = templatefile("${local.helm_values_config_path}/matrix-values.yml",
         {
@@ -165,15 +165,27 @@ module "argocd" {
           app_name        = "matrix"
         }
       )
-    },
-    {
-      name       = "matrix-admin"
-      namespace  = "${var.pg_matrix.namespace}-admin"
-      chart      = "maxxblow"
-      revision   = "0.1.6"
-      repository = "https://maxxblow.de/charts"
     }
   ]
+}
+
+module "matrix_admin" {
+  source = "./modules/argocd_application"
+  application = {
+    name       = "matrix-admin"
+    namespace  = var.pg_matrix.namespace
+    owner      = "ixofoundation"
+    repository = local.ixo_terra_infra_repository
+    path       = "charts/matrix-admin"
+    values_override = templatefile("${local.helm_values_config_path}/matrix-admin.yml",
+      {
+        matrix_host = var.hostnames["${terraform.workspace}_matrix"]
+        app_name    = "matrix-admin"
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
 }
 
 module "ixo_cellnode" {
@@ -193,6 +205,7 @@ module "ixo_cellnode" {
       }
     )
   }
+  create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
