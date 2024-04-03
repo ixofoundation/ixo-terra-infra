@@ -43,6 +43,10 @@ variable "vault_host" {
   type = string
 }
 
+variable "vault_terraform_password" {
+  type = string
+}
+
 variable "org" {
   type = string
 }

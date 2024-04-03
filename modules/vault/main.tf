@@ -1,6 +1,6 @@
 resource "null_resource" "init" {
   provisioner "local-exec" {
-    command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault operator init -format=json > cluster-keys-for-kms-vault.json"
+    command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault operator init -format=json > cluster-keys-for-kms-vault.json || true"
   }
 }
 
@@ -29,16 +29,23 @@ resource "vault_policy" "argocd" {
 }
 
 # Create Vault -> Kubernetes Auth
-resource "null_resource" "vault_kubernetes_config" {
-  depends_on = [vault_auth_backend.kubernetes]
-  provisioner "local-exec" {
-    command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault write auth/kubernetes/config token_reviewer_jwt=${kubernetes_secret_v1.repo_server.data.token} kubernetes_host=https://${var.kubernetes_host}:6443 kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-  }
+#resource "null_resource" "vault_kubernetes_config" {
+#  depends_on = [vault_auth_backend.kubernetes]
+#  provisioner "local-exec" {
+#    command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault login -method=userpass username=terraform password=$TERRAFORM_VAULT_PASSWORD && vault write auth/kubernetes/config token_reviewer_jwt=${kubernetes_secret_v1.repo_server.data.token} kubernetes_host=https://${var.kubernetes_host}:6443 kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+#  }
+#}
+
+resource "vault_kubernetes_auth_backend_config" "vault_kubernetes_config" {
+  kubernetes_host    = "https://${var.kubernetes_host}:6443"
+  backend            = vault_auth_backend.kubernetes.path
+  kubernetes_ca_cert = kubernetes_secret_v1.repo_server.data["ca.crt"]
+  token_reviewer_jwt = kubernetes_secret_v1.repo_server.data.token
 }
 
 # Create role for ArgoCD to read secrets on sync
 resource "null_resource" "vault_argocd_role" {
-  depends_on = [vault_auth_backend.kubernetes, null_resource.vault_kubernetes_config]
+  depends_on = [vault_auth_backend.kubernetes, vault_kubernetes_auth_backend_config.vault_kubernetes_config]
   provisioner "local-exec" {
     command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault write auth/kubernetes/role/argocd bound_service_account_names=argocd-repo-server bound_service_account_namespaces=${var.argo_namespace} policies=argocd ttl=1h"
   }

@@ -41,11 +41,12 @@ variable "hostnames" {
   description = "Environment specific hostnames configurations"
   type        = map(string)
   default = {
-    devnet       = "devnetkb.ixo.earth"
-    devnet_vault = "vault.devnet.ixo.earth"
-    devnet_dex   = "dex.devnet.ixo.earth"
-    test         = "testkb.ixo.earth"
-    main         = "mainkb.ixo.earth"
+    devnet        = "devnetkb.ixo.earth"
+    devnet_vault  = "vault.devnet.ixo.earth"
+    devnet_dex    = "dex.devnet.ixo.earth"
+    devnet_matrix = "devmx.ixo.earth"
+    test          = "testkb.ixo.earth"
+    main          = "mainkb.ixo.earth"
   }
 }
 

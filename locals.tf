@@ -40,6 +40,12 @@ locals {
     - .metadata.annotations
     - .spec
     - .spec.endpoints[]?.relabelings[]?.action
+- group: monitoring.coreos.com
+  kind: Probes
+  jqPathExpressions:
+    - .metadata.annotations
+    - .spec
+    - .spec.endpoints[]?.relabelings[]?.action
 EOT
   loki_ignore_differences             = <<EOT
 - group: monitoring.coreos.com

@@ -1,0 +1,154 @@
+## Override part of the installed name, will still keep release name.
+##
+# nameOverride: ""
+
+## Override the full name of the installed chart.
+##
+# fullnameOverride: ""
+config:
+  enableRegistration: true
+  macaroonSecretKey: <path:${kv_mount}/data/${app_name}#MACAROON_SECRET_KEY>
+
+## The Matrix domain name, this is what will be used for the domain part in
+## your MXIDs.
+##
+serverName: '${host}'
+
+## The public Matrix server name, this will be used for any public URLs
+## in config as well as for client API links in the ingress.
+publicServerName: 'matrix.${host}'
+
+postgresql:
+  enabled: true
+  auth:
+    password: synapse
+    username: synapse
+    database: synapse
+  primary:
+    persistence:
+      storageClass: "vultr-block-storage-hdd"
+      size: 40Gi
+
+## An externally configured Postgres server to use for Synapse's database, note
+## that the database needs to have both COLLATE and CTYPE set to "C".
+##
+externalPostgresql:
+#  host: ${pg_host}
+#  port: 5432
+#  username: ${pg_username}
+
+## The name of an existing secret with postgresql credentials
+#  existingSecret: ${pg_cluster_name}-pguser-${pg_username}
+
+## Password key to be retrieved from existing secret
+#  existingSecretPasswordKey: password
+
+#  database: synapse
+# sslmode: prefer
+
+argoCD: true
+
+## Extra arguments for the database connection
+## ref: https://github.com/matrix-org/synapse/blob/develop/docs/postgres.md#synapse-config
+##
+#  extraArgs: {}
+
+
+## Persistence configuration for the media repository function.
+## This PVC will be mounted in either Synapse or a media_repo worker.
+##
+## NB; If you want to be able to scale this, you will have to set the
+## accessMode to RWX/ReadWriteMany.
+##
+persistence:
+  enabled: true
+  # existingClaim: synapse-data
+  storageClass: "vultr-block-storage-hdd"
+  size: 40Gi
+
+## Configuration for the main Synapse service.
+## To use TLS inside Synapse itself, add an TLS listener, and change the ports
+## configured in here.
+##
+service:
+  type: ClusterIP
+  port: 8008
+  targetPort: http
+
+## The source of the signing key used by Synapse in federation.
+##
+signingkey:
+  resources:
+    limits:
+      memory: 150Mi
+    requests:
+      cpu: 30m
+      memory: 50Mi
+  ## Enable a Kubernetes job to generate and store a signing key if one does not
+  ## exist.
+  ## If you have already run a Matrix server at some point on your domain then
+  ## you will want to keep the old signing key, either by using the `existingSecret`
+  ## configuration, or by including the old key under `extraConfig.old_signing_keys`
+  ##
+  ## If you lose your signing key then any federation traffic from your instance
+  ## might not be trusted any more by the wider network.
+  ##
+  ## After the initial install, the job should be disabled to speed up subsequent upgrades.
+  ##
+  job:
+    enabled: true
+
+    ## Annotations to apply to the signing-key-job.
+    ##
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+      argocd.argoproj.io/hook-delete-policy: HookSucceeded
+
+ingress:
+  enabled: true
+
+  ## Generate traefik-compatible regex paths instead of nginx-compatible ones.
+  ##
+  traefikPaths: false
+
+  ## Annotations to apply to the created ingress resource.
+  ##
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    #  # Sync proxy-body-size with Synapse's max_upload_size which is 10M by default
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  #  kubernetes.io/tls-acme: "true"
+
+  ## Hosts to add to the ingress configuration for handling Client-to-Server
+  ## API request paths.
+  ##
+  ## NB; config.serverName is included if includeServerName is set. (default)
+  ##
+  csHosts:
+    - matrix.${host}
+  hosts:
+    - ${host}
+  tls:
+    - hosts:
+        - ${host}
+        - matrix.${host}
+      secretName: matrix-tls
+synapse:
+  resources:
+    limits:
+      memory: 500Mi
+    requests:
+      cpu: 50m
+      memory: 150Mi
+workers:
+  default:
+    resources:
+      limits:
+        memory: 150Mi
+      requests:
+        cpu: 30m
+        memory: 50Mi
+serviceAccount:
+  create: true
