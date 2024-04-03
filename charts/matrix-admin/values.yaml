@@ -71,6 +71,8 @@ server:
 
   nodeSelector: {}
 
+  env: []
+
   tolerations: []
 
   affinity: {}
