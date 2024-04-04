@@ -1,4 +1,11 @@
-variable "matrix_version" {
+variable "kube_config_path" {
   type = string
-  default = "3.8.1"
+}
+
+variable "namespace" {
+  type = string
+}
+
+variable "vault_mount_path" {
+  type = string
 }
