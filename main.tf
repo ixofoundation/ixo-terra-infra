@@ -81,25 +81,6 @@ resource "vault_mount" "ixo" {
   description = "IXO Core Services KV Secrets"
 }
 
-resource "random_password" "matrix" {
-  length = 32
-}
-
-resource "vault_kv_secret_v2" "matrix" {
-  mount               = vault_mount.ixo.path
-  name                = "matrix"
-  cas                 = 1
-  delete_all_versions = true
-  data_json = jsonencode(
-    {
-      MACAROON_SECRET_KEY   = random_password.matrix.result
-    }
-  )
-  custom_metadata {
-    max_versions = 5
-  }
-}
-
 resource "random_password" "vault_dex_oidc_secret" {
   length  = 16
   special = false

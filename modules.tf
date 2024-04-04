@@ -290,6 +290,14 @@ module "vault_init" {
   org                      = var.org
 }
 
+module "matrix_init" {
+  source = "./modules/matrix"
+
+  kube_config_path = module.kubernetes_cluster.kubeconfig_path
+  namespace        = module.argocd.namespaces_helm["matrix"].metadata[0].name
+  vault_mount_path = vault_mount.ixo.path
+}
+
 #module "cosmos" {
 #  source          = "./modules/cosmos_operator"
 #  kubeconfig_path = abspath(module.kubernetes_cluster.kubeconfig_path)
