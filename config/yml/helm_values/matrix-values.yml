@@ -146,6 +146,10 @@ synapse:
       cpu: 50m
       memory: 150Mi
 workers:
+  federation_sender:
+    enabled: false
+  federation_reader:
+    enabled: false
   default:
     resources:
       limits:
