@@ -12,6 +12,7 @@ versions = {
   dex                          = "0.17.0" # https://artifacthub.io/packages/helm/dex/dex
   tailscale                    = "1.62.0" # https://pkgs.tailscale.com/helmcharts/index.yaml
   matrix                       = "3.9.0"  # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
+  openebs                      = "3.10.0" #https://artifacthub.io/packages/helm/openebs/openebs
 }
 
 # Postgres Matrix Synapse

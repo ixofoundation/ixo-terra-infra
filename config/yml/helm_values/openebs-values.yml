@@ -1,0 +1,4 @@
+nfs-provisioner:
+  enabled: true
+  nfsStorageClass:
+    backendStorageClass: vultr-block-storage-hdd
