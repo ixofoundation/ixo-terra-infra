@@ -186,11 +186,3 @@ prometheusOperator:
     requests:
       memory: 100Mi
       cpu: 100m
-  admissionWebhooks:
-    annotations:
-      argocd.argoproj.io/hook: PreSync
-      argocd.argoproj.io/hook-delete-policy: HookSucceeded
-    patch:
-      annotations:
-        argocd.argoproj.io/hook: PreSync
-        argocd.argoproj.io/hook-delete-policy: HookSucceeded

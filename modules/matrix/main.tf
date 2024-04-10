@@ -13,14 +13,18 @@ resource "random_password" "macaroon" {
 }
 
 resource "vault_kv_secret_v2" "matrix" {
+  lifecycle {
+    ignore_changes = [data_json]
+  }
   mount               = var.vault_mount_path
   name                = "matrix"
   cas                 = 1
   delete_all_versions = true
   data_json = jsonencode(
     {
-      MACAROON_SECRET_KEY = random_password.macaroon.result
-      ADMIN_PASSWORD      = random_password.matrix_admin.result
+      MACAROON_SECRET_KEY    = random_password.macaroon.result
+      ADMIN_PASSWORD         = random_password.matrix_admin.result
+      MATRIX_STATE_BOT_TOKEN = ""
     }
   )
   custom_metadata {

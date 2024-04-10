@@ -13,17 +13,17 @@ ingress:
   hosts:
     - host: ${host}
       paths:
-        - path: /${app_name}(/|$)(.*)
+        - path: ${ingressPath}
           pathType: ImplementationSpecific
 service:
-  port: 5000
+  port: ${port}
 env:
   - name: PORT
-    value: '5000'
+    value: ${port}
   - name: WEB3_KEY
-    value: <path:${kv_mount}/data/${app_name}#WEB3_KEY>
+    value: ${web3_key}
   - name: WEB3_PROOF
-    value: <path:${kv_mount}/data/${app_name}#WEB3_PROOF>
+    value: ${web3_proof}
   - name: DATABASE_URL
     value: ${DB_ENDPOINT}
 resources:
