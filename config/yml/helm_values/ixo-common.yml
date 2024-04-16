@@ -18,17 +18,15 @@ ingress:
 service:
   port: ${port}
 env:
-  - name: PORT
-    value: ${port}
-  - name: WEB3_KEY
-    value: ${web3_key}
-  - name: WEB3_PROOF
-    value: ${web3_proof}
-  - name: DATABASE_URL
-    value: ${DB_ENDPOINT}
+  ${indent(2, yamlencode(envVars))}
 resources:
   requests:
-    memory: 100Mi
+    memory: ${memoryRequest}
     cpu: "100m"
   limits:
-    memory: 200Mi
+    memory: ${memoryLimit}
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

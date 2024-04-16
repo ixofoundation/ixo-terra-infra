@@ -22,7 +22,7 @@ locals {
       for user in var.pg_ixo.pg_users : {
         name      = user.username
         databases = user.databases
-        options   = "NOSUPERUSER"
+        options   = user.options != null ? user.options : "NOSUPERUSER"
       }
     ]
   )

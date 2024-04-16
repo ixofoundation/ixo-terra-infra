@@ -9,14 +9,17 @@ variable "environments" {
   default = {
     devnet = {
       cluster_firewall = true
+      domain           = "ixo.earth"
       // other devnet specific variables...
     }
     testnet = {
       cluster_firewall = true
+      domain           = ""
       // other testnet specific variables...
     }
     main = {
       cluster_firewall = true
+      domain           = ""
       // other main specific variables...
     }
   }
@@ -104,6 +107,7 @@ variable "pg_ixo" {
           {
             username  = string
             databases = list(string)
+            options   = optional(string)
           }
         )
       )
