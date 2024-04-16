@@ -33,8 +33,17 @@ pg_ixo = {
   pg_image_tag    = "ubi8-15.5-0"
   pg_users = [
     {
+      username  = "admin"
+      databases = ["postgres"]
+      options   = "SUPERUSER"
+    },
+    {
       username  = "cellnode"
       databases = ["cellnode"]
+    },
+    {
+      username  = "blocksync-core"
+      databases = ["blocksync-core"]
     }
   ]
   pg_version             = 15

@@ -234,6 +234,7 @@ module "postgres-operator" {
       pgbackrest_repos       = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
       pgmonitoring_image     = var.pg_ixo.pgmonitoring_image
       pgmonitoring_image_tag = var.pg_ixo.pgmonitoring_image_tag
+      initSql                = file("${path.root}/config/sql/ixo-init.sql")
     }
   ]
 }
