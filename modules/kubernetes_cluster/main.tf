@@ -7,6 +7,9 @@ terraform {
 }
 
 resource "vultr_kubernetes" "k8" {
+  lifecycle {
+    ignore_changes = [node_pools[0].node_quantity]
+  }
   provider         = vultr
   region           = var.cluster_region
   label            = var.cluster_label
@@ -25,6 +28,6 @@ resource "vultr_kubernetes" "k8" {
 }
 
 resource "local_file" "kubeconfig" {
-  content = base64decode(vultr_kubernetes.k8.kube_config)
+  content  = base64decode(vultr_kubernetes.k8.kube_config)
   filename = local.kubeconfig_filename
 }

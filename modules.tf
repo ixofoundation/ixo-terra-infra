@@ -166,13 +166,20 @@ module "argocd" {
         }
       )
     },
+    #    {
+    #      name            = "openebs"
+    #      namespace       = "openebs"
+    #      chart           = "openebs"
+    #      revision        = var.versions["openebs"]
+    #      repository      = "https://openebs.github.io/charts"
+    #      values_override = templatefile("${local.helm_values_config_path}/openebs-values.yml", {})
+    #    },
     {
-      name            = "openebs"
-      namespace       = "openebs"
-      chart           = "openebs"
-      revision        = var.versions["openebs"]
-      repository      = "https://openebs.github.io/charts"
-      values_override = templatefile("${local.helm_values_config_path}/openebs-values.yml", {})
+      name       = "metrics-server"
+      namespace  = "metrics-server"
+      chart      = "metrics-server"
+      revision   = var.versions["metrics-server"]
+      repository = "https://kubernetes-sigs.github.io/metrics-server/"
     }
   ]
 }

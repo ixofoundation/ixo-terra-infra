@@ -16,6 +16,10 @@ module "ixo_cellnode" {
         memoryLimit   = "1.2Gi"
         envVars = [
           {
+            name  = "NODE_ENV"
+            value = "production"
+          },
+          {
             name  = "PORT"
             value = "5000"
           },
@@ -100,12 +104,16 @@ module "ixo_blocksync_core" {
         host          = var.hostnames[terraform.workspace]
         port          = 8081
         ingressPath   = "/ixo-blocksync-core(/|$)(.*)"
-        memoryRequest = "500Mi"
-        memoryLimit   = "1.2Gi"
+        memoryRequest = "300Mi"
+        memoryLimit   = "600Mi"
         envVars = [
           {
             name  = "PORT"
             value = "8081"
+          },
+          {
+            name  = "NODE_ENV"
+            value = "production"
           },
           {
             name  = "TRUST_PROXY"
@@ -117,6 +125,10 @@ module "ixo_blocksync_core" {
           },
           {
             name  = "MIGRATE_DB_PROGRAMATICALLY"
+            value = "1"
+          },
+          {
+            name  = "DATABASE_USE_SSL"
             value = "1"
           },
           {
