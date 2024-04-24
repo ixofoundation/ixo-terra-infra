@@ -4,8 +4,7 @@ locals {
   ixo_terra_infra_repository = "https://github.com/ixofoundation/ixo-terra-infra"
   vault_core_mount           = "ixo_core"
   synthetic_monitoring_endpoints = [ #TODO investigate if this can be auto configured.
-    "https://${var.hostnames[terraform.workspace]}/cellnode",
-    "https://${var.hostnames[terraform.workspace]}/blocksync"
+    "https://${terraform.workspace}-.${var.hostnames[terraform.workspace]}",
   ]
 
   # Vultr

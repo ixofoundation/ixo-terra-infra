@@ -97,22 +97,22 @@ resource "kubernetes_persistent_volume_claim_v1" "common" {
   }
 }
 
-resource "kubernetes_persistent_volume_claim_v1" "shared_ops_storage" {
-  depends_on = [module.argocd]
-  metadata {
-    name      = "ixo-shared-ops-storage"
-    namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
-  }
-  spec {
-    access_modes = ["ReadWriteMany"]
-    resources {
-      requests = {
-        storage = "200Gi"
-      }
-    }
-    storage_class_name = "openebs-kernel-nfs"
-  }
-}
+#resource "kubernetes_persistent_volume_claim_v1" "shared_ops_storage" {
+#  depends_on = [module.argocd]
+#  metadata {
+#    name      = "ixo-shared-ops-storage"
+#    namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
+#  }
+#  spec {
+#    access_modes = ["ReadWriteMany"]
+#    resources {
+#      requests = {
+#        storage = "200Gi"
+#      }
+#    }
+#    storage_class_name = "openebs-kernel-nfs"
+#  }
+#}
 
 resource "random_password" "vault_dex_oidc_secret" {
   length  = 16

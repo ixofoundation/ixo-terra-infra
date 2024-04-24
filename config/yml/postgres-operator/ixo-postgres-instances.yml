@@ -1,4 +1,9 @@
 - name: ixo-postgresql-0
+  replicas: 2
+  resources:
+    requests:
+      cpu: 400m
+      memory: 1Gi
   dataVolumeClaimSpec:
     storageClassName: "vultr-block-storage"
     accessModes:
