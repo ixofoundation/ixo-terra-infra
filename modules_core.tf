@@ -12,8 +12,8 @@ module "ixo_cellnode" {
         host          = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
         port          = 5000
         ingressPath   = "/"
-        memoryRequest = "100Mi"
-        memoryLimit   = "1.2Gi"
+        memoryRequest = "300Mi"
+        memoryLimit   = "600Mi"
         envVars = [
           {
             name  = "NODE_ENV"
@@ -37,6 +37,10 @@ module "ixo_cellnode" {
           },
           {
             name  = "MIGRATE_DB_PROGRAMATICALLY"
+            value = "0"
+          },
+          {
+            name  = "DATABASE_USE_SSL"
             value = "1"
           },
           {
