@@ -89,12 +89,12 @@ data:
     bridge:
       # Localpart template of MXIDs for Slack users.
       # {{.}} is replaced with the internal ID of the Slack user.
-      username_template: slack_{{.}}
+      username_template: slack_{{"{{"}}.{{"}}"}}
       # Displayname template for Slack users.
       # TODO: document variables
-      displayname_template: '{{.RealName}} (S)'
-      bot_displayname_template: '{{.Name}} (bot)'
-      channel_name_template: '#{{.Name}}'
+      displayname_template: '{{"{{"}}.RealName{{"}}"}} (S)'
+      bot_displayname_template: '{{"{{"}}.Name{{"}}"}} (bot)'
+      channel_name_template: '#{{"{{"}}.Name{{"}}"}}}'
 
       portal_message_buffer: 128
 
