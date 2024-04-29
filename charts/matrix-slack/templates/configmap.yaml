@@ -88,7 +88,7 @@ data:
     # Bridge config
     bridge:
       # Localpart template of MXIDs for Slack users.
-      # {{.}} is replaced with the internal ID of the Slack user.
+      # {{"{{"}}.{{"}}"}} is replaced with the internal ID of the Slack user.
       username_template: slack_{{"{{"}}.{{"}}"}}
       # Displayname template for Slack users.
       # TODO: document variables
