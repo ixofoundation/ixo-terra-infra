@@ -34,6 +34,7 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
+              mkdir /data
               echo "{{ .Files.Get "config.yml" | quote }}" > /data/config.yml
       containers:
         - name: {{ .Chart.Name }}
