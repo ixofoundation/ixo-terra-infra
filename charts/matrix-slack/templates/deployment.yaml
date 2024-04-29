@@ -34,10 +34,9 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-              mkdir /data
               echo "{{ .Files.Get "config.yml" | quote }}" > /data/config.yaml
           volumeMounts:
-            - mountPath: /
+            - mountPath: /data
               name: storage
       containers:
         - name: {{ .Chart.Name }}
