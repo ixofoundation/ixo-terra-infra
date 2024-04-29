@@ -203,6 +203,26 @@ module "matrix_admin" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "matrix_admin" {
+  depends_on = [module.argocd, module.matrix_init]
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "matrix-slack"
+    namespace  = var.pg_matrix.namespace
+    owner      = "ixofoundation"
+    repository = local.ixo_terra_infra_repository
+    path       = "charts/matrix-slack"
+    values_override = templatefile("${local.helm_values_config_path}/matrix-slack.yml",
+      {
+        domain      = var.hostnames["${terraform.workspace}_matrix"]
+        postgresUri = "postgres://synapse:synapse@${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local/${var.pg_matrix.pg_cluster_name}"
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "cert-issuer" {
   depends_on = [module.argocd]
   source     = "./modules/cert-manager"

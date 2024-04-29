@@ -73,12 +73,9 @@ module "ixo_matrix_state_bot" {
         environment   = terraform.workspace
         app_name      = "ixo-matrix-state-bot"
         host          = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-        DB_ENDPOINT   = ""
-        web3_key      = ""
-        web3_proof    = ""
         port          = 8080
         ingressPath   = "/"
-        memoryRequest = "100Mi"
+        memoryRequest = "120Mi"
         memoryLimit   = "200Mi"
         envVars = [
           {
