@@ -52,7 +52,7 @@ server:
   replicaCount: 1
 
   image:
-    repository: dock.mau.dev/mautrix/slack:latest
+    repository: dock.mau.dev/mautrix/slack
     pullPolicy: IfNotPresent
     tag: latest
 
