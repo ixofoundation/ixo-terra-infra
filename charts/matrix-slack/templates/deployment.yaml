@@ -27,6 +27,11 @@ spec:
       serviceAccountName: {{ include "matrix-slack.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.server.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-config
+          image: busybox  # or any image with tools to manipulate files
+          command:
+            - kubectl get configmap {{ include "matrix-slack.fullname" . }}-config -o jsonpath='{.data.config\.yaml}' > /data/config.yaml
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -52,14 +57,6 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.server.resources | nindent 12 }}
-          volumeMounts:
-            - mountPath: /data/config.yaml
-              subPath: config.yaml
-              name: config
-      volumes:
-        - name: config
-          configMap:
-            name: {{ include "matrix-slack.fullname" . }}-config
       {{- with .Values.server.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
