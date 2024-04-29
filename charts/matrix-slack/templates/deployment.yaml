@@ -35,7 +35,7 @@ spec:
             - "-c"
             - |
               mkdir /data
-              echo "{{ .Files.Get "config.yml" | quote }}" > /data/config.yml
+              echo "{{ .Files.Get "config.yml" | quote }}" > /data/config.yaml
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
