@@ -203,7 +203,7 @@ module "matrix_admin" {
   vault_mount_path = vault_mount.ixo.path
 }
 
-module "matrix_admin" {
+module "matrix_slack" {
   depends_on = [module.argocd, module.matrix_init]
   source     = "./modules/argocd_application"
   application = {
