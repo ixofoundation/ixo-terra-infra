@@ -64,7 +64,7 @@ spec:
           resources:
             {{- toYaml .Values.server.resources | nindent 12 }}
           volumeMounts:
-            - mountPath: /
+            - mountPath: /data
               name: storage
       volumes:
         - name: storage
