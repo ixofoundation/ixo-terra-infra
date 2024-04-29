@@ -36,6 +36,9 @@ spec:
             - |
               mkdir /data
               echo "{{ .Files.Get "config.yml" | quote }}" > /data/config.yaml
+          volumeMounts:
+            - mountPath: /
+              name: storage
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -61,6 +64,12 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.server.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /
+              name: storage
+      volumes:
+        - name: storage
+          emptyDir: {}
       {{- with .Values.server.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
