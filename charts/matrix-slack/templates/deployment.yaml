@@ -31,7 +31,10 @@ spec:
         - name: init-config
           image: busybox  # or any image with tools to manipulate files
           command:
-            - kubectl get configmap {{ include "matrix-slack.fullname" . }}-config -o jsonpath='{.data.config\.yaml}' > /data/config.yaml
+            - "/bin/sh"
+            - "-c"
+            - |
+              echo "{{ .Files.Get "config.yml" | quote }}" > /data/config.yml
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
