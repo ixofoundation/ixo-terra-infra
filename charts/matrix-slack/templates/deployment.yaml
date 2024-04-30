@@ -27,6 +27,15 @@ spec:
       serviceAccountName: {{ include "matrix-slack.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.server.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: copy-config
+          image: busybox
+          command: [ '/bin/sh', '-c', 'cp /config/config.yaml /data/config.yaml' ]
+          volumeMounts:
+            - mountPath: /config
+              name: config
+            - mountPath: /data
+              name: data
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -54,12 +63,14 @@ spec:
             {{- toYaml .Values.server.resources | nindent 12 }}
           volumeMounts:
             - mountPath: /data
-              name: storage
+              name: data
               readOnly: false
       volumes:
-        - name: storage
+        - name: config
           configMap:
             name: {{ include "matrix-slack.fullname" . }}-config
+        - name: data
+          emptyDir: { }
       {{- with .Values.server.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
