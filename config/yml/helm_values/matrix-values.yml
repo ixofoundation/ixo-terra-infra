@@ -12,6 +12,8 @@ config:
 extraConfig:
   dynamic_thumbnails: true
   registration_requires_token: true
+  app_service_config_files:
+    - /synapse/data/slackbot/registration.yaml
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##
@@ -22,29 +24,29 @@ serverName: '${host}'
 publicServerName: 'matrix.${host}'
 
 postgresql:
-  enabled: true
-  auth:
-    password: synapse
-    username: synapse
-    database: synapse
-  primary:
-    persistence:
-      storageClass: "vultr-block-storage-hdd"
-      size: 40Gi
+  enabled: false
+#  auth:
+#    password: synapse
+#    username: synapse
+#    database: synapse
+#  primary:
+#    persistence:
+#      storageClass: "vultr-block-storage-hdd"
+#      size: 40Gi
 
 ## An externally configured Postgres server to use for Synapse's database, note
 ## that the database needs to have both COLLATE and CTYPE set to "C".
 ##
 externalPostgresql:
-#  host: ${pg_host}
-#  port: 5432
-#  username: ${pg_username}
+  host: ${pg_host}
+  port: 5432
+  username: ${pg_username}
 
 ## The name of an existing secret with postgresql credentials
-#  existingSecret: ${pg_cluster_name}-pguser-${pg_username}
+  existingSecret: ${pg_cluster_name}-pguser-${pg_username}
 
 ## Password key to be retrieved from existing secret
-#  existingSecretPasswordKey: password
+  existingSecretPasswordKey: password
 
 #  database: synapse
 # sslmode: prefer

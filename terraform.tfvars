@@ -18,13 +18,22 @@ versions = {
 
 # Postgres Matrix Synapse
 pg_matrix = {
-  pg_cluster_name      = "synapse"
-  pg_image             = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres"
-  pg_image_tag         = "ubi8-15.5-0"
-  pg_version           = 15
-  namespace            = "matrix-synapse"
-  pgbackrest_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
-  pgbackrest_image_tag = "ubi8-2.47-2"
+  pg_cluster_name = "synapse"
+  pg_image        = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres"
+  pg_image_tag    = "ubi8-15.5-0"
+  pg_users = [
+    {
+      username  = "synapse"
+      options   = "SUPERUSER"
+      databases = []
+    }
+  ]
+  pg_version             = 15
+  namespace              = "matrix-synapse"
+  pgbackrest_image       = "registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest"
+  pgbackrest_image_tag   = "ubi8-2.47-2"
+  pgmonitoring_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres-exporter"
+  pgmonitoring_image_tag = "ubi8-5.5.0-0"
 }
 
 # Postgres IXO Core DB

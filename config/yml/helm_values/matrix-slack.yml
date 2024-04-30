@@ -2,5 +2,11 @@ config:
   matrix_slack:
     homeserver:
       domain: ${domain}
-    database:
-      uri: ${postgresUri}
+    appservice:
+      database:
+        uri: ${postgresUri}
+    bridge:
+      permissions:
+        "*": relay
+        "${domain}": user
+        "@admin:${domain}": admin
