@@ -28,6 +28,17 @@ locals {
     ]
   )
 
+  matrix_pg_users_usernames = [for user in var.pg_matrix.pg_users : user.username]
+  matrix_pg_users_yaml = yamlencode(
+    [
+      for user in var.pg_matrix.pg_users : {
+        name      = user.username
+        databases = user.databases
+        options   = user.options != null ? user.options : "NOSUPERUSER"
+      }
+    ]
+  )
+
   # Argo Helm Ignore Differences
   prometheus_stack_ignore_differences = <<EOT
 - group: monitoring.coreos.com

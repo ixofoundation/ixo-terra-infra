@@ -215,7 +215,7 @@ module "matrix_slack" {
     values_override = templatefile("${local.helm_values_config_path}/matrix-slack.yml",
       {
         domain      = var.hostnames["${terraform.workspace}_matrix"]
-        postgresUri = "postgres://synapse:synapse@${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local/${var.pg_matrix.pg_cluster_name}"
+        postgresUri = "postgres://${var.pg_matrix.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_matrix.pg_users[0].username]}@${var.pg_matrix.pg_cluster_name}-primary.${var.pg_matrix.namespace}.svc.cluster.local/slackbot?sslmode=disable"
       }
     )
   }
@@ -232,20 +232,23 @@ module "postgres-operator" {
   depends_on = [module.argocd]
   source     = "./modules/postgres-operator"
   clusters = [
-    #    {
-    #      # Matrix Postgres Cluster
-    #      pg_cluster_name      = var.pg_matrix.pg_cluster_name
-    #      pg_cluster_namespace = module.argocd.namespaces_git["matrix"].metadata[0].name
-    #      pg_image             = var.pg_matrix.pg_image
-    #      pg_image_tag         = var.pg_matrix.pg_image_tag
-    #      pg_version           = var.pg_matrix.pg_version
-    #      pg_instances         = file("${local.postgres_operator_config_path}/matrix-postgres-instances.yml")
-    #      pg_users             = file("${local.postgres_operator_config_path}/matrix-postgres-users.yml")
-    #      pgbackrest_image     = var.pg_matrix.pgbackrest_image
-    #      pgbackrest_image_tag = var.pg_matrix.pgbackrest_image_tag
-    #      pgbackrest_repos     = file("${local.postgres_operator_config_path}/matrix-postgres-backups-repos.yml")
-    #      initSql              = file("${path.root}/config/sql/matrix-init.sql")
-    #    },
+    {
+      # Matrix Postgres Cluster
+      pg_cluster_name        = var.pg_matrix.pg_cluster_name
+      pg_cluster_namespace   = var.pg_matrix.namespace
+      pg_image               = var.pg_matrix.pg_image
+      pg_image_tag           = var.pg_matrix.pg_image_tag
+      pg_version             = var.pg_matrix.pg_version
+      pg_instances           = file("${local.postgres_operator_config_path}/matrix-postgres-instances.yml")
+      pg_users               = local.matrix_pg_users_yaml
+      pg_usernames           = local.matrix_pg_users_usernames
+      pgbackrest_image       = var.pg_matrix.pgbackrest_image
+      pgbackrest_image_tag   = var.pg_matrix.pgbackrest_image_tag
+      pgbackrest_repos       = file("${local.postgres_operator_config_path}/matrix-postgres-backups-repos.yml")
+      pgmonitoring_image     = var.pg_matrix.pgmonitoring_image
+      pgmonitoring_image_tag = var.pg_matrix.pgmonitoring_image_tag
+      initSql                = file("${path.root}/config/sql/matrix-init.sql")
+    },
     {
       # IXO Cluster
       pg_cluster_name        = var.pg_ixo.pg_cluster_name

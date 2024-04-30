@@ -85,13 +85,24 @@ variable "oidc_tailscale" {
 variable "pg_matrix" {
   type = object(
     {
-      pg_cluster_name      = string
-      pg_image             = string
-      pg_image_tag         = string
-      namespace            = string
-      pg_version           = number
-      pgbackrest_image     = string
-      pgbackrest_image_tag = string
+      pg_cluster_name = string
+      pg_image        = string
+      pg_image_tag    = string
+      pg_users = list(
+        object(
+          {
+            username  = string
+            databases = list(string)
+            options   = optional(string)
+          }
+        )
+      )
+      namespace              = string
+      pg_version             = number
+      pgbackrest_image       = string
+      pgbackrest_image_tag   = string
+      pgmonitoring_image     = optional(string)
+      pgmonitoring_image_tag = optional(string)
     }
   )
 }

@@ -30,11 +30,11 @@ spec:
       initContainers:
         - name: copy-config
           image: busybox
-          command: [ '/bin/sh', '-c', 'cp /config/config.yaml /data/config.yaml' ]
+          command: [ '/bin/sh', '-c', 'cp /config/config.yaml /data/slackbot/config.yaml' ]
           volumeMounts:
             - mountPath: /config
               name: config
-            - mountPath: /data
+            - mountPath: /data/slackbot
               name: data
       containers:
         - name: {{ .Chart.Name }}
@@ -62,7 +62,7 @@ spec:
           resources:
             {{- toYaml .Values.server.resources | nindent 12 }}
           volumeMounts:
-            - mountPath: /data
+            - mountPath: /data/slackbot
               name: data
               readOnly: false
       volumes:
@@ -70,7 +70,8 @@ spec:
           configMap:
             name: {{ include "matrix-slack.fullname" . }}-config
         - name: data
-          emptyDir: { }
+          persistentVolumeClaim:
+            claimName: matrix-synapse
       {{- with .Values.server.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
