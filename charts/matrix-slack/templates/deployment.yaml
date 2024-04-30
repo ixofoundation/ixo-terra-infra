@@ -55,6 +55,7 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: storage
+              readOnly: false
       volumes:
         - name: storage
           configMap:
