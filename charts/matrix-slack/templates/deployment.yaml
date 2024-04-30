@@ -34,7 +34,7 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-              echo '{{- toYaml .Values.config.matrix_slack | quote }}' > /data/config.yaml
+              echo '{{ .Values.config.matrix_slack | toYaml | quote }}' > /data/config.yaml
           volumeMounts:
             - mountPath: /data
               name: storage
