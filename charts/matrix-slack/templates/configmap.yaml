@@ -6,4 +6,4 @@ metadata:
     {{- include "matrix-slack.labels" . | nindent 4 }}
 data:
   config.yaml: |-
-    {{ .Files.Get "config.yaml" | indent 4 | nindent 4 }}
+{{- toYaml .Values.config.matrix_slack | nindent 4 }}
