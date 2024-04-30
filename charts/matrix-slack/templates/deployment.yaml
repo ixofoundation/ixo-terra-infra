@@ -30,11 +30,11 @@ spec:
       initContainers:
         - name: copy-config
           image: busybox
-          command: [ '/bin/sh', '-c', 'cp /config/config.yaml /data/slackbot/config.yaml' ]
+          command: [ '/bin/sh', '-c', 'cp /config/config.yaml /data/config.yaml' ]
           volumeMounts:
             - mountPath: /config
               name: config
-            - mountPath: /data/slackbot
+            - mountPath: /data
               name: data
       containers:
         - name: {{ .Chart.Name }}
@@ -62,7 +62,7 @@ spec:
           resources:
             {{- toYaml .Values.server.resources | nindent 12 }}
           volumeMounts:
-            - mountPath: /data/slackbot
+            - mountPath: /data
               name: data
               readOnly: false
       volumes:
