@@ -53,11 +53,11 @@ spec:
             {{- toYaml .Values.server.env | nindent 12 }}
           livenessProbe:
             httpGet:
-              path: /
+              path: /_matrix/mau/live
               port: http
           readinessProbe:
             httpGet:
-              path: /
+              path: /_matrix/mau/ready
               port: http
           resources:
             {{- toYaml .Values.server.resources | nindent 12 }}
