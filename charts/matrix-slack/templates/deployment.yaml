@@ -30,7 +30,7 @@ spec:
       initContainers:
         - name: copy-config
           image: busybox
-          command: [ '/bin/sh', '-c', 'ls / && cp /config/config.yaml /data/config.yaml' ]
+          command: [ '/bin/sh', '-c', 'ls / && cp /config/config.yaml /slackbot/data/config.yaml' ]
           volumeMounts:
             - mountPath: /config
               name: config
@@ -62,7 +62,7 @@ spec:
           resources:
             {{- toYaml .Values.server.resources | nindent 12 }}
           volumeMounts:
-            - mountPath: /data
+            - mountPath: /slackbot/data
               name: data
               readOnly: false
       volumes:
