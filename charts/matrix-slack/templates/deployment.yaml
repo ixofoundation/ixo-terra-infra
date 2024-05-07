@@ -70,7 +70,8 @@ spec:
           configMap:
             name: {{ include "matrix-slack.fullname" . }}-config
         - name: data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: matrix-synapse
       {{- with .Values.server.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
