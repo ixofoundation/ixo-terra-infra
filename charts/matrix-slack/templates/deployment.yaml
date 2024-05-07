@@ -34,7 +34,7 @@ spec:
           volumeMounts:
             - mountPath: /config
               name: config
-            - mountPath: /data
+            - mountPath: /slackbot/data
               name: data
       containers:
         - name: {{ .Chart.Name }}
