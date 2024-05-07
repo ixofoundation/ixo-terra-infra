@@ -30,7 +30,7 @@ spec:
       initContainers:
         - name: copy-config
           image: busybox
-          command: [ '/bin/sh', '-c', 'cp /config/config.yaml /data/config.yaml' ]
+          command: [ '/bin/sh', '-c', 'ls / && cp /config/config.yaml /data/config.yaml' ]
           volumeMounts:
             - mountPath: /config
               name: config
