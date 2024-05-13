@@ -1,4 +1,12 @@
 #file: noinspection YAMLSchemaValidation
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 40m
+        memory: 200Mi
+      limits:
+        memory: 400Mi
 defaultRules:
   rules:
     alertmanager: true
@@ -37,6 +45,13 @@ defaultRules:
     windows: true
 prometheus:
   prometheusSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 300m
+        memory: 600Mi
+      limits:
+        memory: 900Mi
     #https://github.com/CrunchyData/postgres-operator-examples/blob/main/kustomize/monitoring/prometheus/config/prometheus.yml
     additionalScrapeConfigs:
       - job_name: blackbox
@@ -178,6 +193,21 @@ grafana:
       type: loki
       url: http://loki-gateway.loki.svc.cluster.local
 prometheusOperator:
+  prometheusConfigReloader:
+    resources:
+      request:
+        cpu: 50m
+        memory: 50Mi
+      limits:
+        memory: 50Mi
+  admissionWebhooks:
+    deployment:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 100Mi
+        limits:
+          memory: 200Mi
   tls:
     enabled: true
   resources:

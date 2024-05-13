@@ -42,10 +42,12 @@ write:
   resources:
     requests:
       memory: 256Mi
-      cpu: 250m
+      cpu: 150m
     limits:
       memory: 256Mi
 monitoring:
+  rules:
+    alerting: false
   selfMonitoring:
     enabled: true
     grafanaAgent:

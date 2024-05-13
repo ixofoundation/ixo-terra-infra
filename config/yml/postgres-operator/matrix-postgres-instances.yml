@@ -1,4 +1,8 @@
 - name: matrix-postgresql-0
+  resources:
+    requests:
+      cpu: 100m
+      memory: 500Mi
   dataVolumeClaimSpec:
     accessModes:
       - "ReadWriteOnce"
