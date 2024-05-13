@@ -1,10 +1,14 @@
 config:
   matrix_slack:
     homeserver:
+      address: http://matrix-synapse.matrix-synapse.svc.cluster.local:8008
       domain: ${domain}
     appservice:
+      address: http://matrix-slack.matrix-synapse.svc.cluster.local:29335
+      as_token: ${as_token}
       database:
         uri: ${postgresUri}
+      hs_token: ${hs_token}
     bridge:
       permissions:
         "*": relay

@@ -21,7 +21,7 @@ controller:
       whenUnsatisfiable: ScheduleAnyway
   resources:
     requests:
-      cpu: 100m
+      cpu: 70m
       memory: 90Mi
     limits:
       memory: 90Mi

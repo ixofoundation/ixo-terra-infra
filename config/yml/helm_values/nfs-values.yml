@@ -1,0 +1,4 @@
+persistence:
+  enabled: true
+  storageClass: "vultr-block-storage-hdd"
+  size: 200Gi

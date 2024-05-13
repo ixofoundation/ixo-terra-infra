@@ -49,7 +49,7 @@ module "ixo_cellnode" {
           },
           {
             name  = "FILE_TYPES"
-            value = "[\"image/svg+xml\", \"image/png\", \"application/ld+json\", \"application/json\", \"application/pdf\",\"image/jpeg\",\"image/webp\"]"
+            value = "[\"image/svg+xml\",\"image/png\", \"application/ld+json\", \"application/json\", \"application/pdf\",\"image/jpeg\",\"image/webp\"]"
           }
         ]
       }
@@ -75,7 +75,7 @@ module "ixo_matrix_state_bot" {
         host          = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
         port          = 8080
         ingressPath   = "/"
-        memoryRequest = "120Mi"
+        memoryRequest = "100Mi"
         memoryLimit   = "200Mi"
         envVars = [
           {

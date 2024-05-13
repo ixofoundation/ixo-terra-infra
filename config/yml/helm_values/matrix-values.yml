@@ -13,7 +13,7 @@ extraConfig:
   dynamic_thumbnails: true
   registration_requires_token: true
   app_service_config_files:
-    - /synapse/data/slackbot/registration.yaml
+    - /data/registration.yaml
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##
@@ -68,7 +68,8 @@ argoCD: true
 persistence:
   enabled: true
   # existingClaim: synapse-data
-  storageClass: "vultr-block-storage-hdd"
+  storageClass: "nfs"
+  accessMode: ReadWriteMany
   size: 40Gi
 
 ## Configuration for the main Synapse service.
@@ -141,6 +142,9 @@ ingress:
         - matrix.${host}
       secretName: matrix-tls
 synapse:
+  extraVolumeMounts:
+    - name: media
+      mountPath: /data
   resources:
     limits:
       memory: 500Mi

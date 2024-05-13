@@ -4,7 +4,6 @@ dex:
   enabled: true
   resources:
     limits:
-      cpu: 50m
       memory: 64Mi
     requests:
       cpu: 10m
@@ -119,14 +118,14 @@ applicationSet:
     limits:
       memory: 1Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 512Mi
 controller:
   resources:
     limits:
       memory: 2Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 512Mi
 server:
   certificate:
@@ -140,7 +139,7 @@ server:
     limits:
       memory: 256Mi
     requests:
-      cpu: 125m
+      cpu: 100m
       memory: 128Mi
   replicas: 2
   pdb:

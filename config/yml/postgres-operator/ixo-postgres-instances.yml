@@ -2,7 +2,7 @@
   replicas: 2
   resources:
     requests:
-      cpu: 400m
+      cpu: 300m
       memory: 1Gi
   dataVolumeClaimSpec:
     storageClassName: "vultr-block-storage"

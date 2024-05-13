@@ -3,7 +3,7 @@ module "kubernetes_cluster" {
   cluster_firewall        = lookup(var.environments[terraform.workspace], "cluster_firewall", false)
   cluster_label           = "ixo-cluster-${terraform.workspace}"
   initial_node_pool_label = "ixo-${terraform.workspace}"
-  initial_node_pool_plan  = "vc2-2c-4gb"
+  initial_node_pool_plan  = "vc2-4c-8gb"
   k8_version              = var.versions["kubernetes_cluster"]
   cluster_region          = local.region_ids["Amsterdam"]
 }
@@ -20,10 +20,6 @@ module "argocd" {
       name       = "ixofoundation"
       repository = local.ixo_helm_chart_repository
     }
-    #    {
-    #      name       = "matrix-server"
-    #      repository = "https://gitlab.com/ananace/charts.git"
-    #    }
   ]
   applications_helm = [
     {
@@ -166,21 +162,21 @@ module "argocd" {
         }
       )
     },
-    #    {
-    #      name            = "openebs"
-    #      namespace       = "openebs"
-    #      chart           = "openebs"
-    #      revision        = var.versions["openebs"]
-    #      repository      = "https://openebs.github.io/charts"
-    #      values_override = templatefile("${local.helm_values_config_path}/openebs-values.yml", {})
-    #    },
+    {
+      name            = "nfs-provisioner"
+      namespace       = "nfs"
+      chart           = "nfs-server-provisioner"
+      revision        = "1.8.0"
+      repository      = "https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner"
+      values_override = templatefile("${local.helm_values_config_path}/nfs-values.yml", {})
+    },
     {
       name       = "metrics-server"
       namespace  = "metrics-server"
       chart      = "metrics-server"
       revision   = var.versions["metrics-server"]
       repository = "https://kubernetes-sigs.github.io/metrics-server/"
-    }
+    },
   ]
 }
 
@@ -215,7 +211,9 @@ module "matrix_slack" {
     values_override = templatefile("${local.helm_values_config_path}/matrix-slack.yml",
       {
         domain      = var.hostnames["${terraform.workspace}_matrix"]
-        postgresUri = "postgres://${var.pg_matrix.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_matrix.pg_users[0].username]}@${var.pg_matrix.pg_cluster_name}-primary.${var.pg_matrix.namespace}.svc.cluster.local/slackbot?sslmode=disable"
+        as_token    = random_password.mautrix_slack_as_token.result
+        hs_token    = random_password.mautrix_slack_hs_token.result
+        postgresUri = "postgres://${var.pg_matrix.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_matrix.pg_users[0].username]}@${var.pg_matrix.pg_cluster_name}-primary.${var.pg_matrix.namespace}.svc.cluster.local/slackbot"
       }
     )
   }
@@ -323,3 +321,19 @@ module "matrix_init" {
 #    tag   = "v0.21.8"
 #  }
 #}
+
+resource "random_password" "mautrix_slack_as_token" {
+  length  = 64
+  special = false
+  numeric = false
+  lower   = true
+  upper   = true
+}
+
+resource "random_password" "mautrix_slack_hs_token" {
+  length  = 64
+  special = false
+  numeric = false
+  lower   = true
+  upper   = true
+}
