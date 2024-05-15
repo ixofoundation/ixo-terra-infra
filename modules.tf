@@ -14,6 +14,7 @@ module "argocd" {
   hostnames            = var.hostnames
   github_client_id     = var.oidc_argo.clientId
   github_client_secret = var.oidc_argo.clientSecret
+  argo_version         = var.versions["argocd"]
   org                  = var.org
   git_repositories = [
     {

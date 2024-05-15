@@ -1,6 +1,6 @@
 variable "argo_version" {
   type    = string
-  default = "6.2.1"
+  default = "6.9.1"
 }
 
 variable "applications" {
