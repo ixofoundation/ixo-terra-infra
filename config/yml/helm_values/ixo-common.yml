@@ -1,12 +1,10 @@
+name: ${app_name}
 image:
   pullPolicy: Always
 ingress:
   enabled: true
   className: nginx
   annotations:
-    ingress.kubernetes.io/proxy-body-size: 100M
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     cert-manager.io/cluster-issuer: letsencrypt-staging
   tls:
     - hosts:
@@ -16,11 +14,11 @@ ingress:
     - host: ${host}
       paths:
         - path: ${ingressPath}
-          pathType: ImplementationSpecific
+          pathType: Exact
 service:
   port: ${port}
 env:
-  ${indent(2, yamlencode(envVars))}
+  ${indent(2, join("\n", [for v in envVars : "- name: \"${v.name}\"\n  value: \"${v.value}\""]))}
 resources:
   requests:
     memory: ${memoryRequest}

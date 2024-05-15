@@ -1,6 +1,7 @@
 # Versioning for all services.
 versions = {
   kubernetes_cluster           = "v1.29.2+1"
+  argocd                       = "6.9.1"  # https://artifacthub.io/packages/helm/argo/argo-cd
   cert-manager                 = "1.14.4" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
   nginx-ingress-controller     = "4.10.0" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
   postgres-operator            = "5.5.0"  # https://access.crunchydata.com/documentation/postgres-operator/5.5/installation/helm
@@ -14,6 +15,7 @@ versions = {
   matrix                       = "3.9.0"  # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
   openebs                      = "3.10.0" # https://artifacthub.io/packages/helm/openebs/openebs
   metrics-server               = "3.12.1" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
+  nfs                          = "1.8.0"  # https://artifacthub.io/packages/helm/nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner
 }
 
 # Postgres Matrix Synapse
@@ -54,6 +56,10 @@ pg_ixo = {
     {
       username  = "blocksync-core"
       databases = ["blocksync-core"]
+    },
+    {
+      username  = "blocksync"
+      databases = ["blocksync"]
     }
   ]
   pg_version             = 15

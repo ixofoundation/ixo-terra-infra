@@ -1,5 +1,5 @@
 controller:
-  replicaCount: 2
+  replicaCount: 1
   labels:
     app: ingress-nginx
   topologySpreadConstraints:
@@ -21,10 +21,10 @@ controller:
       whenUnsatisfiable: ScheduleAnyway
   resources:
     requests:
-      cpu: 70m
-      memory: 90Mi
+      cpu: 100m
+      memory: 100Mi
     limits:
-      memory: 90Mi
+      memory: 150Mi
   service:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: ${host}
@@ -33,7 +33,7 @@ controller:
 defaultBackend:
   resources:
     limits:
-      cpu: 10m
-      memory: 20Mi
+      memory: 30Mi
     requests:
+      cpu: 10m
       memory: 20Mi

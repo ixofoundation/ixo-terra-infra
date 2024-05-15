@@ -49,7 +49,7 @@ module "ixo_cellnode" {
           },
           {
             name  = "FILE_TYPES"
-            value = "[\"image/svg+xml\",\"image/png\", \"application/ld+json\", \"application/json\", \"application/pdf\",\"image/jpeg\",\"image/webp\"]"
+            value = "[\\\"image/svg+xml\\\", \\\"image/png\\\", \\\"application/ld+json\\\", \\\"application/json\\\", \\\"application/pdf\\\",\\\"image/jpeg\\\",\\\"image/webp\\\"]"
           }
         ]
       }
@@ -102,9 +102,9 @@ module "ixo_blocksync_core" {
       {
         environment   = terraform.workspace
         app_name      = "ixo-blocksync-core"
-        host          = var.hostnames[terraform.workspace]
+        host          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
         port          = 8081
-        ingressPath   = "/ixo-blocksync-core(/|$)(.*)"
+        ingressPath   = "/"
         memoryRequest = "300Mi"
         memoryLimit   = "600Mi"
         envVars = [
@@ -145,6 +145,151 @@ module "ixo_blocksync_core" {
     )
   }
   create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo-blocksync" {
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-blocksync"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
+      {
+        environment   = terraform.workspace
+        app_name      = "ixo-blocksync"
+        host          = "ixo-blocksync.${var.hostnames[terraform.workspace]}"
+        port          = 8082
+        ingressPath   = "/"
+        memoryRequest = "300Mi"
+        memoryLimit   = "800Mi"
+        envVars = [
+          {
+            name  = "PORT"
+            value = "8082"
+          },
+          {
+            name  = "NODE_ENV"
+            value = "production"
+          },
+          {
+            name  = "RPC"
+            value = "https://devnet.ixo.earth/rpc/"
+          },
+          {
+            name  = "MIGRATE_DB_PROGRAMATICALLY"
+            value = "1"
+          },
+          {
+            name  = "DATABASE_USE_SSL"
+            value = "1"
+          },
+          {
+            name  = "IPFS_SERVICE_MAPPING"
+            value = "https://devnet-blocksync-graphql.ixo.earth/api/ipfs/"
+          },
+          {
+            name  = "DATABASE_URL_CORE"
+            value = "postgresql://${var.pg_ixo.pg_users[2].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[2].username}"
+          },
+          {
+            name  = "DATABASE_URL"
+            value = "postgresql://${var.pg_ixo.pg_users[3].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
+          },
+          {
+            name  = "ENTITY_MODULE_CONTRACT_ADDRESS"
+            value = "ixo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sqa3vn7"
+          }
+        ]
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "credentials_prospect" {
+  source = "./modules/argocd_application"
+  application = {
+    name       = "credentials-prospect"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
+      {
+        environment   = terraform.workspace
+        app_name      = "credentials-prospect"
+        host          = "credentials-prospect.${var.hostnames[terraform.workspace]}"
+        port          = 3000
+        ingressPath   = "/"
+        memoryRequest = "200Mi"
+        memoryLimit   = "300Mi"
+        envVars = [
+          {
+            name  = "PORT"
+            value = "3000"
+          },
+          {
+            name  = "Authorization"
+            value = "<path:${vault_mount.ixo.path}/data/credentials-prospect#AUTHORIZATION>"
+          },
+          {
+            name  = "ENABLE_CLAIMS"
+            value = "true"
+          },
+          {
+            name  = "BLOCKSYNC_GRAPHQL"
+            value = "http://ixo-blocksync.core.svc.cluster.local"
+          },
+          {
+            name  = "CELLNODE"
+            value = "http://ixo-cellnode.core.svc.cluster.local"
+          },
+          {
+            name  = "RPC_URL"
+            value = "https://devnet.ixo.earth/rpc/"
+          },
+          {
+            name  = "SECP_MNEMONIC"
+            value = "<path:${vault_mount.ixo.path}/data/credentials-prospect#SECP_MNEMONIC>"
+          },
+          {
+            name  = "ENABLE_CREDENTIALS"
+            value = "true"
+          },
+          {
+            name  = "ISSUER_DID"
+            value = "<path:${vault_mount.ixo.path}/data/credentials-prospect#ISSUER_DID>"
+          },
+          {
+            name  = "CREDENTIALS_MNEMONIC"
+            value = "<path:${vault_mount.ixo.path}/data/credentials-prospect#CREDENTIALS_MNEMONIC>"
+          },
+          {
+            name  = "NETWORK"
+            value = terraform.workspace
+          },
+          {
+            name  = "REMOTE_CONTEXTS"
+            value = "[\\\"https://w3id.org/ixo/context/v1\\\"]"
+          },
+          {
+            name  = "ENABLE_TOKENS"
+            value = "false"
+          },
+          {
+            name  = "ENABLE_PROOFS"
+            value = "false"
+          }
+        ]
+      }
+    )
+  }
+  create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
