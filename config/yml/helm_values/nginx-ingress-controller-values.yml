@@ -29,7 +29,23 @@ controller:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: ${host}
   admissionWebhooks:
-    failurePolicy: Ignore
+    enabled: false
+    certManager:
+      enabled: true
+    createSecretJob:
+      resources:
+       limits:
+         memory: 20Mi
+       requests:
+         cpu: 10m
+         memory: 20Mi
+    patchWebhookJob:
+      resources:
+       limits:
+         memory: 20Mi
+       requests:
+         cpu: 10m
+         memory: 20Mi
 defaultBackend:
   resources:
     limits:

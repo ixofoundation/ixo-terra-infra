@@ -1,0 +1,48 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-cellnode-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+service:
+  port: 5000
+env:
+  - name: "NODE_ENV"
+    value: "production"
+  - name: "PORT"
+    value: "5000"
+  - name: "WEB3_KEY"
+    value: "<path:${vault_mount}/data/ixo-cellnode#WEB3_KEY>"
+  - name: "WEB3_PROOF"
+    value: "<path:${vault_mount}/data/ixo-cellnode#WEB3_PROOF>"
+  - name: "DATABASE_URL"
+    value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
+  - name: "MIGRATE_DB_PROGRAMATICALLY"
+    value: "0"
+  - name: "DATABASE_USE_SSL"
+    value: "1"
+  - name: "TRUST_PROXY"
+    value: "1"
+  - name: "FILE_TYPES"
+    value: "[\"image/svg+xml\", \"image/png\", \"application/ld+json\", \"application/json\", \"application/pdf\",\"image/jpeg\",\"image/webp\"]"
+resources:
+  requests:
+    memory: 300Mi
+    cpu: "100m"
+  limits:
+    memory: 600Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

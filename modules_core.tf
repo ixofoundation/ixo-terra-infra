@@ -1,3 +1,19 @@
+resource "kubernetes_secret_v1" "repository" { // Common Git Repository for Core modules.
+  metadata {
+    name      = "ixo"
+    namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    labels = {
+      "argocd.argoproj.io/secret-type" : "repository"
+    }
+  }
+  data = {
+    type : "git"
+    url : local.ixo_helm_chart_repository
+    githubAppID : 1
+    githubAppInstallationID : 2
+  }
+}
+
 module "ixo_cellnode" {
   source = "./modules/argocd_application"
   application = {
@@ -5,53 +21,14 @@ module "ixo_cellnode" {
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     owner      = "ixofoundation"
     repository = local.ixo_helm_chart_repository
-    values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cellnode.yml",
       {
-        environment   = terraform.workspace
-        app_name      = "ixo-cellnode"
-        host          = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
-        port          = 5000
-        ingressPath   = "/"
-        memoryRequest = "300Mi"
-        memoryLimit   = "600Mi"
-        envVars = [
-          {
-            name  = "NODE_ENV"
-            value = "production"
-          },
-          {
-            name  = "PORT"
-            value = "5000"
-          },
-          {
-            name  = "WEB3_KEY"
-            value = "<path:${vault_mount.ixo.path}/data/ixo-cellnode#WEB3_KEY>"
-          },
-          {
-            name  = "WEB3_PROOF"
-            value = "<path:${vault_mount.ixo.path}/data/ixo-cellnode#WEB3_PROOF>"
-          },
-          {
-            name  = "DATABASE_URL"
-            value = "postgresql://${var.pg_ixo.pg_users[1].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[1].username}"
-          },
-          {
-            name  = "MIGRATE_DB_PROGRAMATICALLY"
-            value = "0"
-          },
-          {
-            name  = "DATABASE_USE_SSL"
-            value = "1"
-          },
-          {
-            name  = "TRUST_PROXY"
-            value = "1"
-          },
-          {
-            name  = "FILE_TYPES"
-            value = "[\\\"image/svg+xml\\\", \\\"image/png\\\", \\\"application/ld+json\\\", \\\"application/json\\\", \\\"application/pdf\\\",\\\"image/jpeg\\\",\\\"image/webp\\\"]"
-          }
-        ]
+        host        = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
+        vault_mount = vault_mount.ixo.path
+        pgUsername  = var.pg_ixo.pg_users[1].username
+        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username]
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
       }
     )
   }
@@ -68,21 +45,9 @@ module "ixo_matrix_state_bot" {
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     owner      = "ixofoundation"
     repository = local.ixo_helm_chart_repository
-    values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-matrix-state-bot.yml",
       {
-        environment   = terraform.workspace
-        app_name      = "ixo-matrix-state-bot"
-        host          = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-        port          = 8080
-        ingressPath   = "/"
-        memoryRequest = "100Mi"
-        memoryLimit   = "200Mi"
-        envVars = [
-          {
-            name  = "PORT"
-            value = "8080"
-          }
-        ]
+        host = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
       }
     )
   }
@@ -98,49 +63,13 @@ module "ixo_blocksync_core" {
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     owner      = "ixofoundation"
     repository = local.ixo_helm_chart_repository
-    values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-core.yml",
       {
-        environment   = terraform.workspace
-        app_name      = "ixo-blocksync-core"
-        host          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
-        port          = 8081
-        ingressPath   = "/"
-        memoryRequest = "300Mi"
-        memoryLimit   = "600Mi"
-        envVars = [
-          {
-            name  = "PORT"
-            value = "8081"
-          },
-          {
-            name  = "NODE_ENV"
-            value = "production"
-          },
-          {
-            name  = "TRUST_PROXY"
-            value = "1"
-          },
-          {
-            name  = "RPC"
-            value = "https://devnet.ixo.earth/rpc/"
-          },
-          {
-            name  = "MIGRATE_DB_PROGRAMATICALLY"
-            value = "1"
-          },
-          {
-            name  = "DATABASE_USE_SSL"
-            value = "1"
-          },
-          {
-            name  = "SENTRYDSN"
-            value = ""
-          },
-          {
-            name  = "DATABASE_URL"
-            value = "postgresql://${var.pg_ixo.pg_users[2].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[2].username}"
-          }
-        ]
+        host        = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
+        pgUsername  = var.pg_ixo.pg_users[2].username
+        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
       }
     )
   }
@@ -156,53 +85,15 @@ module "ixo-blocksync" {
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     owner      = "ixofoundation"
     repository = local.ixo_helm_chart_repository
-    values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
-        environment   = terraform.workspace
-        app_name      = "ixo-blocksync"
-        host          = "ixo-blocksync.${var.hostnames[terraform.workspace]}"
-        port          = 8082
-        ingressPath   = "/"
-        memoryRequest = "300Mi"
-        memoryLimit   = "800Mi"
-        envVars = [
-          {
-            name  = "PORT"
-            value = "8082"
-          },
-          {
-            name  = "NODE_ENV"
-            value = "production"
-          },
-          {
-            name  = "RPC"
-            value = "https://devnet.ixo.earth/rpc/"
-          },
-          {
-            name  = "MIGRATE_DB_PROGRAMATICALLY"
-            value = "1"
-          },
-          {
-            name  = "DATABASE_USE_SSL"
-            value = "1"
-          },
-          {
-            name  = "IPFS_SERVICE_MAPPING"
-            value = "https://devnet-blocksync-graphql.ixo.earth/api/ipfs/"
-          },
-          {
-            name  = "DATABASE_URL_CORE"
-            value = "postgresql://${var.pg_ixo.pg_users[2].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[2].username}"
-          },
-          {
-            name  = "DATABASE_URL"
-            value = "postgresql://${var.pg_ixo.pg_users[3].username}:${module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username]}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
-          },
-          {
-            name  = "ENTITY_MODULE_CONTRACT_ADDRESS"
-            value = "ixo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sqa3vn7"
-          }
-        ]
+        host            = "ixo-blocksync.${var.hostnames[terraform.workspace]}"
+        pgUsername      = var.pg_ixo.pg_users[3].username
+        pgPassword      = module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username]
+        pgCluster       = var.pg_ixo.pg_cluster_name
+        pgNamespace     = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername_core = var.pg_ixo.pg_users[2].username
+        pgPassword_core = module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]
       }
     )
   }
@@ -219,73 +110,11 @@ module "credentials_prospect" {
     owner      = "ixofoundation"
     repository = local.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
-    values_override = templatefile("${local.helm_values_config_path}/ixo-common.yml",
+    values_override = templatefile("${local.helm_values_config_path}/core-values/credentials-prospect.yml",
       {
-        environment   = terraform.workspace
-        app_name      = "credentials-prospect"
-        host          = "credentials-prospect.${var.hostnames[terraform.workspace]}"
-        port          = 3000
-        ingressPath   = "/"
-        memoryRequest = "200Mi"
-        memoryLimit   = "300Mi"
-        envVars = [
-          {
-            name  = "PORT"
-            value = "3000"
-          },
-          {
-            name  = "Authorization"
-            value = "<path:${vault_mount.ixo.path}/data/credentials-prospect#AUTHORIZATION>"
-          },
-          {
-            name  = "ENABLE_CLAIMS"
-            value = "true"
-          },
-          {
-            name  = "BLOCKSYNC_GRAPHQL"
-            value = "http://ixo-blocksync.core.svc.cluster.local"
-          },
-          {
-            name  = "CELLNODE"
-            value = "http://ixo-cellnode.core.svc.cluster.local"
-          },
-          {
-            name  = "RPC_URL"
-            value = "https://devnet.ixo.earth/rpc/"
-          },
-          {
-            name  = "SECP_MNEMONIC"
-            value = "<path:${vault_mount.ixo.path}/data/credentials-prospect#SECP_MNEMONIC>"
-          },
-          {
-            name  = "ENABLE_CREDENTIALS"
-            value = "true"
-          },
-          {
-            name  = "ISSUER_DID"
-            value = "<path:${vault_mount.ixo.path}/data/credentials-prospect#ISSUER_DID>"
-          },
-          {
-            name  = "CREDENTIALS_MNEMONIC"
-            value = "<path:${vault_mount.ixo.path}/data/credentials-prospect#CREDENTIALS_MNEMONIC>"
-          },
-          {
-            name  = "NETWORK"
-            value = terraform.workspace
-          },
-          {
-            name  = "REMOTE_CONTEXTS"
-            value = "[\\\"https://w3id.org/ixo/context/v1\\\"]"
-          },
-          {
-            name  = "ENABLE_TOKENS"
-            value = "false"
-          },
-          {
-            name  = "ENABLE_PROOFS"
-            value = "false"
-          }
-        ]
+        environment = terraform.workspace
+        host        = "credentials-prospect.${var.hostnames[terraform.workspace]}"
+        vault_mount = vault_mount.ixo.path
       }
     )
   }
