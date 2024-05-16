@@ -105,15 +105,78 @@ module "ixo-blocksync" {
 module "credentials_prospect" {
   source = "./modules/argocd_application"
   application = {
-    name       = "credentials-prospect"
+    name       = "claims-credentials-prospect"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     owner      = "ixofoundation"
     repository = local.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
-    values_override = templatefile("${local.helm_values_config_path}/core-values/credentials-prospect.yml",
+    values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_prospect.yml",
       {
         environment = terraform.workspace
-        host        = "credentials-prospect.${var.hostnames[terraform.workspace]}"
+        host        = "claims-credentials-prospect.${var.hostnames[terraform.workspace]}"
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ecs" {
+  source = "./modules/argocd_application"
+  application = {
+    name       = "claims-credentials-ecs"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_ecs.yml",
+      {
+        environment = terraform.workspace
+        host        = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "carbon" {
+  source = "./modules/argocd_application"
+  application = {
+    name       = "claims-credentials-carbon"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_carbon.yml",
+      {
+        environment = terraform.workspace
+        host        = "claims-credentials-carbon.${var.hostnames[terraform.workspace]}"
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "umuzi" {
+  source = "./modules/argocd_application"
+  application = {
+    name       = "claims-credentials-umuzi"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_umuzi.yml",
+      {
+        environment = terraform.workspace
+        host        = "claims-credentials-umuzi.${var.hostnames[terraform.workspace]}"
         vault_mount = vault_mount.ixo.path
       }
     )
