@@ -26,22 +26,6 @@ resource "vault_kv_secret_v2" "this" {
   }
 }
 
-resource "kubernetes_secret_v1" "repository" {
-  metadata {
-    name      = var.application.name
-    namespace = var.argo_namespace
-    labels = {
-      "argocd.argoproj.io/secret-type" : "repository"
-    }
-  }
-  data = {
-    type : "git"
-    url : var.application.repository
-    githubAppID : 1
-    githubAppInstallationID : 2
-  }
-}
-
 # Create Argo Git Application
 resource "kubectl_manifest" "application" {
   yaml_body = templatefile("${path.module}/crds/argo-application.yml",
