@@ -6,7 +6,12 @@ locals {
   synthetic_monitoring_endpoints = [ #TODO investigate if this can be auto configured.
     "https://${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}",
     "https://ixo-blocksync-core.${var.hostnames[terraform.workspace]}",
-    "https://state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
+    "https://state.bot.${var.hostnames["${terraform.workspace}_matrix"]}",
+    "https://prospect.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
+    "https://carbon.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
+    "https://ecs.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
+    "https://umuzi.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
+    "https://${terraform.workspace}-blocksync.${var.environments[terraform.workspace].domain}",
   ]
 
   # Vultr
