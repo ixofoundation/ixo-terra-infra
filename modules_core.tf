@@ -87,7 +87,7 @@ module "ixo-blocksync" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
-        host            = "ixo-blocksync.${var.hostnames[terraform.workspace]}"
+        host            = "${terraform.workspace}-blocksync.${var.environments[terraform.workspace].domain}"
         pgUsername      = var.pg_ixo.pg_users[3].username
         pgPassword      = module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username]
         pgCluster       = var.pg_ixo.pg_cluster_name
@@ -113,7 +113,7 @@ module "credentials_prospect" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_prospect.yml",
       {
         environment = terraform.workspace
-        host        = "claims-credentials-prospect.${var.hostnames[terraform.workspace]}"
+        host        = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -155,7 +155,7 @@ module "carbon" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_carbon.yml",
       {
         environment = terraform.workspace
-        host        = "claims-credentials-carbon.${var.hostnames[terraform.workspace]}"
+        host        = "carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -176,7 +176,7 @@ module "umuzi" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_umuzi.yml",
       {
         environment = terraform.workspace
-        host        = "claims-credentials-umuzi.${var.hostnames[terraform.workspace]}"
+        host        = "umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
       }
     )

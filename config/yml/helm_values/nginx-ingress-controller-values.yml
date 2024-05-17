@@ -29,9 +29,7 @@ controller:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: ${host}
   admissionWebhooks:
-    enabled: false
-    certManager:
-      enabled: true
+    enabled: true
     createSecretJob:
       resources:
        limits:
