@@ -7,11 +7,12 @@ locals {
     "https://${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}",
     "https://ixo-blocksync-core.${var.hostnames[terraform.workspace]}",
     "https://state.bot.${var.hostnames["${terraform.workspace}_matrix"]}",
-    "https://prospect.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
-    "https://carbon.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
-    "https://ecs.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
-    "https://umuzi.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
+    "https://prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
+    "https://carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
+    "https://ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
+    "https://umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
     "https://${terraform.workspace}-blocksync.${var.environments[terraform.workspace].domain}",
+    "https://${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}",
   ]
 
   # Vultr

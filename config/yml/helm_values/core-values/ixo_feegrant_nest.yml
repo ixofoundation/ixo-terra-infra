@@ -1,0 +1,42 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-feegrant-nest-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+service:
+  port: 3000
+env:
+  - name: "NODE_ENV"
+    value: "production"
+  - name: "RPC_URL"
+    value: "https://devnet.ixo.earth/rpc/"
+  - name: "PORT"
+    value: "3000"
+  - name: "AUTHORIZATION"
+    value: "<path:${vault_mount}/data/ixo-feegrant-nest#AUTHORIZATION>"
+  - name: "JAMBO_AUTHORIZATION"
+    value: "<path:${vault_mount}/data/ixo-feegrant-nest#JAMBO_AUTHORIZATION>"
+  - name: "MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-feegrant-nest#MNEMONIC>"
+resources:
+  requests:
+    memory: 300Mi
+    cpu: "100m"
+  limits:
+    memory: 600Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

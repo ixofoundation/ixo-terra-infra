@@ -12,8 +12,8 @@ config:
 extraConfig:
   dynamic_thumbnails: true
   registration_requires_token: true
-  app_service_config_files:
-    - /data/registration.yaml
+#  app_service_config_files:
+#    - /data/registration.yaml
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##
