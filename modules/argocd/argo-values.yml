@@ -104,12 +104,11 @@ configs:
               - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
         generate:
           command:
-            - sh
+            - bash
             - "-c"
             - |
-              echo "$ARGOCD_ENV_HELM_VALUES" > /tmp/helm_values.yaml
-              helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f /tmp/helm_values.yaml . > generated_manifests.yaml
-              argocd-vault-plugin generate generated_manifests.yaml
+              helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f <(echo "$ARGOCD_ENV_HELM_VALUES") . |
+              argocd-vault-plugin generate -
         lockRepo: false
   params:
     server.rootpath: /argocd
@@ -123,7 +122,7 @@ applicationSet:
 controller:
   resources:
     limits:
-      memory: 2Gi
+      memory: 1Gi
     requests:
       cpu: 100m
       memory: 512Mi

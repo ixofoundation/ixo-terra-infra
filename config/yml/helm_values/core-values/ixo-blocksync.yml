@@ -37,10 +37,10 @@ env:
     value: "ixo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sqa3vn7"
 resources:
   requests:
-    memory: 300Mi
-    cpu: "100m"
+    memory: 1Gi
+    cpu: "800m"
   limits:
-    memory: 800Mi
+    memory: 2Gi
 autoscaling:
   enabled: true
   minReplicas: 1

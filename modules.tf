@@ -3,7 +3,7 @@ module "kubernetes_cluster" {
   cluster_firewall        = lookup(var.environments[terraform.workspace], "cluster_firewall", false)
   cluster_label           = "ixo-cluster-${terraform.workspace}"
   initial_node_pool_label = "ixo-${terraform.workspace}"
-  initial_node_pool_plan  = "vc2-4c-8gb"
+  initial_node_pool_plan  = "vhf-3c-8gb"
   k8_version              = var.versions["kubernetes_cluster"]
   cluster_region          = local.region_ids["Amsterdam"]
 }
