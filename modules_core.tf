@@ -25,7 +25,7 @@ module "ixo_cellnode" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cellnode.yml",
       {
         environment = terraform.workspace
-        host        = "${terraform.workspace}-cellnode2.${var.environments[terraform.workspace].domain}"
+        host        = local.dns_for_environment[terraform.workspace]["ixo_cellnode"]
         vault_mount = vault_mount.ixo.path
         pgUsername  = var.pg_ixo.pg_users[1].username
         pgPassword = replace( # This replaces special characters to a readable format for Postgres
@@ -62,7 +62,7 @@ module "ixo_matrix_state_bot" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-matrix-state-bot.yml",
       {
-        host = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
+        host = local.dns_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
       }
     )
   }
@@ -82,7 +82,7 @@ module "ixo_blocksync_core" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-core.yml",
       {
         environment = terraform.workspace
-        host        = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
+        host        = local.dns_for_environment[terraform.workspace]["ixo_blocksync_core"]
         pgUsername  = var.pg_ixo.pg_users[2].username
         pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]
         pgCluster   = var.pg_ixo.pg_cluster_name
@@ -106,7 +106,7 @@ module "ixo_blocksync" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
         environment     = terraform.workspace
-        host            = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
+        host            = local.dns_for_environment[terraform.workspace]["ixo_blocksync"]
         pgUsername      = var.pg_ixo.pg_users[3].username
         pgPassword      = module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username]
         pgCluster       = var.pg_ixo.pg_cluster_name
@@ -133,7 +133,7 @@ module "credentials_prospect" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_prospect.yml",
       {
         environment = terraform.workspace
-        host        = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        host        = local.dns_for_environment[terraform.workspace]["claims_credentials_prospect"]
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -155,7 +155,7 @@ module "ecs" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_ecs.yml",
       {
         environment = terraform.workspace
-        host        = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        host        = local.dns_for_environment[terraform.workspace]["claims_credentials_ecs"]
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -177,7 +177,7 @@ module "carbon" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_carbon.yml",
       {
         environment = terraform.workspace
-        host        = "carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        host        = local.dns_for_environment[terraform.workspace]["claims_credentials_carbon"]
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -199,7 +199,7 @@ module "umuzi" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_umuzi.yml",
       {
         environment = terraform.workspace
-        host        = "umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        host        = local.dns_for_environment[terraform.workspace]["claims_credentials_umuzi"]
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -221,7 +221,7 @@ module "ixo_feegrant_nest" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_feegrant_nest.yml",
       {
         environment = terraform.workspace
-        host        = "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        host        = local.dns_for_environment[terraform.workspace]["ixo_feegrant_nest"]
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -243,7 +243,7 @@ module "ixo_did_resolver" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_did_resolver.yml",
       {
         environment = terraform.workspace
-        host        = "resolver.${var.hostnames[terraform.workspace]}" # "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        host        = local.dns_for_environment[terraform.workspace]["ixo_did_resolver"] # "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -265,7 +265,7 @@ module "ixo_faucet" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_faucet.yml",
       {
         environment = terraform.workspace
-        host        = "faucet.${var.hostnames[terraform.workspace]}" #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        host        = local.dns_for_environment[terraform.workspace]["ixo_faucet"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
       }
     )

@@ -3,18 +3,59 @@ locals {
   ixo_helm_chart_repository  = "https://github.com/ixofoundation/ixo-helm-charts"
   ixo_terra_infra_repository = "https://github.com/ixofoundation/ixo-terra-infra"
   vault_core_mount           = "ixo_core"
-  synthetic_monitoring_endpoints = [ #TODO investigate if this can be auto configured.
-    "https://${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}",
-    "https://ixo-blocksync-core.${var.hostnames[terraform.workspace]}",
-    "https://state.bot.${var.hostnames["${terraform.workspace}_matrix"]}",
-    "https://prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
-    "https://carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
-    "https://ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
-    "https://umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
-    "https://${terraform.workspace}-blocksync.${var.environments[terraform.workspace].domain}",
-    "https://${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}",
-    "https://feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+  synthetic_monitoring_endpoints = [
+    for app, dns_endpoint in local.dns_for_environment[terraform.workspace] :
+    contains(local.excluded_synthetic_monitoring, app) ? null : "https://${dns_endpoint}"
   ]
+  excluded_synthetic_monitoring = []
+  # IXO DNS Entries
+  dns_for_environment = {
+    for env, config in var.environments : env => {
+      for service, enabled in config.enabled_services : service => enabled ? local.dns_endpoints[env][service] : null
+    }
+  }
+
+  dns_endpoints = {
+    devnet = {
+      ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
+      ixo_blocksync               = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
+      ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
+      ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
+      claims_credentials_prospect = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_ecs      = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_carbon   = "carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_umuzi    = "umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_feegrant_nest           = "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_did_resolver            = "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_faucet                  = "faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+    }
+    testnet = {
+      ixo_cellnode                = "${terraform.workspace}-cellnode2.${var.environments[terraform.workspace].domain}"
+      ixo_blocksync               = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
+      ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
+      ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
+      claims_credentials_prospect = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_ecs      = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_carbon   = "carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_umuzi    = "umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_feegrant_nest           = "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_did_resolver            = "resolver.${var.hostnames[terraform.workspace]}"
+      ixo_faucet                  = "faucet.${var.hostnames[terraform.workspace]}"
+    }
+    main = {
+      ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
+      ixo_blocksync               = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
+      ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
+      ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
+      claims_credentials_prospect = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_ecs      = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_carbon   = "carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      claims_credentials_umuzi    = "umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_feegrant_nest           = "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_did_resolver            = "resolver.${var.hostnames[terraform.workspace]}"
+      ixo_faucet                  = "faucet.${var.hostnames[terraform.workspace]}"
+    }
+  }
 
   # Vultr
   region_ids = { for city, id in var.region_ids : id => city }

@@ -1,3 +1,3 @@
 locals {
-  kubeconfig_filename = "${path.module}/kubeconfig.yaml"
+  kubeconfig_filename = "${path.module}/kubeconfig_${terraform.workspace}.yaml"
 }
