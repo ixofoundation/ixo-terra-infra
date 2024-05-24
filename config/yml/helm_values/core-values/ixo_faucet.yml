@@ -26,7 +26,7 @@ env:
   - name: "FAUCET_MNEMONIC"
     value: "<path:${vault_mount}/data/ixo-faucet#FAUCET_MNEMONIC>"
   - name: "PROJECT_NAME"
-    value: "Ixo ${environment}"
+    value: "Ixo ${title(environment)}"
 resources:
   requests:
     memory: 300Mi
