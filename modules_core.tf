@@ -84,7 +84,19 @@ module "ixo_blocksync_core" {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_blocksync_core"]
         pgUsername  = var.pg_ixo.pg_users[2].username
-        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]
+        pgPassword = replace( # This replaces special characters to a readable format for Postgres
+          replace(
+            replace(
+              replace(
+                module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username],
+                "/", "%2F"
+              ),
+              ":", "%3A"
+            ),
+            "@", "%40"
+          ),
+          " ", "%20"
+        )
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
       }
@@ -105,14 +117,38 @@ module "ixo_blocksync" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
-        environment     = terraform.workspace
-        host            = local.dns_for_environment[terraform.workspace]["ixo_blocksync"]
-        pgUsername      = var.pg_ixo.pg_users[3].username
-        pgPassword      = module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username]
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_blocksync"]
+        pgUsername  = var.pg_ixo.pg_users[3].username
+        pgPassword = replace( # This replaces special characters to a readable format for Postgres
+          replace(
+            replace(
+              replace(
+                module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username],
+                "/", "%2F"
+              ),
+              ":", "%3A"
+            ),
+            "@", "%40"
+          ),
+          " ", "%20"
+        )
         pgCluster       = var.pg_ixo.pg_cluster_name
         pgNamespace     = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername_core = var.pg_ixo.pg_users[2].username
-        pgPassword_core = module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]
+        pgPassword_core = replace( # This replaces special characters to a readable format for Postgres
+          replace(
+            replace(
+              replace(
+                module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username],
+                "/", "%2F"
+              ),
+              ":", "%3A"
+            ),
+            "@", "%40"
+          ),
+          " ", "%20"
+        )
       }
     )
   }
