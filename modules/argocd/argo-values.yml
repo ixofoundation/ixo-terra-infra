@@ -128,7 +128,7 @@ controller:
       memory: 512Mi
 server:
   certificate:
-    enabled: true
+    enabled: true # Note: This must be disabled for INITIAL setup, as cert-manager is installed in Argo-CD so these CRDS do not exist yet.
     domain: ${host}
     issuer:
       group: cert-manager.io

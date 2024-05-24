@@ -15,6 +15,7 @@ resource "kubernetes_secret_v1" "repository" { // Common Git Repository for Core
 }
 
 module "ixo_cellnode" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_cellnode"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-cellnode"
@@ -23,10 +24,23 @@ module "ixo_cellnode" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cellnode.yml",
       {
-        host        = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
+        environment = terraform.workspace
+        host        = "${terraform.workspace}-cellnode2.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
         pgUsername  = var.pg_ixo.pg_users[1].username
-        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username]
+        pgPassword = replace( # This replaces special characters to a readable format for Postgres
+          replace(
+            replace(
+              replace(
+                module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username],
+                "/", "%2F"
+              ),
+              ":", "%3A"
+            ),
+            "@", "%40"
+          ),
+          " ", "%20"
+        )
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
       }
@@ -38,6 +52,7 @@ module "ixo_cellnode" {
 }
 
 module "ixo_matrix_state_bot" {
+  count      = var.environments[terraform.workspace].enabled_services["ixo_matrix_state_bot"] ? 1 : 0
   depends_on = [kubernetes_persistent_volume_claim_v1.common]
   source     = "./modules/argocd_application"
   application = {
@@ -57,6 +72,7 @@ module "ixo_matrix_state_bot" {
 }
 
 module "ixo_blocksync_core" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_blocksync_core"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-blocksync-core"
@@ -65,6 +81,7 @@ module "ixo_blocksync_core" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-core.yml",
       {
+        environment = terraform.workspace
         host        = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
         pgUsername  = var.pg_ixo.pg_users[2].username
         pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username]
@@ -78,7 +95,8 @@ module "ixo_blocksync_core" {
   vault_mount_path = vault_mount.ixo.path
 }
 
-module "ixo-blocksync" {
+module "ixo_blocksync" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_blocksync"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-blocksync"
@@ -87,6 +105,7 @@ module "ixo-blocksync" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
+        environment     = terraform.workspace
         host            = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
         pgUsername      = var.pg_ixo.pg_users[3].username
         pgPassword      = module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username]
@@ -103,6 +122,7 @@ module "ixo-blocksync" {
 }
 
 module "credentials_prospect" {
+  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_prospect"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-prospect"
@@ -124,6 +144,7 @@ module "credentials_prospect" {
 }
 
 module "ecs" {
+  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_ecs"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-ecs"
@@ -145,6 +166,7 @@ module "ecs" {
 }
 
 module "carbon" {
+  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_carbon"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-carbon"
@@ -166,6 +188,7 @@ module "carbon" {
 }
 
 module "umuzi" {
+  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_umuzi"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-umuzi"
@@ -187,6 +210,7 @@ module "umuzi" {
 }
 
 module "ixo_feegrant_nest" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_feegrant_nest"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-feegrant-nest"
@@ -197,7 +221,7 @@ module "ixo_feegrant_nest" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_feegrant_nest.yml",
       {
         environment = terraform.workspace
-        host        = "feegrant.${var.hostnames[terraform.workspace]}" # "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        host        = "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
       }
     )
@@ -208,6 +232,7 @@ module "ixo_feegrant_nest" {
 }
 
 module "ixo_did_resolver" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_did_resolver"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-did-resolver"
@@ -229,6 +254,7 @@ module "ixo_did_resolver" {
 }
 
 module "ixo_faucet" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_faucet"] ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-faucet"

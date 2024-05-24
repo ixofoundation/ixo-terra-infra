@@ -10,16 +10,55 @@ variable "environments" {
     devnet = {
       cluster_firewall = true
       domain           = "ixo.earth"
+      enabled_services = {
+        ixo_cellnode                = true
+        ixo_blocksync               = true
+        ixo_blocksync_core          = true
+        ixo_feegrant_nest           = true
+        ixo_did_resolver            = true
+        ixo_faucet                  = true
+        ixo_matrix_state_bot        = true
+        claims_credentials_ecs      = true
+        claims_credentials_prospect = true
+        claims_credentials_carbon   = true
+        claims_credentials_umuzi    = true
+      }
       // other devnet specific variables...
     }
     testnet = {
       cluster_firewall = true
-      domain           = ""
+      domain           = "ixo.earth"
+      enabled_services = {
+        ixo_cellnode                = true
+        ixo_blocksync               = true
+        ixo_blocksync_core          = true
+        ixo_feegrant_nest           = true
+        ixo_did_resolver            = true
+        ixo_faucet                  = true
+        ixo_matrix_state_bot        = true
+        claims_credentials_ecs      = true
+        claims_credentials_prospect = true
+        claims_credentials_carbon   = true
+        claims_credentials_umuzi    = false
+      }
       // other testnet specific variables...
     }
     main = {
       cluster_firewall = true
       domain           = ""
+      enabled_services = {
+        ixo_cellnode                = true
+        ixo_blocksync               = true
+        ixo_blocksync_core          = true
+        ixo_feegrant_nest           = true
+        ixo_did_resolver            = true
+        ixo_faucet                  = true
+        ixo_matrix_state_bot        = true
+        claims_credentials_ecs      = true
+        claims_credentials_prospect = true
+        claims_credentials_carbon   = true
+        claims_credentials_umuzi    = false
+      }
       // other main specific variables...
     }
   }
@@ -34,9 +73,9 @@ variable "gcp_project_ids" {
   description = "Project IDs for GCP"
   type        = map(string)
   default = {
-    devnet = "devsecops-415617"
-    test   = ""
-    main   = ""
+    devnet  = "devsecops-415617"
+    testnet = "devsecops-415617"
+    main    = ""
   }
 }
 
@@ -44,12 +83,15 @@ variable "hostnames" {
   description = "Environment specific hostnames configurations"
   type        = map(string)
   default = {
-    devnet        = "devnetkb.ixo.earth"
-    devnet_vault  = "vault.devnet.ixo.earth"
-    devnet_dex    = "dex.devnet.ixo.earth"
-    devnet_matrix = "devmx.ixo.earth"
-    test          = "testkb.ixo.earth"
-    main          = "mainkb.ixo.earth"
+    devnet         = "devnetkb.ixo.earth"
+    devnet_vault   = "vault.devnet.ixo.earth"
+    devnet_dex     = "dex.devnet.ixo.earth"
+    devnet_matrix  = "devmx.ixo.earth"
+    testnet        = "testnetkb.ixo.earth"
+    testnet_vault  = "vault.testnet.ixo.earth"
+    testnet_dex    = "dex.testnet.ixo.earth"
+    testnet_matrix = "testmx.testnet.ixo.earth"
+    main           = "mainkb.ixo.earth"
   }
 }
 

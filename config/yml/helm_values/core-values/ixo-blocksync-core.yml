@@ -24,7 +24,7 @@ env:
   - name: "TRUST_PROXY"
     value: "1"
   - name: "RPC"
-    value: "https://devnet.ixo.earth/rpc/"
+    value: "https://${environment}.ixo.earth/rpc/"
   - name: "MIGRATE_DB_PROGRAMATICALLY"
     value: "1"
   - name: "DATABASE_USE_SSL"

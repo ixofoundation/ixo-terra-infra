@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     kubectl = {
-      source = "gavinbunney/kubectl"
+      source = "alekc/kubectl"
     }
   }
 }
@@ -14,7 +14,7 @@ resource "kubernetes_namespace_v1" "this" {
 
 resource "null_resource" "deploy_operator" {
   provisioner "local-exec" {
-    command = "export KUBECONFIG=${var.kubeconfig_path} && make deploy IMG=\"${var.cosmos_operator.image}:${var.cosmos_operator.tag}\""
+    command     = "export KUBECONFIG=${var.kubeconfig_path} && make deploy IMG=\"${var.cosmos_operator.image}:${var.cosmos_operator.tag}\""
     working_dir = "${path.module}/cosmos-operator"
   }
 }
