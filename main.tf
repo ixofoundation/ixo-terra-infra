@@ -7,8 +7,8 @@ terraform {
       version = "2.19.0"
     }
     kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "1.14.0"
+      source  = "alekc/kubectl"
+      version = "~> 2.0"
     }
     google = {
       source  = "hashicorp/google"
@@ -82,6 +82,7 @@ resource "vault_mount" "ixo" {
 }
 
 data "kubernetes_service_v1" "nfs" {
+  depends_on = [module.argocd]
   metadata {
     name      = "nfs-server-provisioner"
     namespace = module.argocd.namespaces_helm["nfs-provisioner"].metadata[0].name
@@ -89,6 +90,7 @@ data "kubernetes_service_v1" "nfs" {
 }
 
 resource "kubernetes_persistent_volume_claim_v1" "common" {
+  depends_on = [module.argocd, data.kubernetes_service_v1.nfs]
   metadata {
     name      = "${var.org}-common-storage"
     namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name

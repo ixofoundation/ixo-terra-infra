@@ -13,6 +13,7 @@ locals {
     "https://umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}",
     "https://${terraform.workspace}-blocksync.${var.environments[terraform.workspace].domain}",
     "https://${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}",
+    "https://feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
   ]
 
   # Vultr

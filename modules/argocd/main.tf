@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     kubectl = {
-      source = "gavinbunney/kubectl"
+      source = "alekc/kubectl"
     }
   }
 }
@@ -52,7 +52,8 @@ resource "kubernetes_namespace_v1" "app-argocd" {
 }
 
 resource "kubernetes_secret_v1" "repository" {
-  for_each = { for repo in var.git_repositories : repo.name => repo }
+  depends_on = [module.argocd_release]
+  for_each   = { for repo in var.git_repositories : repo.name => repo }
   metadata {
     name      = each.value["name"]
     namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
@@ -104,7 +105,7 @@ resource "kubectl_manifest" "application" {
 
 # Create Argo Helm Applications
 resource "kubectl_manifest" "application_helm" {
-  depends_on = [kubernetes_namespace_v1.application, module.argocd_release]
+  depends_on = [kubernetes_namespace_v1.application_helm, module.argocd_release]
   for_each   = { for app in var.applications_helm : app.name => app }
   yaml_body = templatefile("${path.module}/crds/argo-application-helm.yml",
     {

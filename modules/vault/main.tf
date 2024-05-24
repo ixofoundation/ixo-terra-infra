@@ -119,6 +119,7 @@ resource "vault_identity_group" "devops" {
 }
 
 resource "vault_identity_group_alias" "devops" {
+  depends_on     = [vault_auth_backend.kubernetes, vault_kubernetes_auth_backend_role.vault_argocd_role]
   canonical_id   = vault_identity_group.devops.id
   mount_accessor = vault_jwt_auth_backend.oidc.accessor
   name           = "${var.org}:${terraform.workspace}-devsecops"

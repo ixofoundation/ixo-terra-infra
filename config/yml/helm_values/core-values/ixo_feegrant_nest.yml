@@ -20,7 +20,7 @@ env:
   - name: "NODE_ENV"
     value: "production"
   - name: "RPC_URL"
-    value: "https://devnet.ixo.earth/rpc/"
+    value: "https://${environment}.ixo.earth/rpc/"
   - name: "PORT"
     value: "3000"
   - name: "AUTHORIZATION"

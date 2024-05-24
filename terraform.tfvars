@@ -1,6 +1,6 @@
 # Versioning for all services.
 versions = {
-  kubernetes_cluster           = "v1.29.2+1"
+  kubernetes_cluster           = "v1.30.0+1"
   argocd                       = "6.9.1"  # https://artifacthub.io/packages/helm/argo/argo-cd
   cert-manager                 = "1.14.4" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
   nginx-ingress-controller     = "4.10.0" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
