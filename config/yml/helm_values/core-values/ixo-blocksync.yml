@@ -22,19 +22,19 @@ env:
   - name: "NODE_ENV"
     value: "production"
   - name: "RPC"
-    value: "https://${environment}.ixo.earth/rpc/"
+    value: "${rpc_url}"
   - name: "MIGRATE_DB_PROGRAMATICALLY"
     value: "1"
   - name: "DATABASE_USE_SSL"
     value: "1"
   - name: "IPFS_SERVICE_MAPPING"
-    value: "https://${environment}-blocksync-graphql.ixo.earth/api/ipfs/"
+    value: "${ipfs_service_mapping}"
   - name: "DATABASE_URL_CORE"
     value: "postgresql://${pgUsername_core}:${pgPassword_core}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername_core}"
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
   - name: "ENTITY_MODULE_CONTRACT_ADDRESS"
-    value: "ixo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sqa3vn7"
+    value: "<path:${vault_mount}/data/ixo-blocksync#ENTITY_MODULE_CONTRACT_ADDRESS>"
 resources:
   requests:
     memory: 1Gi

@@ -39,7 +39,7 @@ module "argocd" {
       repository = "https://kubernetes.github.io/ingress-nginx"
       values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
         {
-          host = var.hostnames[terraform.workspace]
+          host = terraform.workspace == "testnet" ? "${var.hostnames[terraform.workspace]}, ${var.hostnames["${terraform.workspace}_world"]}" : var.hostnames[terraform.workspace]
         }
       )
     },
@@ -312,6 +312,30 @@ module "matrix_init" {
   kube_config_path = module.kubernetes_cluster.kubeconfig_path
   namespace        = module.argocd.namespaces_helm["matrix"].metadata[0].name
   vault_mount_path = vault_mount.ixo.path
+}
+
+module "external_dns_cloudflare" {
+  count  = terraform.workspace == "testnet" || terraform.workspace == "main" ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "external-dns-cloudflare"
+    namespace  = kubernetes_namespace_v1.external_dns_cloudflare.metadata[0].name
+    owner      = ""
+    repository = "https://kubernetes-sigs.github.io/external-dns/"
+    helm = {
+      isOci    = false
+      chart    = "external-dns"
+      revision = var.versions["external-dns"]
+    }
+    values_override = templatefile("${local.helm_values_config_path}/external-dns-values-cloudflare.yml",
+      {
+        CF_API_TOKEN = var.cloudflare_api_token
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  create_kv        = false
+  vault_mount_path = null
 }
 
 #module "cosmos" {

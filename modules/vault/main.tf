@@ -59,6 +59,7 @@ resource "vault_kubernetes_auth_backend_role" "vault_argocd_role" {
 
 # Vault -> Dex OIDC
 resource "vault_jwt_auth_backend" "oidc" {
+  depends_on         = [vault_kubernetes_auth_backend_role.vault_argocd_role]
   description        = "JWT Auth with Dex + GitHub"
   path               = "oidc"
   type               = "oidc"

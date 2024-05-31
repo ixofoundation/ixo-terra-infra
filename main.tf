@@ -138,3 +138,9 @@ resource "random_password" "grafana_dex_oidc_secret" {
   length  = 16
   special = false
 }
+
+resource "kubernetes_namespace_v1" "external_dns_cloudflare" {
+  metadata {
+    name = "external-dns-cloudflare"
+  }
+}

@@ -7,13 +7,10 @@ ingress:
     cert-manager.io/cluster-issuer: letsencrypt-staging
   tls:
     - hosts:
-        - ${host}
+        ${indent(8, tls_hosts)}
       secretName: ixo-cellnode-tls
   hosts:
-    - host: ${host}
-      paths:
-        - path: /
-          pathType: Prefix
+    ${indent(4, hosts)}
 service:
   port: 5000
 env:

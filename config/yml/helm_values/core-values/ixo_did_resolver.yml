@@ -20,7 +20,7 @@ env:
   - name: "NODE_ENV"
     value: "production"
   - name: "RPC_ENDPOINT"
-    value: "https://devnet.ixo.earth/rpc/"
+    value: "${rpc_url}"
   - name: "PORT"
     value: "8080"
 resources:

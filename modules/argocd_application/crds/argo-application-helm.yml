@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${name}
+  namespace: ${argo_namespace}
+spec:
+  ignoreDifferences:
+    - kind: Secret
+      jsonPointers:
+        - /data
+  project: default
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+    automated:
+      prune: true
+      selfHeal: true
+  source:
+    chart: ${chart}
+    repoURL: ${repository}
+    enableOCI: ${isOci}
+    targetRevision: ${revision}
+    helm:
+      releaseName: ${chart}
+      values: |
+        ${indent(8, helm_values)}
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: ${namespace}

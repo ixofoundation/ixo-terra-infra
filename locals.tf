@@ -30,20 +30,19 @@ locals {
       ixo_faucet                  = "faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
     }
     testnet = {
-      ixo_cellnode                = "${terraform.workspace}-cellnode2.${var.environments[terraform.workspace].domain}"
+      ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
       ixo_blocksync               = "${terraform.workspace}-blocksync-graphql2.${var.environments[terraform.workspace].domain}"
       ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
       ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
       claims_credentials_prospect = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       claims_credentials_ecs      = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       claims_credentials_carbon   = "carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_umuzi    = "umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_feegrant_nest           = "feegrant2.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_did_resolver            = "resolver2.${var.hostnames[terraform.workspace]}"
-      ixo_faucet                  = "faucet2.${var.hostnames[terraform.workspace]}"
+      ixo_feegrant_nest           = "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_did_resolver            = "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_faucet                  = "faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
     }
-    main = {
-      ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
+    mainnet = {
+      ixo_cellnode                = "${terraform.workspace}-cellnode2.${var.environments[terraform.workspace].domain}"
       ixo_blocksync               = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
       ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
       ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
@@ -56,6 +55,37 @@ locals {
       ixo_faucet                  = "faucet.${var.hostnames[terraform.workspace]}"
     }
   }
+
+  cellnode_hosts = terraform.workspace == "testnet" ? [
+    {
+      host = local.dns_for_environment[terraform.workspace]["ixo_cellnode"]
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    },
+    {
+      host = "cellnode-pandora.${var.environments[terraform.workspace].domain}"
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    },
+    {
+      host = "cellnode-pandora.${var.environments["main"].domain}"
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    }
+    ] : [{
+      host = local.dns_for_environment[terraform.workspace]["ixo_cellnode"]
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+  }]
+  cellnode_tls_hostnames = [for host in local.cellnode_hosts : host.host]
 
   # Vultr
   region_ids = { for city, id in var.region_ids : id => city }

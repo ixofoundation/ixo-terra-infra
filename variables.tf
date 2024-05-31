@@ -3,13 +3,20 @@ variable "vultr_api_key" {
   default     = ""
 }
 
+variable "cloudflare_api_token" {
+  description = "CloudFlare Api Token" # TF_VAR_cloudflare_api_token
+  default     = ""
+}
+
 variable "environments" {
   description = "Environment specific configurations"
   type        = map(any)
   default = {
     devnet = {
-      cluster_firewall = true
-      domain           = "ixo.earth"
+      cluster_firewall     = true
+      rpc_url              = "https://devnet.ixo.earth/rpc/"
+      ipfs_service_mapping = "https://devnet-blocksync-graphql.ixo.earth/api/ipfs/" #TODO this possibly could be moved to local cluster address
+      domain               = "ixo.earth"
       enabled_services = {
         ixo_cellnode                = true
         ixo_blocksync               = true
@@ -23,43 +30,44 @@ variable "environments" {
         claims_credentials_carbon   = true
         claims_credentials_umuzi    = true
       }
-      // other devnet specific variables...
     }
     testnet = {
-      cluster_firewall = true
-      domain           = "ixo.earth"
+      cluster_firewall     = true
+      rpc_url              = "https://testnet.ixo.earth/rpc/"
+      domain               = "ixo.earth"
+      ipfs_service_mapping = "https://testnet-blocksync-graphql.ixo.earth/api/ipfs/"
       enabled_services = {
         ixo_cellnode                = true
-        ixo_blocksync               = true
-        ixo_blocksync_core          = true
+        ixo_blocksync               = false
+        ixo_blocksync_core          = false
         ixo_feegrant_nest           = true
         ixo_did_resolver            = true
         ixo_faucet                  = true
-        ixo_matrix_state_bot        = true
+        ixo_matrix_state_bot        = false
         claims_credentials_ecs      = true
         claims_credentials_prospect = true
         claims_credentials_carbon   = true
         claims_credentials_umuzi    = false
       }
-      // other testnet specific variables...
     }
-    main = {
-      cluster_firewall = true
-      domain           = ""
+    mainnet = {
+      cluster_firewall     = true
+      rpc_url              = "https://impacthub.ixo.earth/rpc/"
+      domain               = "ixo.world"
+      ipfs_service_mapping = "https://blocksync.ixo.earth/api/ipfs/"
       enabled_services = {
-        ixo_cellnode                = true
-        ixo_blocksync               = true
-        ixo_blocksync_core          = true
-        ixo_feegrant_nest           = true
-        ixo_did_resolver            = true
-        ixo_faucet                  = true
-        ixo_matrix_state_bot        = true
-        claims_credentials_ecs      = true
-        claims_credentials_prospect = true
-        claims_credentials_carbon   = true
+        ixo_cellnode                = false
+        ixo_blocksync               = false
+        ixo_blocksync_core          = false
+        ixo_feegrant_nest           = false
+        ixo_did_resolver            = false
+        ixo_faucet                  = false
+        ixo_matrix_state_bot        = false
+        claims_credentials_ecs      = false
+        claims_credentials_prospect = false
+        claims_credentials_carbon   = false
         claims_credentials_umuzi    = false
       }
-      // other main specific variables...
     }
   }
 }
@@ -75,7 +83,7 @@ variable "gcp_project_ids" {
   default = {
     devnet  = "devsecops-415617"
     testnet = "devsecops-415617"
-    main    = ""
+    mainnet = "devsecops-415617"
   }
 }
 
@@ -88,10 +96,14 @@ variable "hostnames" {
     devnet_dex     = "dex.devnet.ixo.earth"
     devnet_matrix  = "devmx.ixo.earth"
     testnet        = "testnetkb.ixo.earth"
+    testnet_world  = "testnetkb.ixo.world"
     testnet_vault  = "vault.testnet.ixo.earth"
     testnet_dex    = "dex.testnet.ixo.earth"
     testnet_matrix = "testmx.testnet.ixo.earth"
-    main           = "mainkb.ixo.earth"
+    mainnet        = "mainnetkb.ixo.earth"
+    mainnet_vault  = "vault.mainnet.ixo.earth"
+    mainnet_dex    = "dex.mainnet.ixo.earth"
+    mainnet_matrix = "testmx.mainnet.ixo.earth"
   }
 }
 

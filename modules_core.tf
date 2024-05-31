@@ -25,7 +25,9 @@ module "ixo_cellnode" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cellnode.yml",
       {
         environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_cellnode"]
+        hosts       = yamlencode(local.cellnode_hosts)
+        tls_hosts   = yamlencode(local.cellnode_tls_hostnames)
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         vault_mount = vault_mount.ixo.path
         pgUsername  = var.pg_ixo.pg_users[1].username
         pgPassword = replace( # This replaces special characters to a readable format for Postgres
@@ -82,6 +84,7 @@ module "ixo_blocksync_core" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-core.yml",
       {
         environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_blocksync_core"]
         pgUsername  = var.pg_ixo.pg_users[2].username
         pgPassword = replace( # This replaces special characters to a readable format for Postgres
@@ -117,9 +120,12 @@ module "ixo_blocksync" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_blocksync"]
-        pgUsername  = var.pg_ixo.pg_users[3].username
+        environment          = terraform.workspace
+        vault_mount          = vault_mount.ixo.path
+        rpc_url              = var.environments[terraform.workspace].rpc_url
+        ipfs_service_mapping = var.environments[terraform.workspace].ipfs_service_mapping
+        host                 = local.dns_for_environment[terraform.workspace]["ixo_blocksync"]
+        pgUsername           = var.pg_ixo.pg_users[3].username
         pgPassword = replace( # This replaces special characters to a readable format for Postgres
           replace(
             replace(
@@ -152,7 +158,7 @@ module "ixo_blocksync" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
@@ -169,6 +175,7 @@ module "credentials_prospect" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_prospect.yml",
       {
         environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_prospect"]
         vault_mount = vault_mount.ixo.path
       }
@@ -191,6 +198,7 @@ module "ecs" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_ecs.yml",
       {
         environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_ecs"]
         vault_mount = vault_mount.ixo.path
       }
@@ -213,6 +221,7 @@ module "carbon" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_carbon.yml",
       {
         environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_carbon"]
         vault_mount = vault_mount.ixo.path
       }
@@ -235,6 +244,7 @@ module "umuzi" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_umuzi.yml",
       {
         environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_umuzi"]
         vault_mount = vault_mount.ixo.path
       }
@@ -257,6 +267,7 @@ module "ixo_feegrant_nest" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_feegrant_nest.yml",
       {
         environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_feegrant_nest"]
         vault_mount = vault_mount.ixo.path
       }
@@ -279,6 +290,7 @@ module "ixo_did_resolver" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_did_resolver.yml",
       {
         environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_did_resolver"] # "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
       }
@@ -301,6 +313,7 @@ module "ixo_faucet" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_faucet.yml",
       {
         environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_faucet"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = vault_mount.ixo.path
       }
