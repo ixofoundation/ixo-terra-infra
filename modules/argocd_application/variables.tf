@@ -1,10 +1,15 @@
 variable "application" {
   type = object(
     {
-      name            = string
-      namespace       = string
-      owner           = string
-      repository      = string
+      name       = string
+      namespace  = string
+      owner      = string
+      repository = string
+      helm = optional(object({
+        isOci    = bool
+        chart    = string
+        revision = string
+      }))
       path            = optional(string)
       values_override = optional(string)
     }

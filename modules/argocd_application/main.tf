@@ -28,7 +28,19 @@ resource "vault_kv_secret_v2" "this" {
 
 # Create Argo Git Application
 resource "kubectl_manifest" "application" {
-  yaml_body = templatefile("${path.module}/crds/argo-application.yml",
+  yaml_body = local.isHelm == true ? templatefile("${path.module}/crds/argo-application-helm.yml",
+    {
+      name           = var.application.name
+      namespace      = var.application.namespace
+      argo_namespace = var.argo_namespace
+      workspace      = terraform.workspace
+      isOci          = var.application.helm.isOci
+      chart          = var.application.helm.chart
+      revision       = var.application.helm.revision
+      repository     = var.application.repository
+      helm_values    = var.application.values_override != null ? var.application.values_override : ""
+    }
+    ) : templatefile("${path.module}/crds/argo-application.yml",
     {
       name           = var.application.name
       namespace      = var.application.namespace
