@@ -18,9 +18,20 @@ resource "kubernetes_config_map_v1" "init_sql" {
   }
 }
 
+resource "kubernetes_secret_v1" "gcs_secret_key" {
+  for_each = { for cluster in var.clusters : cluster.pg_cluster_namespace => cluster }
+  metadata {
+    name      = "${each.value.pg_cluster_name}-gcs-pgbackrest-secret"
+    namespace = each.value.pg_cluster_namespace
+  }
+  data = {
+    "gcs-key.json" : var.gcs_key
+  }
+}
+
 resource "kubectl_manifest" "cluster" {
   for_each   = { for cluster in var.clusters : cluster.pg_cluster_namespace => cluster }
-  depends_on = [kubernetes_config_map_v1.init_sql]
+  depends_on = [kubernetes_config_map_v1.init_sql, kubernetes_secret_v1.gcs_secret_key]
   yaml_body = templatefile("${path.module}/crds/cluster.yml",
     {
       pg_cluster_name        = each.value.pg_cluster_name

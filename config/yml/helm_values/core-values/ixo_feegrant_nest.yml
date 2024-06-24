@@ -29,6 +29,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-feegrant-nest#JAMBO_AUTHORIZATION>"
   - name: "MNEMONIC"
     value: "<path:${vault_mount}/data/ixo-feegrant-nest#MNEMONIC>"
+  - name: "SENTRY_DSN"
+    value: "<path:${vault_mount}/data/ixo-feegrant-nest#SENTRY_DSN>"
 resources:
   requests:
     memory: 300Mi

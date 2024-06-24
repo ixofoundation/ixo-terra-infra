@@ -52,7 +52,7 @@ provider "vault" {
 
 provider "google" {
   project     = var.gcp_project_ids[terraform.workspace]
-  credentials = file("${path.root}/credentials.json")
+  credentials = file("${path.root}/credentials.json") #TODO don't use a file and use another method for future CD.
 }
 
 resource "kubernetes_namespace_v1" "ixo_core" {
@@ -142,5 +142,32 @@ resource "random_password" "grafana_dex_oidc_secret" {
 resource "kubernetes_namespace_v1" "external_dns_cloudflare" {
   metadata {
     name = "external-dns-cloudflare"
+  }
+}
+
+resource "google_storage_bucket" "postgres_backups" {
+  location = "US"
+  name     = "${var.org}-${terraform.workspace}-core-postgres"
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      age = 365 # Objects older than 365 days will be deleted
+    }
+  }
+
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "NEARLINE"
+    }
+    condition {
+      age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
+    }
   }
 }

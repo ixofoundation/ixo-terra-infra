@@ -17,56 +17,68 @@ variable "environments" {
       rpc_url              = "https://devnet.ixo.earth/rpc/"
       ipfs_service_mapping = "https://devnet-blocksync-graphql.ixo.earth/api/ipfs/" #TODO this possibly could be moved to local cluster address
       domain               = "ixo.earth"
+      domain2              = "ixo.earth"
       enabled_services = {
-        ixo_cellnode                = true
-        ixo_blocksync               = true
-        ixo_blocksync_core          = true
-        ixo_feegrant_nest           = true
-        ixo_did_resolver            = true
-        ixo_faucet                  = true
-        ixo_matrix_state_bot        = true
-        claims_credentials_ecs      = true
-        claims_credentials_prospect = true
-        claims_credentials_carbon   = true
-        claims_credentials_umuzi    = true
+        ixo_cellnode                         = true
+        ixo_blocksync                        = true
+        ixo_blocksync_core                   = true
+        ixo_feegrant_nest                    = true
+        ixo_did_resolver                     = true
+        ixo_faucet                           = true
+        ixo_matrix_state_bot                 = true
+        claims_credentials_ecs               = true
+        claims_credentials_prospect          = true
+        claims_credentials_carbon            = true
+        claims_credentials_umuzi             = true
+        claims_credentials_claimformprotocol = false
+        ixo_deeplink_server                  = false
+        ixo_kyc_server                       = false
       }
     }
     testnet = {
       cluster_firewall     = true
       rpc_url              = "https://testnet.ixo.earth/rpc/"
       domain               = "ixo.earth"
+      domain2              = "ixo.earth"
       ipfs_service_mapping = "https://testnet-blocksync-graphql.ixo.earth/api/ipfs/"
       enabled_services = {
-        ixo_cellnode                = true
-        ixo_blocksync               = false
-        ixo_blocksync_core          = false
-        ixo_feegrant_nest           = true
-        ixo_did_resolver            = true
-        ixo_faucet                  = true
-        ixo_matrix_state_bot        = false
-        claims_credentials_ecs      = true
-        claims_credentials_prospect = true
-        claims_credentials_carbon   = true
-        claims_credentials_umuzi    = false
+        ixo_cellnode                         = true
+        ixo_blocksync                        = true
+        ixo_blocksync_core                   = true
+        ixo_feegrant_nest                    = true
+        ixo_did_resolver                     = true
+        ixo_faucet                           = true
+        ixo_matrix_state_bot                 = false
+        claims_credentials_ecs               = true
+        claims_credentials_prospect          = true
+        claims_credentials_carbon            = true
+        claims_credentials_umuzi             = false
+        claims_credentials_claimformprotocol = false
+        ixo_deeplink_server                  = false
+        ixo_kyc_server                       = false
       }
     }
     mainnet = {
       cluster_firewall     = true
-      rpc_url              = "https://impacthub.ixo.earth/rpc/"
+      rpc_url              = "https://impacthub.ixo.world/rpc/"
       domain               = "ixo.world"
+      domain2              = "ixo.earth"
       ipfs_service_mapping = "https://blocksync.ixo.earth/api/ipfs/"
       enabled_services = {
-        ixo_cellnode                = false
-        ixo_blocksync               = false
-        ixo_blocksync_core          = false
-        ixo_feegrant_nest           = false
-        ixo_did_resolver            = false
-        ixo_faucet                  = false
-        ixo_matrix_state_bot        = false
-        claims_credentials_ecs      = false
-        claims_credentials_prospect = false
-        claims_credentials_carbon   = false
-        claims_credentials_umuzi    = false
+        ixo_cellnode                         = true
+        ixo_blocksync                        = true
+        ixo_blocksync_core                   = true
+        ixo_feegrant_nest                    = true
+        ixo_did_resolver                     = false
+        ixo_faucet                           = false
+        ixo_matrix_state_bot                 = false
+        claims_credentials_ecs               = true
+        claims_credentials_prospect          = false
+        claims_credentials_carbon            = true
+        claims_credentials_umuzi             = false
+        claims_credentials_claimformprotocol = true
+        ixo_deeplink_server                  = true
+        ixo_kyc_server                       = true
       }
     }
   }
@@ -104,6 +116,7 @@ variable "hostnames" {
     mainnet_vault  = "vault.mainnet.ixo.earth"
     mainnet_dex    = "dex.mainnet.ixo.earth"
     mainnet_matrix = "testmx.mainnet.ixo.earth"
+    mainnet_world  = "mainnet.ixo.world"
   }
 }
 

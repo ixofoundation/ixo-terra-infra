@@ -1,7 +1,57 @@
 controller:
-  replicaCount: 1
+  config:
+    keep-alive: "4s 4s"
+    server-snippet: |
+      keepalive_timeout 4s 4s;
+      if ($host = "blockscantest.devnet.ixo.earth") {
+          rewrite ^/ixo$ https://explorer.ixo.earth/devnet-ixo redirect;
+          rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/devnet-ixo/tx/$1 redirect;
+          rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/devnet-ixo/block/$1 redirect;
+          rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/devnet-ixo/gov/$1 redirect;
+          rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/devnet-ixo/account/$1 redirect;
+      }
+      if ($host = "blockscan.devnet.ixo.earth") {
+          rewrite ^/ixo$ https://explorer.ixo.earth/devnet-ixo redirect;
+          rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/devnet-ixo/tx/$1 redirect;
+          rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/devnet-ixo/block/$1 redirect;
+          rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/devnet-ixo/gov/$1 redirect;
+          rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/devnet-ixo/account/$1 redirect;
+      }
+      if ($host = "blockscan.testnet.ixo.earth") {
+          rewrite ^/ixo$ https://explorer.ixo.earth/testnet-ixo redirect;
+          rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/testnet-ixo/tx/$1 redirect;
+          rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/testnet-ixo/block/$1 redirect;
+          rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/testnet-ixo/gov/$1 redirect;
+          rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/testnet-ixo/account/$1 redirect;
+      }
+  addHeaders:
+    Host: "$host"
+    X-Real-IP: "$remote_addr"
+    X-Forwarded-For: "$proxy_add_x_forwarded_for"
+  replicaCount: 2
+  minAvailable: 1
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 50
+    targetMemoryUtilizationPercentage: 70
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 180
+      scaleUp:
+        stabilizationWindowSeconds: 300
+        policies:
+          - type: Pods
+            value: 2
+            periodSeconds: 60
   labels:
     app: ingress-nginx
+    app.kubernetes.io/part-of: ixo
   topologySpreadConstraints:
     - labelSelector:
         matchLabels:
@@ -32,18 +82,18 @@ controller:
     enabled: true
     createSecretJob:
       resources:
-       limits:
-         memory: 20Mi
-       requests:
-         cpu: 10m
-         memory: 20Mi
+        limits:
+          memory: 20Mi
+        requests:
+          cpu: 10m
+          memory: 20Mi
     patchWebhookJob:
       resources:
-       limits:
-         memory: 20Mi
-       requests:
-         cpu: 10m
-         memory: 20Mi
+        limits:
+          memory: 20Mi
+        requests:
+          cpu: 10m
+          memory: 20Mi
 defaultBackend:
   resources:
     limits:

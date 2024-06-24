@@ -32,7 +32,7 @@ env:
   - name: "DATABASE_URL_CORE"
     value: "postgresql://${pgUsername_core}:${pgPassword_core}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername_core}"
   - name: "DATABASE_URL"
-    value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
+    value: "<path:${vault_mount}/data/ixo-blocksync#DATABASE_URL>"
   - name: "ENTITY_MODULE_CONTRACT_ADDRESS"
     value: "<path:${vault_mount}/data/ixo-blocksync#ENTITY_MODULE_CONTRACT_ADDRESS>"
 resources:

@@ -30,18 +30,33 @@ module "ixo_cellnode" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         vault_mount = vault_mount.ixo.path
         pgUsername  = var.pg_ixo.pg_users[1].username
-        pgPassword = replace( # This replaces special characters to a readable format for Postgres
+        pgPassword = replace( #TODO Find a way to simplify this #pain
           replace(
             replace(
               replace(
-                module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username],
-                "/", "%2F"
+                replace(
+                  replace(
+                    replace(
+                      replace(
+                        replace(
+                          module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username],
+                          "/", "%2F"
+                        ),
+                        ":", "%3A"
+                      ),
+                      "@", "%40"
+                    ),
+                    " ", "%20"
+                  ),
+                  "{", "%7B"
+                ),
+                "}", "%7D"
               ),
-              ":", "%3A"
+              "?", "%3F"
             ),
-            "@", "%40"
+            "<", "%3C"
           ),
-          " ", "%20"
+          ">", "%3E"
         )
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
@@ -125,23 +140,9 @@ module "ixo_blocksync" {
         rpc_url              = var.environments[terraform.workspace].rpc_url
         ipfs_service_mapping = var.environments[terraform.workspace].ipfs_service_mapping
         host                 = local.dns_for_environment[terraform.workspace]["ixo_blocksync"]
-        pgUsername           = var.pg_ixo.pg_users[3].username
-        pgPassword = replace( # This replaces special characters to a readable format for Postgres
-          replace(
-            replace(
-              replace(
-                module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username],
-                "/", "%2F"
-              ),
-              ":", "%3A"
-            ),
-            "@", "%40"
-          ),
-          " ", "%20"
-        )
-        pgCluster       = var.pg_ixo.pg_cluster_name
-        pgNamespace     = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-        pgUsername_core = var.pg_ixo.pg_users[2].username
+        pgCluster            = var.pg_ixo.pg_cluster_name
+        pgNamespace          = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername_core      = var.pg_ixo.pg_users[2].username
         pgPassword_core = replace( # This replaces special characters to a readable format for Postgres
           replace(
             replace(
@@ -158,7 +159,22 @@ module "ixo_blocksync" {
       }
     )
   }
-  create_kv        = true
+  create_kv = true
+  kv_defaults = {
+    "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[3].username}:${replace(
+      replace(
+        replace(
+          replace(
+            module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username],
+            "/", "%2F"
+          ),
+          ":", "%3A"
+        ),
+        "@", "%40"
+      ),
+      " ", "%20"
+    )}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
+  }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
@@ -201,10 +217,14 @@ module "ecs" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_ecs"]
         vault_mount = vault_mount.ixo.path
+        cellnode    = terraform.workspace == "mainnet" ? "https://cellnode.ixo.world" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
-  create_kv        = true
+  create_kv = true
+  kv_defaults = {
+    "REMOTE_CONTEXTS" = "[ \"https://w3id.org/ixo/context/v1\" ]" # TODO this can be moved to an application config in future.
+  }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
@@ -224,6 +244,31 @@ module "carbon" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_carbon"]
         vault_mount = vault_mount.ixo.path
+        cellnode    = terraform.workspace == "mainnet" ? "https://cellnode.ixo.world" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "claimformprotocol" {
+  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_claimformprotocol"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "claims-credentials-claimformprotocol"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_claimformprotocol.yml",
+      {
+        environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
+        host        = local.dns_for_environment[terraform.workspace]["claims_credentials_claimformprotocol"]
+        vault_mount = vault_mount.ixo.path
+        cellnode    = terraform.workspace == "mainnet" ? "https://cellnode.ixo.world" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
@@ -323,3 +368,111 @@ module "ixo_faucet" {
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
+
+module "ixo_deeplink_server" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_deeplink_server"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-deeplink-server"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-deeplink-server"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_deeplink_server.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_deeplink_server"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[4].username
+        pgPassword = replace( # This replaces special characters to a readable format for Postgres
+          replace(
+            replace(
+              replace(
+                module.postgres-operator.database_password[var.pg_ixo.pg_users[4].username],
+                "/", "%2F"
+              ),
+              ":", "%3A"
+            ),
+            "@", "%40"
+          ),
+          " ", "%20"
+        )
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_kyc_server" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_kyc_server"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-kyc-server"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-kyc-server"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_server.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_server"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[5].username
+        pgPassword = replace( # This replaces special characters to a readable format for Postgres
+          replace(
+            replace(
+              replace(
+                module.postgres-operator.database_password[var.pg_ixo.pg_users[5].username],
+                "/", "%2F"
+              ),
+              ":", "%3A"
+            ),
+            "@", "%40"
+          ),
+          " ", "%20"
+        )
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_redirects" {
+  count           = terraform.workspace == "mainnet" ? 0 : 1
+  source          = "./modules/ixo_redirects"
+  nginx_namespace = module.argocd.namespaces_helm["nginx-ingress-controller"].metadata[0].name
+}
+
+#module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
+#  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
+#  source     = "./modules/ixo_blocksync_migration"
+#  db_info = {
+#    pgUsername = var.pg_ixo.pg_users[3].username
+#    pgPassword = replace( # This replaces special characters to a readable format for Postgres
+#      replace(
+#        replace(
+#          replace(
+#            module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username],
+#            "/", "%2F"
+#          ),
+#          ":", "%3A"
+#        ),
+#        "@", "%40"
+#      ),
+#      " ", "%20"
+#    )
+#    pgCluster   = var.pg_ixo.pg_cluster_name
+#    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+#    useAlt      = true # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
+#  }
+#  existing_blocksync_pod_label_name = "ixo-blocksync"
+#  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
+#}

@@ -39,7 +39,7 @@ module "argocd" {
       repository = "https://kubernetes.github.io/ingress-nginx"
       values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
         {
-          host = terraform.workspace == "testnet" ? "${var.hostnames[terraform.workspace]}, ${var.hostnames["${terraform.workspace}_world"]}" : var.hostnames[terraform.workspace]
+          host = terraform.workspace == "testnet" || terraform.workspace == "mainnet" ? "${var.hostnames[terraform.workspace]}, ${var.hostnames["${terraform.workspace}_world"]}" : var.hostnames[terraform.workspace]
         }
       )
     },
@@ -200,27 +200,27 @@ module "matrix_admin" {
   vault_mount_path = vault_mount.ixo.path
 }
 
-module "matrix_slack" {
-  depends_on = [module.argocd, module.matrix_init]
-  source     = "./modules/argocd_application"
-  application = {
-    name       = "matrix-slack"
-    namespace  = var.pg_matrix.namespace
-    owner      = "ixofoundation"
-    repository = local.ixo_terra_infra_repository
-    path       = "charts/matrix-slack"
-    values_override = templatefile("${local.helm_values_config_path}/matrix-slack.yml",
-      {
-        domain      = var.hostnames["${terraform.workspace}_matrix"]
-        as_token    = random_password.mautrix_slack_as_token.result
-        hs_token    = random_password.mautrix_slack_hs_token.result
-        postgresUri = "postgres://${var.pg_matrix.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_matrix.pg_users[0].username]}@${var.pg_matrix.pg_cluster_name}-primary.${var.pg_matrix.namespace}.svc.cluster.local/slackbot"
-      }
-    )
-  }
-  argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
-}
+#module "matrix_slack" {
+#  depends_on = [module.argocd, module.matrix_init]
+#  source     = "./modules/argocd_application"
+#  application = {
+#    name       = "matrix-slack"
+#    namespace  = var.pg_matrix.namespace
+#    owner      = "ixofoundation"
+#    repository = local.ixo_terra_infra_repository
+#    path       = "charts/matrix-slack"
+#    values_override = templatefile("${local.helm_values_config_path}/matrix-slack.yml",
+#      {
+#        domain      = var.hostnames["${terraform.workspace}_matrix"]
+#        as_token    = random_password.mautrix_slack_as_token.result
+#        hs_token    = random_password.mautrix_slack_hs_token.result
+#        postgresUri = "postgres://${var.pg_matrix.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_matrix.pg_users[0].username]}@${var.pg_matrix.pg_cluster_name}-primary.${var.pg_matrix.namespace}.svc.cluster.local/slackbot"
+#      }
+#    )
+#  }
+#  argo_namespace   = module.argocd.argo_namespace
+#  vault_mount_path = vault_mount.ixo.path
+#}
 
 module "cert-issuer" {
   depends_on = [module.argocd]
@@ -250,22 +250,27 @@ module "postgres-operator" {
     },
     {
       # IXO Cluster
-      pg_cluster_name        = var.pg_ixo.pg_cluster_name
-      pg_cluster_namespace   = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-      pg_image               = var.pg_ixo.pg_image
-      pg_image_tag           = var.pg_ixo.pg_image_tag
-      pg_version             = var.pg_ixo.pg_version
-      pg_instances           = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
-      pg_users               = local.pg_users_yaml
-      pg_usernames           = local.pg_users_usernames
-      pgbackrest_image       = var.pg_ixo.pgbackrest_image
-      pgbackrest_image_tag   = var.pg_ixo.pgbackrest_image_tag
-      pgbackrest_repos       = file("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml")
+      pg_cluster_name      = var.pg_ixo.pg_cluster_name
+      pg_cluster_namespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+      pg_image             = var.pg_ixo.pg_image
+      pg_image_tag         = var.pg_ixo.pg_image_tag
+      pg_version           = var.pg_ixo.pg_version
+      pg_instances         = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
+      pg_users             = local.pg_users_yaml
+      pg_usernames         = local.pg_users_usernames
+      pgbackrest_image     = var.pg_ixo.pgbackrest_image
+      pgbackrest_image_tag = var.pg_ixo.pgbackrest_image_tag
+      pgbackrest_repos = templatefile("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml",
+        {
+          gcs_bucket = google_storage_bucket.postgres_backups.name
+        }
+      )
       pgmonitoring_image     = var.pg_ixo.pgmonitoring_image
       pgmonitoring_image_tag = var.pg_ixo.pgmonitoring_image_tag
       initSql                = file("${path.root}/config/sql/ixo-init.sql")
     }
   ]
+  gcs_key = file("${path.root}/credentials.json")
 }
 
 module "ixo_loki_logs" {
@@ -273,7 +278,8 @@ module "ixo_loki_logs" {
   source     = "./modules/loki_logs"
 
   matchNamespaces = [
-    kubernetes_namespace_v1.ixo_core.metadata[0].name
+    kubernetes_namespace_v1.ixo_core.metadata[0].name,
+    module.argocd.namespaces_helm["nginx-ingress-controller"].metadata[0].name
   ]
   name      = "ixo"
   namespace = "ixo-loki"
@@ -315,7 +321,7 @@ module "matrix_init" {
 }
 
 module "external_dns_cloudflare" {
-  count  = terraform.workspace == "testnet" || terraform.workspace == "main" ? 1 : 0
+  count  = terraform.workspace == "testnet" || terraform.workspace == "mainnet" ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "external-dns-cloudflare"
@@ -337,6 +343,13 @@ module "external_dns_cloudflare" {
   create_kv        = false
   vault_mount_path = null
 }
+
+# Requires to be logged in via gcloud auth login
+#module "gce_csi_driver" {
+#  source = "./modules/gce_csi_driver"
+#  service_account_dir = path.cwd
+#  kubeconfig_path = abspath(module.kubernetes_cluster.kubeconfig_path)
+#}
 
 #module "cosmos" {
 #  source          = "./modules/cosmos_operator"
