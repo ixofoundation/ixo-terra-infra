@@ -21,6 +21,15 @@ spec:
   backups:
     pgbackrest:
       image: ${pgbackrest_image}:${pgbackrest_image_tag}
+      global:
+        repo1-gcs-key: /etc/pgbackrest/conf.d/gcs-key.json
+      configuration:
+        - secret:
+            name: ${pg_cluster_name}-gcs-pgbackrest-secret
+      manual:
+        repoName: repo1
+        options:
+          - --type=full
       repos:
         ${indent(8, pgbackrest_repos)}
   databaseInitSQL:

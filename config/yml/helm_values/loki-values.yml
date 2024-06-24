@@ -20,7 +20,7 @@ read:
   resources:
     requests:
       memory: 256Mi
-      cpu: 250m
+      cpu: 150m
     limits:
       memory: 256Mi
 backend:
@@ -31,7 +31,7 @@ backend:
   resources:
     requests:
       memory: 512Mi
-      cpu: 250m
+      cpu: 100m
     limits:
       memory: 512Mi
 write:

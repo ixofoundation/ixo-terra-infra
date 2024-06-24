@@ -1,5 +1,7 @@
 provider:
   name: cloudflare
+rbac:
+  create: false
 env:
   - name: CF_API_TOKEN
     value: ${CF_API_TOKEN}

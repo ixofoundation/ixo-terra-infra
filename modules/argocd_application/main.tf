@@ -15,12 +15,7 @@ resource "vault_kv_secret_v2" "this" {
   name                = var.application.name
   cas                 = 1
   delete_all_versions = true
-  data_json = jsonencode(
-    {
-      WEB3_KEY   = "",
-      WEB3_PROOF = "",
-    }
-  )
+  data_json           = jsonencode(var.kv_defaults)
   custom_metadata {
     max_versions = 5
   }

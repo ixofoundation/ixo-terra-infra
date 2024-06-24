@@ -1,9 +1,6 @@
 - name: repo1
-  volume:
-    volumeClaimSpec:
-      storageClassName: "vultr-block-storage-hdd"
-      accessModes:
-        - "ReadWriteOnce"
-      resources:
-        requests:
-          storage: 200Gi
+  gcs:
+    bucket: ${gcs_bucket}
+  schedules:
+    full: "0 2 * * 0"  # Full backup every Sunday at 2 AM
+    differential: "0 2 * * 1-6"  # Differential backup Monday to Saturday at 2 AM

@@ -19,3 +19,7 @@ variable "clusters" {
     )
   )
 }
+
+variable "gcs_key" {
+  type = string
+}

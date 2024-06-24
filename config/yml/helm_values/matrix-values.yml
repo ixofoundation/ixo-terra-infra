@@ -68,8 +68,9 @@ argoCD: true
 persistence:
   enabled: true
   # existingClaim: synapse-data
-  storageClass: "nfs"
-  accessMode: ReadWriteMany
+#  storageClass: "nfs"
+  storageClass: "vultr-block-storage-hdd"
+  accessMode: ReadWriteOnce
   size: 40Gi
 
 ## Configuration for the main Synapse service.
@@ -142,9 +143,9 @@ ingress:
         - matrix.${host}
       secretName: matrix-tls
 synapse:
-  extraVolumeMounts:
-    - name: media
-      mountPath: /data
+#  extraVolumeMounts:
+#    - name: media
+#      mountPath: /data
   resources:
     limits:
       memory: 500Mi

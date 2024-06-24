@@ -16,6 +16,10 @@ variable "application" {
   )
 }
 
+variable "kv_defaults" {
+  default = {}
+}
+
 variable "create_kv" {
   type    = bool
   default = false

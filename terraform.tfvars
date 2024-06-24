@@ -12,7 +12,7 @@ versions = {
   prometheus-blackbox-exporter = "8.12.0" # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
   dex                          = "0.17.0" # https://artifacthub.io/packages/helm/dex/dex
   tailscale                    = "1.62.0" # https://pkgs.tailscale.com/helmcharts/index.yaml
-  matrix                       = "3.9.0"  # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
+  matrix                       = "3.9.5"  # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
   openebs                      = "3.10.0" # https://artifacthub.io/packages/helm/openebs/openebs
   metrics-server               = "3.12.1" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
   nfs                          = "1.8.0"  # https://artifacthub.io/packages/helm/nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner
@@ -59,7 +59,15 @@ pg_ixo = {
     },
     {
       username  = "blocksync"
-      databases = ["blocksync"]
+      databases = ["blocksync", "blocksync_alt"]
+    },
+    {
+      username  = "deeplink"
+      databases = ["deeplink"]
+    },
+    {
+      username  = "kyc"
+      databases = ["kyc"]
     }
   ]
   pg_version             = 15
