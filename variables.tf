@@ -31,6 +31,7 @@ variable "environments" {
         claims_credentials_carbon            = true
         claims_credentials_umuzi             = true
         claims_credentials_claimformprotocol = false
+        claims_credentials_did               = false
         ixo_deeplink_server                  = false
         ixo_kyc_server                       = false
       }
@@ -48,12 +49,13 @@ variable "environments" {
         ixo_feegrant_nest                    = true
         ixo_did_resolver                     = true
         ixo_faucet                           = true
-        ixo_matrix_state_bot                 = false
+        ixo_matrix_state_bot                 = true
         claims_credentials_ecs               = true
         claims_credentials_prospect          = true
         claims_credentials_carbon            = true
         claims_credentials_umuzi             = false
         claims_credentials_claimformprotocol = false
+        claims_credentials_did               = true
         ixo_deeplink_server                  = false
         ixo_kyc_server                       = false
       }
@@ -77,6 +79,7 @@ variable "environments" {
         claims_credentials_carbon            = true
         claims_credentials_umuzi             = false
         claims_credentials_claimformprotocol = true
+        claims_credentials_did               = true
         ixo_deeplink_server                  = true
         ixo_kyc_server                       = true
       }
@@ -111,11 +114,11 @@ variable "hostnames" {
     testnet_world  = "testnetkb.ixo.world"
     testnet_vault  = "vault.testnet.ixo.earth"
     testnet_dex    = "dex.testnet.ixo.earth"
-    testnet_matrix = "testmx.testnet.ixo.earth"
+    testnet_matrix = "testmx.ixo.earth"
     mainnet        = "mainnetkb.ixo.earth"
     mainnet_vault  = "vault.mainnet.ixo.earth"
     mainnet_dex    = "dex.mainnet.ixo.earth"
-    mainnet_matrix = "testmx.mainnet.ixo.earth"
+    mainnet_matrix = "mx.ixo.earth"
     mainnet_world  = "mainnet.ixo.world"
   }
 }
