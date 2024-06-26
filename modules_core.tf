@@ -300,6 +300,30 @@ module "umuzi" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "did" {
+  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_did"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "claims-credentials-did"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_did.yml",
+      {
+        environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
+        host        = local.dns_for_environment[terraform.workspace]["claims_credentials_did"]
+        vault_mount = vault_mount.ixo.path
+        cellnode    = terraform.workspace == "mainnet" ? "https://cellnode.ixo.world" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "ixo_feegrant_nest" {
   count  = var.environments[terraform.workspace].enabled_services["ixo_feegrant_nest"] ? 1 : 0
   source = "./modules/argocd_application"

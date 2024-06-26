@@ -2,3 +2,9 @@ persistence:
   enabled: true
   storageClass: "vultr-block-storage-hdd"
   size: 200Gi
+resources:
+   limits:
+     memory: 256Mi
+   requests:
+     cpu: 100m
+     memory: 128Mi
