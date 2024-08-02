@@ -24,33 +24,36 @@ module "argocd" {
   ]
   applications_helm = [
     {
-      name            = "cert-manager"
-      namespace       = "cert-manager"
-      chart           = "cert-manager"
-      repository      = "https://charts.jetstack.io"
-      revision        = var.versions["cert-manager"]
-      values_override = templatefile("${local.helm_values_config_path}/cert-manager-values.yml", {})
+      name              = "cert-manager"
+      namespace         = "cert-manager"
+      chart             = "cert-manager"
+      repository        = "https://charts.jetstack.io"
+      revision          = var.versions["cert-manager"]
+      ignoreDifferences = local.cert_manager_ignore_differences
+      values_override   = templatefile("${local.helm_values_config_path}/cert-manager-values.yml", {})
     },
     {
-      name       = "nginx-ingress-controller"
-      namespace  = "ingress-nginx"
-      chart      = "ingress-nginx"
-      revision   = var.versions["nginx-ingress-controller"]
-      repository = "https://kubernetes.github.io/ingress-nginx"
+      name              = "nginx-ingress-controller"
+      namespace         = "ingress-nginx"
+      chart             = "ingress-nginx"
+      revision          = var.versions["nginx-ingress-controller"]
+      repository        = "https://kubernetes.github.io/ingress-nginx"
+      ignoreDifferences = local.nginx_ignore_differences
       values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
         {
           host = terraform.workspace == "testnet" || terraform.workspace == "mainnet" ? "${var.hostnames[terraform.workspace]}, ${var.hostnames["${terraform.workspace}_world"]}" : var.hostnames[terraform.workspace]
         }
       )
     },
-    {
+    { # We use a fork of the main Operator helm chart to enable feature gates.
       name            = "postgres-operator"
       namespace       = "postgres-operator"
       chart           = "pgo"
       revision        = var.versions["postgres-operator"]
-      repository      = "registry.developers.crunchydata.com/crunchydata"
+      repository      = "https://github.com/ixofoundation/postgres-operator-examples"
+      path            = "helm/install"
+      isHelm          = false
       values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
-      oci             = true
     },
     {
       name              = "prometheus-stack"
@@ -160,16 +163,18 @@ module "argocd" {
           host            = var.hostnames["${terraform.workspace}_matrix"]
           kv_mount        = local.vault_core_mount
           app_name        = "matrix"
+          gcs_bucket_url  = google_storage_bucket.matrix_backups.url
         }
       )
     },
     {
-      name            = "nfs-provisioner"
-      namespace       = "nfs"
-      chart           = "nfs-server-provisioner"
-      revision        = "1.8.0"
-      repository      = "https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner"
-      values_override = templatefile("${local.helm_values_config_path}/nfs-values.yml", {})
+      name              = "nfs-provisioner"
+      namespace         = "nfs"
+      chart             = "nfs-server-provisioner"
+      revision          = "1.8.0"
+      repository        = "https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner"
+      ignoreDifferences = local.nfs_provisioner_ignore_differences
+      values_override   = templatefile("${local.helm_values_config_path}/nfs-values.yml", {})
     },
     {
       name       = "metrics-server"
@@ -279,7 +284,9 @@ module "ixo_loki_logs" {
 
   matchNamespaces = [
     kubernetes_namespace_v1.ixo_core.metadata[0].name,
-    module.argocd.namespaces_helm["nginx-ingress-controller"].metadata[0].name
+    module.argocd.namespaces_helm["nginx-ingress-controller"].metadata[0].name,
+    module.argocd.namespaces_helm["matrix"].metadata[0].name,
+    kubernetes_namespace_v1.ixo-postgres.metadata[0].name
   ]
   name      = "ixo"
   namespace = "ixo-loki"
@@ -289,6 +296,18 @@ module "gcp_kms_vault" {
   source    = "./modules/gcp_kms"
   name      = "vault-${terraform.workspace}"
   namespace = "vault"
+}
+
+module "gcp_kms_matrix" {
+  source    = "./modules/gcp_kms"
+  name      = "matrix-${terraform.workspace}"
+  namespace = module.argocd.namespaces_helm["matrix"].metadata[0].name
+}
+
+module "gcp_kms_core" {
+  source    = "./modules/gcp_kms"
+  name      = "core-${terraform.workspace}"
+  namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
 }
 
 module "vault_init" {

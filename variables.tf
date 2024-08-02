@@ -26,6 +26,7 @@ variable "environments" {
         ixo_did_resolver                     = true
         ixo_faucet                           = true
         ixo_matrix_state_bot                 = true
+        ixo_matrix_appservice_rooms          = true
         claims_credentials_ecs               = true
         claims_credentials_prospect          = true
         claims_credentials_carbon            = true
@@ -50,6 +51,7 @@ variable "environments" {
         ixo_did_resolver                     = true
         ixo_faucet                           = true
         ixo_matrix_state_bot                 = true
+        ixo_matrix_appservice_rooms          = true
         claims_credentials_ecs               = true
         claims_credentials_prospect          = true
         claims_credentials_carbon            = true
@@ -74,6 +76,7 @@ variable "environments" {
         ixo_did_resolver                     = false
         ixo_faucet                           = false
         ixo_matrix_state_bot                 = false
+        ixo_matrix_appservice_rooms          = false
         claims_credentials_ecs               = true
         claims_credentials_prospect          = false
         claims_credentials_carbon            = true

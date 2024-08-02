@@ -1,28 +1,44 @@
 controller:
   config:
-    keep-alive: "4s 4s"
+    keep-alive: "4"
+    proxy-body-size: "50m"
     server-snippet: |
       keepalive_timeout 4s 4s;
       if ($host = "blockscantest.devnet.ixo.earth") {
+          rewrite ^/$ https://explorer.ixo.earth/devnet-ixo redirect;
           rewrite ^/ixo$ https://explorer.ixo.earth/devnet-ixo redirect;
           rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/devnet-ixo/tx/$1 redirect;
           rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/devnet-ixo/block/$1 redirect;
           rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/devnet-ixo/gov/$1 redirect;
           rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/devnet-ixo/account/$1 redirect;
+          rewrite ^/(.*)$ https://explorer.ixo.earth/devnet-ixo redirect;
       }
       if ($host = "blockscan.devnet.ixo.earth") {
+          rewrite ^/$ https://explorer.ixo.earth/devnet-ixo redirect;
           rewrite ^/ixo$ https://explorer.ixo.earth/devnet-ixo redirect;
           rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/devnet-ixo/tx/$1 redirect;
           rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/devnet-ixo/block/$1 redirect;
           rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/devnet-ixo/gov/$1 redirect;
           rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/devnet-ixo/account/$1 redirect;
+          rewrite ^/(.*)$ https://explorer.ixo.earth/devnet-ixo redirect;
       }
       if ($host = "blockscan.testnet.ixo.earth") {
+          rewrite ^/$ https://explorer.ixo.earth/testnet-ixo redirect;
           rewrite ^/ixo$ https://explorer.ixo.earth/testnet-ixo redirect;
           rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/testnet-ixo/tx/$1 redirect;
           rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/testnet-ixo/block/$1 redirect;
           rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/testnet-ixo/gov/$1 redirect;
           rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/testnet-ixo/account/$1 redirect;
+          rewrite ^/(.*)$ https://explorer.ixo.earth/testnet-ixo redirect;
+      }
+      if ($host = "blockscan-pandora.ixo.earth") {
+          rewrite ^/$ https://explorer.ixo.earth/testnet-ixo redirect;
+          rewrite ^/ixo$ https://explorer.ixo.earth/testnet-ixo redirect;
+          rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/testnet-ixo/tx/$1 redirect;
+          rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/testnet-ixo/block/$1 redirect;
+          rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/testnet-ixo/gov/$1 redirect;
+          rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/testnet-ixo/account/$1 redirect;
+          rewrite ^/(.*)$ https://explorer.ixo.earth/testnet-ixo redirect;
       }
   addHeaders:
     Host: "$host"

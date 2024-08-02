@@ -85,29 +85,11 @@ resource "kubernetes_namespace_v1" "application_helm" {
   }
 }
 
-# Create Argo Git Applications
-resource "kubectl_manifest" "application" {
-  depends_on = [kubernetes_namespace_v1.application, module.argocd_release]
-  for_each   = { for app in var.applications : app.name => app }
-  yaml_body = templatefile("${path.module}/crds/argo-application.yml",
-    {
-      name           = each.value.name
-      namespace      = each.value.namespace
-      owner          = each.value.owner
-      argo_namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
-      workspace      = terraform.workspace
-      repository     = each.value.repository
-      helm_values    = each.value.values_override != null ? each.value.values_override : ""
-      path           = each.value.path != null ? each.value.path : "charts/${terraform.workspace}/${each.value.owner}/${each.value.namespace}"
-    }
-  )
-}
-
 # Create Argo Helm Applications
 resource "kubectl_manifest" "application_helm" {
   depends_on = [kubernetes_namespace_v1.application_helm, module.argocd_release]
   for_each   = { for app in var.applications_helm : app.name => app }
-  yaml_body = templatefile("${path.module}/crds/argo-application-helm.yml",
+  yaml_body = templatefile(each.value.isHelm == false ? "${path.module}/crds/argo-application.yml" : "${path.module}/crds/argo-application-helm.yml",
     {
       name              = each.value.name
       namespace         = each.value.namespace
@@ -118,6 +100,7 @@ resource "kubectl_manifest" "application_helm" {
       argo_namespace    = kubernetes_namespace_v1.app-argocd.metadata[0].name
       isOci             = each.value.oci != null ? each.value.oci : false
       ignoreDifferences = each.value.ignoreDifferences != null ? each.value.ignoreDifferences : "[]"
+      path              = each.value.path != null ? each.value.path : ""
     }
   )
 }

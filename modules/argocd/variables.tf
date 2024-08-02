@@ -30,6 +30,8 @@ variable "applications_helm" {
         revision          = string
         values_override   = optional(string)
         oci               = optional(bool)
+        isHelm            = optional(bool) # Default true
+        path              = optional(string)
         ignoreDifferences = optional(string)
       }
     )

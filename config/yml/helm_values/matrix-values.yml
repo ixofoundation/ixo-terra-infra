@@ -12,8 +12,12 @@ config:
 extraConfig:
   dynamic_thumbnails: true
   registration_requires_token: true
-#  app_service_config_files:
-#    - /data/registration.yaml
+  app_service_config_files:
+    - /data/appservice/rooms/production.yaml
+  experimental_features:
+    msc3202_device_masquerading: true
+    msc3202_transaction_extensions: true
+    msc2409_to_device_messages_enabled: true
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##
@@ -143,9 +147,28 @@ ingress:
         - matrix.${host}
       secretName: matrix-tls
 synapse:
-#  extraVolumeMounts:
-#    - name: media
-#      mountPath: /data
+  extraEnv:
+    - name: GOOGLE_APPLICATION_CREDENTIALS
+      value: /secrets/gcp/key.json
+  extraVolumes:
+    - name: matrix-rooms
+      configMap:
+        name: ixo-matrix-appservice-rooms-registration
+    - name: gcp-service-account-key
+      secret:
+        secretName: gcp-key-secret
+  extraVolumeMounts:
+    - name: matrix-rooms
+      mountPath: /data/appservice/rooms
+    - name: gcp-service-account-key
+      mountPath: /secrets/gcp
+  extraCommands: # This is for backing up.
+    - 'apt-get update -yqq && apt-get install -yqq apt-transport-https ca-certificates gnupg curl zip'
+    - 'curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg'
+    - 'echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list'
+    - 'apt-get update -yqq && apt-get install -yqq google-cloud-cli'
+    - 'gcloud auth login --cred-file=$GOOGLE_APPLICATION_CREDENTIALS'
+    - 'nohup sh -c "while true; do cd /synapse && zip -r data.zip data && gsutil cp data.zip ${gcs_bucket_url}/matrix/$(date +\%Y\%m\%d)/ && rm -f data.zip; sleep 86400; done" &' # Every 24 hours.
   resources:
     limits:
       memory: 500Mi

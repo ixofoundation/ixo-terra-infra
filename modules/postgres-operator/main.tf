@@ -18,6 +18,41 @@ resource "kubernetes_config_map_v1" "init_sql" {
   }
 }
 
+resource "kubernetes_config_map_v1" "promtail_postgres" {
+  for_each = { for cluster in var.clusters : cluster.pg_cluster_namespace => cluster }
+  metadata {
+    name      = "promtail-config"
+    namespace = each.value.pg_cluster_namespace
+  }
+
+  data = {
+    "promtail.yaml" = <<-EOT
+      server:
+        http_listen_port: 9080
+        grpc_listen_port: 0
+
+      positions:
+        filename: /tmp/positions.yaml
+
+      clients:
+        - url: http://loki.loki.svc.cluster.local:3100/loki/api/v1/push
+
+      scrape_configs:
+        - job_name: postgres-logs
+          static_configs:
+            - targets:
+                - localhost
+              labels:
+                job: ixo-postgres/ixo-postgres-promtail
+                __path__: /pgdata/*/log/postgresql*.log
+                cluster: ixo
+                name: ixo-postgres-promtail
+                app_kubernetes_io_name: ixo-postgres-promtail
+                app_kubernetes_io_part_of: ixo
+    EOT
+  }
+}
+
 resource "kubernetes_secret_v1" "gcs_secret_key" {
   for_each = { for cluster in var.clusters : cluster.pg_cluster_namespace => cluster }
   metadata {
@@ -31,7 +66,7 @@ resource "kubernetes_secret_v1" "gcs_secret_key" {
 
 resource "kubectl_manifest" "cluster" {
   for_each   = { for cluster in var.clusters : cluster.pg_cluster_namespace => cluster }
-  depends_on = [kubernetes_config_map_v1.init_sql, kubernetes_secret_v1.gcs_secret_key]
+  depends_on = [kubernetes_config_map_v1.init_sql, kubernetes_secret_v1.gcs_secret_key, kubernetes_config_map_v1.promtail_postgres]
   yaml_body = templatefile("${path.module}/crds/cluster.yml",
     {
       pg_cluster_name        = each.value.pg_cluster_name

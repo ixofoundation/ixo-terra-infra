@@ -30,34 +30,7 @@ module "ixo_cellnode" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         vault_mount = vault_mount.ixo.path
         pgUsername  = var.pg_ixo.pg_users[1].username
-        pgPassword = replace( #TODO Find a way to simplify this #pain
-          replace(
-            replace(
-              replace(
-                replace(
-                  replace(
-                    replace(
-                      replace(
-                        replace(
-                          module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username],
-                          "/", "%2F"
-                        ),
-                        ":", "%3A"
-                      ),
-                      "@", "%40"
-                    ),
-                    " ", "%20"
-                  ),
-                  "{", "%7B"
-                ),
-                "}", "%7D"
-              ),
-              "?", "%3F"
-            ),
-            "<", "%3C"
-          ),
-          ">", "%3E"
-        )
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username])
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
       }
@@ -79,7 +52,8 @@ module "ixo_matrix_state_bot" {
     repository = local.ixo_helm_chart_repository
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-matrix-state-bot.yml",
       {
-        host = local.dns_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
+        host       = local.dns_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
+        gcs_bucket = "${google_storage_bucket.matrix_backups.url}/bot/state"
       }
     )
   }
@@ -102,19 +76,7 @@ module "ixo_blocksync_core" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_blocksync_core"]
         pgUsername  = var.pg_ixo.pg_users[2].username
-        pgPassword = replace( # This replaces special characters to a readable format for Postgres
-          replace(
-            replace(
-              replace(
-                module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username],
-                "/", "%2F"
-              ),
-              ":", "%3A"
-            ),
-            "@", "%40"
-          ),
-          " ", "%20"
-        )
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username])
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
       }
@@ -143,37 +105,13 @@ module "ixo_blocksync" {
         pgCluster            = var.pg_ixo.pg_cluster_name
         pgNamespace          = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername_core      = var.pg_ixo.pg_users[2].username
-        pgPassword_core = replace( # This replaces special characters to a readable format for Postgres
-          replace(
-            replace(
-              replace(
-                module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username],
-                "/", "%2F"
-              ),
-              ":", "%3A"
-            ),
-            "@", "%40"
-          ),
-          " ", "%20"
-        )
+        pgPassword_core      = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username])
       }
     )
   }
   create_kv = true
   kv_defaults = {
-    "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[3].username}:${replace(
-      replace(
-        replace(
-          replace(
-            module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username],
-            "/", "%2F"
-          ),
-          ":", "%3A"
-        ),
-        "@", "%40"
-      ),
-      " ", "%20"
-    )}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
+    "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[3].username}:${urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username])}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
@@ -410,19 +348,7 @@ module "ixo_deeplink_server" {
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[4].username
-        pgPassword = replace( # This replaces special characters to a readable format for Postgres
-          replace(
-            replace(
-              replace(
-                module.postgres-operator.database_password[var.pg_ixo.pg_users[4].username],
-                "/", "%2F"
-              ),
-              ":", "%3A"
-            ),
-            "@", "%40"
-          ),
-          " ", "%20"
-        )
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[4].username])
       }
     )
   }
@@ -448,19 +374,7 @@ module "ixo_kyc_server" {
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[5].username
-        pgPassword = replace( # This replaces special characters to a readable format for Postgres
-          replace(
-            replace(
-              replace(
-                module.postgres-operator.database_password[var.pg_ixo.pg_users[5].username],
-                "/", "%2F"
-              ),
-              ":", "%3A"
-            ),
-            "@", "%40"
-          ),
-          " ", "%20"
-        )
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[5].username])
       }
     )
   }
@@ -475,24 +389,35 @@ module "ixo_redirects" {
   nginx_namespace = module.argocd.namespaces_helm["nginx-ingress-controller"].metadata[0].name
 }
 
+module "ixo_matrix_appservice_rooms" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_matrix_appservice_rooms"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-matrix-appservice-rooms"
+    namespace  = module.argocd.namespaces_helm["matrix"].metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-appservice-rooms"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_appservice_rooms.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
+        vault_mount = vault_mount.ixo.path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups.url}/bot/rooms"
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 #module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
 #  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
 #  source     = "./modules/ixo_blocksync_migration"
 #  db_info = {
 #    pgUsername = var.pg_ixo.pg_users[3].username
-#    pgPassword = replace( # This replaces special characters to a readable format for Postgres
-#      replace(
-#        replace(
-#          replace(
-#            module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username],
-#            "/", "%2F"
-#          ),
-#          ":", "%3A"
-#        ),
-#        "@", "%40"
-#      ),
-#      " ", "%20"
-#    )
+#    pgPassword = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username])
 #    pgCluster   = var.pg_ixo.pg_cluster_name
 #    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
 #    useAlt      = true # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
@@ -500,3 +425,6 @@ module "ixo_redirects" {
 #  existing_blocksync_pod_label_name = "ixo-blocksync"
 #  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
 #}
+
+#DATABASE_URL : postgresql://cellnode:p^mv%7Bv|+^C^vkXlNoYRuBA)@ixo-postgres-primary.ixo-postgres.svc.cluster.local/cellnode
+#DATABASE_URL : postgresql://cellnode:p%5Emv%7Bv%7C%2B%5EC%5EvkXlNoYRuBA%29@ixo-postgres-primary.ixo-postgres.svc.cluster.local/cellnode
