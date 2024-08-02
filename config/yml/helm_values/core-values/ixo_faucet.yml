@@ -30,7 +30,7 @@ env:
 resources:
   requests:
     memory: 300Mi
-    cpu: "100m"
+    cpu: "40m"
   limits:
     memory: 600Mi
 autoscaling:

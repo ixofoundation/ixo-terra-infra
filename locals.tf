@@ -20,6 +20,7 @@ locals {
       ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
       ixo_blocksync               = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
       ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
+      ixo_matrix_appservice_rooms = "rooms.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
       ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
       claims_credentials_prospect = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       claims_credentials_ecs      = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
@@ -36,6 +37,7 @@ locals {
       ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
       ixo_blocksync               = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
       ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
+      ixo_matrix_appservice_rooms = "rooms.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
       ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
       claims_credentials_prospect = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       claims_credentials_ecs      = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
@@ -51,6 +53,7 @@ locals {
       ixo_cellnode                         = "cellnode.${var.environments[terraform.workspace].domain}"
       ixo_blocksync                        = "blocksync-graphql.${var.environments[terraform.workspace].domain2}"
       ixo_matrix_state_bot                 = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
+      ixo_matrix_appservice_rooms          = "rooms.appservice.${var.hostnames["${terraform.workspace}_matrix"]}"
       ixo_blocksync_core                   = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
       claims_credentials_prospect          = "prospect.credentials2.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       claims_credentials_ecs               = "ecs.credentials.${var.environments[terraform.workspace].domain}"
@@ -144,43 +147,79 @@ locals {
 
   # Argo Helm Ignore Differences
   prometheus_stack_ignore_differences = <<EOT
-- group: monitoring.coreos.com
-  kind: ServiceMonitor
-  jqPathExpressions:
-    - .metadata.annotations
-    - .spec
-    - .spec.endpoints[]?.relabelings[]?.action
-- group: monitoring.coreos.com
-  kind: PodMonitor
-  jqPathExpressions:
-    - .metadata.annotations
-    - .spec
-    - .spec.endpoints[]?.relabelings[]?.action
-- group: monitoring.coreos.com
-  kind: Probes
-  jqPathExpressions:
-    - .metadata.annotations
-    - .spec
-    - .spec.endpoints[]?.relabelings[]?.action
+- group: admissionregistration.k8s.io
+  kind: MutatingWebhookConfiguration
+  jsonPointers:
+    - /webhooks
+- group: admissionregistration.k8s.io
+  kind: ValidatingWebhookConfiguration
+  jsonPointers:
+    - /webhooks
+- group: apps
+  kind: DaemonSet
+  jsonPointers:
+    - /spec/template/spec/containers/0/resources
+- group: apps
+  kind: Deployment
+  jsonPointers:
+    - /spec/template/spec/containers/0/resources
+    - /spec/template/spec/containers/1/resources
+    - /spec/template/spec/containers/2/resources
+    - /spec/template/spec/initContainers/0/resources
 EOT
   loki_ignore_differences             = <<EOT
-- group: monitoring.coreos.com
-  kind: ServiceMonitor
-  jqPathExpressions:
-    - .metadata.annotations
-    - .spec
-    - .spec.endpoints[]?.relabelings[]?.action
-- group: monitoring.coreos.com
-  kind: PodMonitor
-  jqPathExpressions:
-    - .metadata.annotations
-    - .spec
-    - .spec.endpoints[]?.relabelings[]?.action
+- group: apiextensions.k8s.io
+  kind: CustomResourceDefinition
+  jsonPointers:
+    - /metadata/annotations
+    - /spec/versions
+- group: apps
+  kind: DaemonSet
+  jsonPointers:
+    - /spec/template/spec/containers/0/resources
+- group: apps
+  kind: Deployment
+  jsonPointers:
+    - /spec/template/spec/containers/0/resources
 EOT
   vault_ignore_differences            = <<EOT
+- group: admissionregistration.k8s.io
+  kind: MutatingWebhookConfiguration
+  jsonPointers:
+    - /webhooks
 - group: apps
   kind: StatefulSet
   jqPathExpressions:
     - '.spec.volumeClaimTemplates[]?'
+EOT
+  nfs_provisioner_ignore_differences  = <<EOT
+- group: apps
+  kind: StatefulSet
+  jsonPointers:
+    - /spec/volumeClaimTemplates
+EOT
+  cert_manager_ignore_differences     = <<EOT
+- group: admissionregistration.k8s.io
+  kind: MutatingWebhookConfiguration
+  jsonPointers:
+    - /webhooks
+- group: admissionregistration.k8s.io
+  kind: ValidatingWebhookConfiguration
+  jsonPointers:
+    - /webhooks
+- group: apps
+  kind: Deployment
+  jsonPointers:
+    - /spec/template/spec/containers/0/resources
+EOT
+  nginx_ignore_differences            = <<EOT
+- group: ""
+  kind: Service
+  jsonPointers:
+    - /spec/ports
+- group: admissionregistration.k8s.io
+  kind: ValidatingWebhookConfiguration
+  jsonPointers:
+    - /webhooks
 EOT
 }

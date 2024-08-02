@@ -171,3 +171,30 @@ resource "google_storage_bucket" "postgres_backups" {
     }
   }
 }
+
+resource "google_storage_bucket" "matrix_backups" {
+  location = "US"
+  name     = "${var.org}-${terraform.workspace}-matrix"
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      age = 365 # Objects older than 365 days will be deleted
+    }
+  }
+
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "NEARLINE"
+    }
+    condition {
+      age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
+    }
+  }
+}

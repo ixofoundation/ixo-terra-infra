@@ -8,17 +8,17 @@ ingress:
   tls:
     - hosts:
         - ${host}
-      secretName: ixo-matrix-state-bot-tls
+      secretName: ixo-matrix-appservice-rooms-tls
   hosts:
     - host: ${host}
       paths:
         - path: /
           pathType: Prefix
 service:
-  port: 8080
+  port: 8081
 env:
   - name: "PORT"
-    value: "8080"
+    value: "8081"
 resources:
   requests:
     memory: 100Mi

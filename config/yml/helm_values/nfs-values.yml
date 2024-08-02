@@ -1,3 +1,4 @@
+replicaCount: 2
 persistence:
   enabled: true
   storageClass: "vultr-block-storage-hdd"
@@ -8,3 +9,17 @@ resources:
    requests:
      cpu: 100m
      memory: 128Mi
+storageClass:
+  mountOptions:
+    - tcp
+    - vers=4.1
+affinity:
+  podAntiAffinity:  # Spread the pods across nodes for high availability
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - nfs-server-provisioner
+        topologyKey: "kubernetes.io/hostname"

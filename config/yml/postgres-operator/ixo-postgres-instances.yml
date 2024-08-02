@@ -1,5 +1,31 @@
 - name: ixo-postgresql-0
   replicas: 2
+  metadata:
+    labels:
+      app.kubernetes.io/part-of: ixo
+      app.kubernetes.io/name: ixo-postgres
+  containers:
+    - name: promtail
+      image: grafana/promtail:latest
+      imagePullPolicy: IfNotPresent
+      args:
+        - -config.file=/conf/promtail.yaml
+      volumeMounts:
+        - name: postgres-data
+          mountPath: /pgdata
+        - name: exporter-config
+          readOnly: false
+          mountPath: /conf
+      resources:
+        limits:
+          memory: 256Mi
+        requests:
+          cpu: 50m
+          memory: 128Mi
+  config:
+    files:
+      - configMap:
+          name: promtail-config
   resources:
     requests:
       cpu: 500m
