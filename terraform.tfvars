@@ -68,6 +68,14 @@ pg_ixo = {
     {
       username  = "kyc"
       databases = ["kyc"]
+    },
+    {
+      username  = "coin-server"
+      databases = ["coin-server"]
+    },
+    {
+      username  = "faq-assistant"
+      databases = ["faq-assistant"]
     }
   ]
   pg_version             = 15

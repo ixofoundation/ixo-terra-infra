@@ -1,7 +1,11 @@
 provider:
   name: cloudflare
+namespaced: false
 rbac:
-  create: false
+  create: true
+sources:
+  - ingress
+  - service
 env:
   - name: CF_API_TOKEN
     value: ${CF_API_TOKEN}

@@ -1,4 +1,4 @@
-resource "kubernetes_secret_v1" "repository" { // Common Git Repository for Core modules.
+resource "kubernetes_secret_v1" "repository" { // Common ArgoCD Git Repository for Core modules.
   metadata {
     name      = "ixo"
     namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
@@ -384,7 +384,6 @@ module "ixo_kyc_server" {
 }
 
 module "ixo_redirects" {
-  count           = terraform.workspace == "mainnet" ? 0 : 1
   source          = "./modules/ixo_redirects"
   nginx_namespace = module.argocd.namespaces_helm["nginx-ingress-controller"].metadata[0].name
 }
@@ -408,6 +407,119 @@ module "ixo_matrix_appservice_rooms" {
     )
   }
   create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_faq_assistant" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_faq_assistant"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-faq-assistant"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/faq-assistant"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-faq-assistant.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_faq_assistant"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[7].username
+        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[7].username]
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    OPEN_AI_API_KEY = ""
+
+    AIRTABLE_API_KEY        = ""
+    AIRTABLE_FAQ_TABLE_NAME = ""
+
+    FAQ_ASSISTANCE_API_TOKEN = ""
+
+    SLACK_SIGNING_SECRET  = ""
+    SLACK_BOT_TOKEN       = ""
+    BOT_OAUTH_TOKEN       = ""
+    SLACK_APP_LEVEL_TOKEN = ""
+
+    LANGCHAIN_TRACING_V2           = ""
+    LANGCHAIN_API_KEY              = ""
+    LANGCHAIN_CALLBACKS_BACKGROUND = ""
+    LANGCHAIN_PROJECT              = ""
+
+    PINECONE_INDEX   = ""
+    PINECONE_API_KEY = ""
+
+    QSTASH_URL                 = ""
+    QSTASH_TOKEN               = ""
+    QSTASH_CURRENT_SIGNING_KEY = ""
+    QSTASH_NEXT_SIGNING_KEY    = ""
+    REDIS_URL                  = ""
+    REDIS_TOKEN                = ""
+    QUEUE_CALLBACK_Root_Path   = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_coin_server" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_coin_server"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-coin-server"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-coin-server"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-coin-server.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_coin_server"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[6].username
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[6].username])
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION     = ""
+    COINGECKO_API_KEY = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_stake_reward_claimer" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_stake_reward_claimer"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-stake-reward-claimer"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-stake-reward-claimer"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-stake-reward-claimer.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_stake_reward_claimer"]
+        vault_mount = vault_mount.ixo.path
+        rpc_url     = var.environments[terraform.workspace].rpc_url
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION = ""
+    SENTRYDSN     = ""
+    MNEMONIC      = ""
+  }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }

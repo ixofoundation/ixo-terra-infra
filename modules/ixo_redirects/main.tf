@@ -9,13 +9,13 @@ resource "kubernetes_ingress_v1" "redirect" {
   spec {
     ingress_class_name = "nginx"
     tls {
-      hosts       = terraform.workspace == "testnet" ? ["blockscan.${terraform.workspace}.ixo.earth", "blockscan-pandora.${terraform.workspace}.ixo.earth"] : ["blockscan.${terraform.workspace}.ixo.earth"]
+      hosts       = lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"])
       secret_name = "blockscan.${terraform.workspace}-tls"
     }
     dynamic "rule" {
-      for_each = terraform.workspace == "testnet" ? [1] : [0]
+      for_each = terraform.workspace == "testnet" ? [1] : []
       content {
-        host = "blockscan-pandora.ixo.earth"
+        host = element(lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"]), 1)
         http {
           path {
             path      = "/"
@@ -33,7 +33,7 @@ resource "kubernetes_ingress_v1" "redirect" {
       }
     }
     rule {
-      host = "blockscan.${terraform.workspace}.ixo.earth"
+      host = element(lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"]), 0)
       http {
         path {
           path      = "/"

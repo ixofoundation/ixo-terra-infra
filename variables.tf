@@ -8,6 +8,30 @@ variable "cloudflare_api_token" {
   default     = ""
 }
 
+variable "additional_manual_synthetic_monitoring_endpoints" {
+  type = map(list(string))
+  default = {
+    devnet = [
+      "https://devnet-blocksync.ixo.earth",
+      "https://signx.devnet.ixo.earth"
+    ]
+    testnet = [
+      "https://payments.testnet.emerging.eco",
+      "https://blockscan-pandora.ixo.earth",
+      "https://signx.testnet.ixo.earth"
+    ]
+    mainnet = [
+      "https://coincache.ixo.earth",
+      "https://kyc.devnet.ixo.earth",
+      "https://relayer.assistant.ixo.earth",
+      "https://blocksync.ixo.earth",
+      "https://reclaim.ixo.earth",
+      "https://signx.ixo.earth",
+      "https://ixo.rpc.m.stavr.tech"
+    ]
+  }
+}
+
 variable "environments" {
   description = "Environment specific configurations"
   type        = map(any)
@@ -35,6 +59,9 @@ variable "environments" {
         claims_credentials_did               = false
         ixo_deeplink_server                  = false
         ixo_kyc_server                       = false
+        ixo_faq_assistant                    = false
+        ixo_coin_server                      = false
+        ixo_stake_reward_claimer             = false
       }
     }
     testnet = {
@@ -60,6 +87,9 @@ variable "environments" {
         claims_credentials_did               = true
         ixo_deeplink_server                  = false
         ixo_kyc_server                       = false
+        ixo_faq_assistant                    = false
+        ixo_coin_server                      = false
+        ixo_stake_reward_claimer             = false
       }
     }
     mainnet = {
@@ -67,13 +97,13 @@ variable "environments" {
       rpc_url              = "https://impacthub.ixo.world/rpc/"
       domain               = "ixo.world"
       domain2              = "ixo.earth"
-      ipfs_service_mapping = "https://blocksync.ixo.earth/api/ipfs/"
+      ipfs_service_mapping = "https://blocksync-graphql.ixo.earth/api/ipfs/"
       enabled_services = {
         ixo_cellnode                         = true
         ixo_blocksync                        = true
         ixo_blocksync_core                   = true
         ixo_feegrant_nest                    = true
-        ixo_did_resolver                     = false
+        ixo_did_resolver                     = true
         ixo_faucet                           = false
         ixo_matrix_state_bot                 = false
         ixo_matrix_appservice_rooms          = false
@@ -85,6 +115,9 @@ variable "environments" {
         claims_credentials_did               = true
         ixo_deeplink_server                  = true
         ixo_kyc_server                       = true
+        ixo_faq_assistant                    = true
+        ixo_coin_server                      = true
+        ixo_stake_reward_claimer             = true
       }
     }
   }
