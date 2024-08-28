@@ -3,10 +3,13 @@ locals {
   ixo_helm_chart_repository  = "https://github.com/ixofoundation/ixo-helm-charts"
   ixo_terra_infra_repository = "https://github.com/ixofoundation/ixo-terra-infra"
   vault_core_mount           = "ixo_core"
-  synthetic_monitoring_endpoints = compact([
-    for app, dns_endpoint in local.dns_for_environment[terraform.workspace] :
-    contains(local.excluded_synthetic_monitoring, app) || dns_endpoint == null ? null : "https://${dns_endpoint}"
-  ])
+  synthetic_monitoring_endpoints = concat(
+    compact([
+      for app, dns_endpoint in local.dns_for_environment[terraform.workspace] :
+      contains(local.excluded_synthetic_monitoring, app) || dns_endpoint == null ? null : "https://${dns_endpoint}"
+    ]),
+    lookup(var.additional_manual_synthetic_monitoring_endpoints, terraform.workspace, [])
+  )
   excluded_synthetic_monitoring = []
   # IXO DNS Entries
   dns_for_environment = {
@@ -32,6 +35,9 @@ locals {
       ixo_faucet                  = "faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_deeplink_server         = "deeplink.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_kyc_server              = "kyc.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_faq_assistant           = ""
+      ixo_coin_server             = ""
+      ixo_stake_reward_claimer    = ""
     }
     testnet = {
       ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
@@ -48,6 +54,9 @@ locals {
       ixo_faucet                  = "faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_deeplink_server         = "deeplink.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_kyc_server              = "kyc.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_faq_assistant           = ""
+      ixo_coin_server             = ""
+      ixo_stake_reward_claimer    = ""
     }
     mainnet = {
       ixo_cellnode                         = "cellnode.${var.environments[terraform.workspace].domain}"
@@ -62,10 +71,13 @@ locals {
       claims_credentials_claimformprotocol = "claimformobjects.credentials.${var.environments[terraform.workspace].domain}"
       claims_credentials_did               = "didoracle.credentials.${var.environments[terraform.workspace].domain2}"
       ixo_feegrant_nest                    = "feegrant.${var.environments[terraform.workspace].domain}"
-      ixo_did_resolver                     = "resolver2.${var.hostnames[terraform.workspace]}"
+      ixo_did_resolver                     = "resolver.${var.environments[terraform.workspace].domain}"
       ixo_faucet                           = "faucet2.${var.hostnames[terraform.workspace]}"
       ixo_deeplink_server                  = "x.${var.environments[terraform.workspace].domain2}"
       ixo_kyc_server                       = "kyc2.${var.environments[terraform.workspace].domain}"
+      ixo_faq_assistant                    = "faq.assistant.${var.environments[terraform.workspace].domain2}"
+      ixo_coin_server                      = "coincache.${var.environments[terraform.workspace].domain2}"
+      ixo_stake_reward_claimer             = "reclaim.${var.environments[terraform.workspace].domain2}"
     }
   }
 

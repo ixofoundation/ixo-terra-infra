@@ -1,0 +1,44 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-stake-reward-claimer-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: "PORT"
+    value: "3000"
+  - name: "AUTHORIZATION"
+    value: "<path:${vault_mount}/data/ixo-stake-reward-claimer#AUTHORIZATION>"
+  - name: "MIGRATE_DB_PROGRAMATICALLY"
+    value: "1"
+  - name: "DATABASE_USE_SSL"
+    value: "1"
+  - name: "RPC_URL"
+    value: "${rpc_url}"
+  - name: "MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-stake-reward-claimer#MNEMONIC>"
+  - name: "SENTRYDSN"
+    value: "<path:${vault_mount}/data/ixo-stake-reward-claimer#SENTRYDSN>"
+service:
+  port: 3000
+resources:
+  requests:
+    memory: 200Mi
+    cpu: "50m"
+  limits:
+    memory: 350Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"
