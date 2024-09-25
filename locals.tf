@@ -38,6 +38,11 @@ locals {
       ixo_faq_assistant           = ""
       ixo_coin_server             = ""
       ixo_stake_reward_claimer    = ""
+      ixo_ussd                    = ""
+      ixo_whizz                   = ""
+      auto_approve_offset         = ""
+      ixo_iot_data                = ""
+      ixo_notification_server     = ""
     }
     testnet = {
       ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
@@ -53,10 +58,15 @@ locals {
       ixo_did_resolver            = "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_faucet                  = "faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_deeplink_server         = "deeplink.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_kyc_server              = "kyc.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_kyc_server              = "kyc.devnet.${var.environments[terraform.workspace].domain}"
       ixo_faq_assistant           = ""
       ixo_coin_server             = ""
       ixo_stake_reward_claimer    = ""
+      ixo_ussd                    = ""
+      ixo_whizz                   = ""
+      auto_approve_offset         = "offset.auto-approve.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_iot_data                = ""
+      ixo_notification_server     = ""
     }
     mainnet = {
       ixo_cellnode                         = "cellnode.${var.environments[terraform.workspace].domain}"
@@ -74,10 +84,15 @@ locals {
       ixo_did_resolver                     = "resolver.${var.environments[terraform.workspace].domain}"
       ixo_faucet                           = "faucet2.${var.hostnames[terraform.workspace]}"
       ixo_deeplink_server                  = "x.${var.environments[terraform.workspace].domain2}"
-      ixo_kyc_server                       = "kyc2.${var.environments[terraform.workspace].domain}"
+      ixo_kyc_server                       = "kyc.oracle.${var.environments[terraform.workspace].domain2}"
       ixo_faq_assistant                    = "faq.assistant.${var.environments[terraform.workspace].domain2}"
       ixo_coin_server                      = "coincache.${var.environments[terraform.workspace].domain2}"
       ixo_stake_reward_claimer             = "reclaim.${var.environments[terraform.workspace].domain2}"
+      ixo_ussd                             = ""
+      ixo_whizz                            = "whizz.assistant.${var.environments[terraform.workspace].domain2}"
+      auto_approve_offset                  = "offset.auto-approve.${var.environments[terraform.workspace].domain2}"
+      ixo_iot_data                         = "iot-data.${var.environments[terraform.workspace].domain2}"
+      ixo_notification_server              = "notifications.${var.environments[terraform.workspace].domain2}"
     }
   }
 

@@ -352,7 +352,15 @@ module "ixo_deeplink_server" {
       }
     )
   }
-  create_kv        = true
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION        = ""
+    BASE_URL             = ""
+    REDIRECT_URL         = ""
+    ANDROID_REDIRECT_URL = ""
+    IOS_REDIRECT_URL     = ""
+    FALLBACK_URL         = ""
+  }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
@@ -369,7 +377,8 @@ module "ixo_kyc_server" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_server.yml",
       {
         environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_server"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+        rpc_url     = var.environments[terraform.workspace].rpc_url
+        host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_server"]
         vault_mount = vault_mount.ixo.path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
@@ -378,7 +387,19 @@ module "ixo_kyc_server" {
       }
     )
   }
-  create_kv        = true
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION               = ""
+    COMPLYCUBE_API_KEY          = ""
+    COMPLYCUBE_WEBHOOK_SECRET   = ""
+    WEBVIEW_BASE_URL            = ""
+    ORACLE_DID                  = ""
+    CREDENTIALS_WORKER_API_KEY  = ""
+    CREDENTIALS_WORKER_URL      = ""
+    ORACLE_DELEGATOR_ADDRESS    = ""
+    ORACLE_DELEGATE_MNEMONIC    = ""
+    NOTIFICATION_SERVER_API_KEY = ""
+  }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
@@ -466,6 +487,63 @@ module "ixo_faq_assistant" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "ixo_whizz" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_whizz"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-whizz"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-whizz"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-whizz.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_whizz"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[8].username
+        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[8].username]
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    OPEN_AI_API_KEY = ""
+
+    AIRTABLE_API_KEY              = ""
+    AIRTABLE_Marketing_TABLE_NAME = ""
+
+    GURU_ASSISTANCE_API_TOKEN = ""
+    IXO_GURU_API_URL          = ""
+    MARKETING_GURU_API_TOKEN  = ""
+
+    SLACK_SIGNING_SECRET  = ""
+    SLACK_BOT_TOKEN       = ""
+    BOT_OAUTH_TOKEN       = ""
+    SLACK_APP_LEVEL_TOKEN = ""
+
+    LANGCHAIN_TRACING_V2           = ""
+    LANGCHAIN_API_KEY              = ""
+    LANGCHAIN_CALLBACKS_BACKGROUND = ""
+    LANGCHAIN_PROJECT              = ""
+
+    PINECONE_INDEX   = ""
+    PINECONE_API_KEY = ""
+
+    QSTASH_URL                 = ""
+    QSTASH_TOKEN               = ""
+    QSTASH_CURRENT_SIGNING_KEY = ""
+    QSTASH_NEXT_SIGNING_KEY    = ""
+    REDIS_URL                  = ""
+    REDIS_TOKEN                = ""
+    QUEUE_CALLBACK_Root_Path   = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "ixo_coin_server" {
   count  = var.environments[terraform.workspace].enabled_services["ixo_coin_server"] ? 1 : 0
   source = "./modules/argocd_application"
@@ -524,6 +602,124 @@ module "ixo_stake_reward_claimer" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "ixo_offset_auto_approve" {
+  count  = var.environments[terraform.workspace].enabled_services["auto_approve_offset"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "auto-approve-offset"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-auto-approve-agent"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/auto_approve_offset.yml",
+      {
+        environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
+        host        = local.dns_for_environment[terraform.workspace]["auto_approve_offset"]
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION              = ""
+    BLOCKSYNC_GRAPHQL          = ""
+    MNEMONIC_DELEGATE          = ""
+    MNEMONIC_OWNER             = ""
+    COLLECTION_IDS             = ""
+    QUOTAS_PER_COLLECTION      = ""
+    EXPIRATION_PER_COLLECTION  = ""
+    NOTIFICATIONS_WORKER_AUTH  = ""
+    NOTIFICATIONS_TEMPLATE_ID  = ""
+    NOTIFICATIONS_TEMPLATE_IDS = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_iot_data" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_iot_data"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-iot-data"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-iot-data"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-iot-data.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_iot_data"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[9].username
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[9].username])
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_notification_server" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_notification_server"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-notification-server"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-notification-server"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-notification-server.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_notification_server"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[10].username
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[10].username])
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION                   = ""
+    AIRTABLE_API_KEY                = ""
+    AIRTABLE_BASE_ID                = ""
+    AIRTABLE_TABLE_NOTIFICATIONS_V2 = ""
+    PUBLIC_AUTHORIZATION            = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+#module "ixo_ussd" {
+#  count  = var.environments[terraform.workspace].enabled_services["ixo_ussd"] ? 1 : 0
+#  source = "./modules/argocd_application"
+#  application = {
+#    name       = "ixo-ussd"
+#    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+#    owner      = "ixofoundation"
+#    repository = local.ixo_helm_chart_repository
+#    path       = "charts/${terraform.workspace}/ixofoundation/ixo-ussd"
+#    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ussd.yml",
+#      {
+#        environment = terraform.workspace
+#        host        = local.dns_for_environment[terraform.workspace]["ixo_ussd"]
+#        vault_mount = vault_mount.ixo.path
+#      }
+#    )
+#  }
+#  argo_namespace   = module.argocd.argo_namespace
+#  vault_mount_path = vault_mount.ixo.path
+#}
+
 #module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
 #  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
 #  source     = "./modules/ixo_blocksync_migration"
@@ -532,7 +728,11 @@ module "ixo_stake_reward_claimer" {
 #    pgPassword = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username])
 #    pgCluster   = var.pg_ixo.pg_cluster_name
 #    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-#    useAlt      = true # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
+#    # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
+#    # If current DB in-use is `blocksync` set to true. Else if current DB in-use is`blocksync_alt` set to false.
+#    # true = pod created will run migrations on `blocksync_alt`
+#    # false = pod created will run migrations on `blocksync`
+#    useAlt      = true
 #  }
 #  existing_blocksync_pod_label_name = "ixo-blocksync"
 #  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name

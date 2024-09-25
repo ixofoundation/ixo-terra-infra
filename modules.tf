@@ -205,23 +205,14 @@ module "matrix_admin" {
   vault_mount_path = vault_mount.ixo.path
 }
 
-#module "matrix_slack" {
-#  depends_on = [module.argocd, module.matrix_init]
-#  source     = "./modules/argocd_application"
+#module "hummingbot" {
+#  source = "./modules/argocd_application"
 #  application = {
-#    name       = "matrix-slack"
-#    namespace  = var.pg_matrix.namespace
-#    owner      = "ixofoundation"
-#    repository = local.ixo_terra_infra_repository
-#    path       = "charts/matrix-slack"
-#    values_override = templatefile("${local.helm_values_config_path}/matrix-slack.yml",
-#      {
-#        domain      = var.hostnames["${terraform.workspace}_matrix"]
-#        as_token    = random_password.mautrix_slack_as_token.result
-#        hs_token    = random_password.mautrix_slack_hs_token.result
-#        postgresUri = "postgres://${var.pg_matrix.pg_users[0].username}:${module.postgres-operator.database_password[var.pg_matrix.pg_users[0].username]}@${var.pg_matrix.pg_cluster_name}-primary.${var.pg_matrix.namespace}.svc.cluster.local/slackbot"
-#      }
-#    )
+#    name = "hummingbot"
+#    namespace = kubernetes_namespace_v1.hummingbot.metadata[0].name
+#    owner = "hummingbot"
+#    repository = local.ixo_helm_chart_repository
+#    path = "charts/${terraform.workspace}/hummingbot/deploy"
 #  }
 #  argo_namespace   = module.argocd.argo_namespace
 #  vault_mount_path = vault_mount.ixo.path
