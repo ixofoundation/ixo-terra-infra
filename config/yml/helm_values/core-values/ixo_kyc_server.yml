@@ -8,7 +8,7 @@ ingress:
   tls:
     - hosts:
         - ${host}
-      secretName: ixo-deeplink-server-nest-tls
+      secretName: ixo-kyc-server-tls
   hosts:
     - host: ${host}
       paths:
@@ -21,8 +21,30 @@ env:
     value: "production"
   - name: "AUTHORIZATION"
     value: "<path:${vault_mount}/data/ixo-kyc-server#AUTHORIZATION>"
-  - name: "COMPLYCUBE_TEST_API_KEY"
-    value: "<path:${vault_mount}/data/ixo-kyc-server#COMPLYCUBE_TEST_API_KEY>"
+  - name: "COMPLYCUBE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#COMPLYCUBE_API_KEY>"
+  - name: "COMPLYCUBE_WEBHOOK_SECRET"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#COMPLYCUBE_WEBHOOK_SECRET>"
+  - name: "WEBVIEW_BASE_URL"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#WEBVIEW_BASE_URL>"
+  - name: "IXO_NETWORK"
+    value: "${environment}"
+  - name: "ORACLE_DID"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#ORACLE_DID>"
+  - name: "CREDENTIALS_WORKER_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#CREDENTIALS_WORKER_API_KEY>"
+  - name: "CREDENTIALS_WORKER_URL"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#CREDENTIALS_WORKER_URL>"
+  - name: "RPC_ENDPOINT"
+    value: "${rpc_url}"
+  - name: "ORACLE_DELEGATOR_ADDRESS"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#ORACLE_DELEGATOR_ADDRESS>"
+  - name: "ORACLE_DELEGATE_MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#ORACLE_DELEGATE_MNEMONIC>"
+  - name: "NOTIFICATION_SERVER_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#NOTIFICATION_SERVER_API_KEY>"
+  - name: "INVESTOR_EVALUATION_AUTHORIZATION"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#INVESTOR_EVALUATION_AUTHORIZATION>"
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
   - name: "MIGRATE_DB_PROGRAMATICALLY"

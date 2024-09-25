@@ -1,0 +1,90 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-whizz-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: "NODE_ENV"
+    value: "production"
+  - name: "POSTGRES_USER"
+    value: "${pgUsername}"
+  - name: "POSTGRES_PASSWORD"
+    value: "${pgPassword}"
+  - name: "POSTGRES_DB"
+    value: "${pgUsername}"
+  - name: "POSTGRES_HOST"
+    value: "${pgCluster}-primary.${pgNamespace}.svc.cluster.local"
+  - name: "POSTGRES_PORT"
+    value: "5432"
+  - name: "DATABASE_USE_SSL"
+    value: "1"
+  - name: "OPEN_AI_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-whizz#OPEN_AI_API_KEY>"
+  - name: "AIRTABLE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-whizz#AIRTABLE_API_KEY>"
+  - name: "AIRTABLE_Marketing_TABLE_NAME"
+    value: "<path:${vault_mount}/data/ixo-whizz#AIRTABLE_Marketing_TABLE_NAME>"
+  - name: "GURU_ASSISTANCE_API_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-whizz#GURU_ASSISTANCE_API_TOKEN>"
+  - name: "MARKETING_GURU_API_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-whizz#MARKETING_GURU_API_TOKEN>"
+  - name: "SLACK_SIGNING_SECRET"
+    value: "<path:${vault_mount}/data/ixo-whizz#SLACK_SIGNING_SECRET>"
+  - name: "SLACK_BOT_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-whizz#SLACK_BOT_TOKEN>"
+  - name: "BOT_OAUTH_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-whizz#BOT_OAUTH_TOKEN>"
+  - name: "SLACK_APP_LEVEL_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-whizz#SLACK_APP_LEVEL_TOKEN>"
+  - name: "LANGCHAIN_TRACING_V2"
+    value: "<path:${vault_mount}/data/ixo-whizz#LANGCHAIN_TRACING_V2>"
+  - name: "LANGCHAIN_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-whizz#LANGCHAIN_API_KEY>"
+  - name: "LANGCHAIN_CALLBACKS_BACKGROUND"
+    value: "<path:${vault_mount}/data/ixo-whizz#LANGCHAIN_CALLBACKS_BACKGROUND>"
+  - name: "LANGCHAIN_PROJECT"
+    value: "<path:${vault_mount}/data/ixo-whizz#LANGCHAIN_PROJECT>"
+  - name: "PINECONE_INDEX"
+    value: "<path:${vault_mount}/data/ixo-whizz#PINECONE_INDEX>"
+  - name: "PINECONE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-whizz#PINECONE_API_KEY>"
+  - name: "QSTASH_URL"
+    value: "<path:${vault_mount}/data/ixo-whizz#QSTASH_URL>"
+  - name: "QSTASH_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-whizz#QSTASH_TOKEN>"
+  - name: "QSTASH_CURRENT_SIGNING_KEY"
+    value: "<path:${vault_mount}/data/ixo-whizz#QSTASH_CURRENT_SIGNING_KEY>"
+  - name: "QSTASH_NEXT_SIGNING_KEY"
+    value: "<path:${vault_mount}/data/ixo-whizz#QSTASH_NEXT_SIGNING_KEY>"
+  - name: "REDIS_URL"
+    value: "<path:${vault_mount}/data/ixo-whizz#REDIS_URL>"
+  - name: "REDIS_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-whizz#REDIS_TOKEN>"
+  - name: "QUEUE_CALLBACK_Root_Path"
+    value: "<path:${vault_mount}/data/ixo-whizz#QUEUE_CALLBACK_Root_Path>"
+  - name: "IXO_GURU_API_URL"
+    value: "<path:${vault_mount}/data/ixo-whizz#IXO_GURU_API_URL>"
+service:
+  port: 8080
+resources:
+  requests:
+    memory: 200Mi
+    cpu: "50m"
+  limits:
+    memory: 350Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

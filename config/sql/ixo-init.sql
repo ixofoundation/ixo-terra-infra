@@ -18,3 +18,15 @@ GRANT CREATE ON SCHEMA "public" to "coin-server";
 
 \c faq-assistant
 GRANT CREATE ON SCHEMA "public" to "faq-assistant";
+
+\c whizz
+GRANT CREATE ON SCHEMA "public" to "whizz";
+
+\c kyc
+GRANT CREATE ON SCHEMA "public" to "kyc";
+
+\c 'iot-data'
+GRANT CREATE ON SCHEMA "public" to "iot-data";
+
+\c 'notification-server'
+GRANT CREATE ON SCHEMA "public" to "notification-server";

@@ -13,21 +13,23 @@ variable "additional_manual_synthetic_monitoring_endpoints" {
   default = {
     devnet = [
       "https://devnet-blocksync.ixo.earth",
-      "https://signx.devnet.ixo.earth"
+      "https://signx.devnet.ixo.earth",
+      "https://devnet.ixo.earth/rpc/"
     ]
     testnet = [
       "https://payments.testnet.emerging.eco",
       "https://blockscan-pandora.ixo.earth",
-      "https://signx.testnet.ixo.earth"
+      "https://signx.testnet.ixo.earth",
+      "https://testnet.ixo.earth/rpc/"
     ]
     mainnet = [
       "https://coincache.ixo.earth",
-      "https://kyc.devnet.ixo.earth",
       "https://relayer.assistant.ixo.earth",
       "https://blocksync.ixo.earth",
       "https://reclaim.ixo.earth",
       "https://signx.ixo.earth",
-      "https://ixo.rpc.m.stavr.tech"
+      "https://ixo.rpc.m.stavr.tech",
+      "https://impacthub.ixo.world/rpc/"
     ]
   }
 }
@@ -62,6 +64,11 @@ variable "environments" {
         ixo_faq_assistant                    = false
         ixo_coin_server                      = false
         ixo_stake_reward_claimer             = false
+        ixo_ussd                             = false
+        ixo_whizz                            = false
+        auto_approve_offset                  = false
+        ixo_iot_data                         = false
+        ixo_notification_server              = false
       }
     }
     testnet = {
@@ -86,10 +93,15 @@ variable "environments" {
         claims_credentials_claimformprotocol = false
         claims_credentials_did               = true
         ixo_deeplink_server                  = false
-        ixo_kyc_server                       = false
+        ixo_kyc_server                       = true
         ixo_faq_assistant                    = false
         ixo_coin_server                      = false
         ixo_stake_reward_claimer             = false
+        ixo_ussd                             = false
+        ixo_whizz                            = false
+        auto_approve_offset                  = true
+        ixo_iot_data                         = false
+        ixo_notification_server              = false
       }
     }
     mainnet = {
@@ -105,8 +117,8 @@ variable "environments" {
         ixo_feegrant_nest                    = true
         ixo_did_resolver                     = true
         ixo_faucet                           = false
-        ixo_matrix_state_bot                 = false
-        ixo_matrix_appservice_rooms          = false
+        ixo_matrix_state_bot                 = true
+        ixo_matrix_appservice_rooms          = true
         claims_credentials_ecs               = true
         claims_credentials_prospect          = false
         claims_credentials_carbon            = true
@@ -118,6 +130,11 @@ variable "environments" {
         ixo_faq_assistant                    = true
         ixo_coin_server                      = true
         ixo_stake_reward_claimer             = true
+        ixo_ussd                             = false
+        ixo_whizz                            = true
+        auto_approve_offset                  = true
+        ixo_iot_data                         = true
+        ixo_notification_server              = true
       }
     }
   }
