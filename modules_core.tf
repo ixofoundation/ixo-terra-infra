@@ -399,6 +399,7 @@ module "ixo_kyc_server" {
     ORACLE_DELEGATOR_ADDRESS    = ""
     ORACLE_DELEGATE_MNEMONIC    = ""
     NOTIFICATION_SERVER_API_KEY = ""
+    SLACK_WEBHOOK_URL           = ""
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
@@ -720,23 +721,23 @@ module "ixo_notification_server" {
 #  vault_mount_path = vault_mount.ixo.path
 #}
 
-#module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
-#  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
-#  source     = "./modules/ixo_blocksync_migration"
-#  db_info = {
-#    pgUsername = var.pg_ixo.pg_users[3].username
-#    pgPassword = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username])
-#    pgCluster   = var.pg_ixo.pg_cluster_name
-#    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-#    # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
-#    # If current DB in-use is `blocksync` set to true. Else if current DB in-use is`blocksync_alt` set to false.
-#    # true = pod created will run migrations on `blocksync_alt`
-#    # false = pod created will run migrations on `blocksync`
-#    useAlt      = true
-#  }
-#  existing_blocksync_pod_label_name = "ixo-blocksync"
-#  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
-#}
+module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
+  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
+  source     = "./modules/ixo_blocksync_migration"
+  db_info = {
+    pgUsername  = var.pg_ixo.pg_users[3].username
+    pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username])
+    pgCluster   = var.pg_ixo.pg_cluster_name
+    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+    # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
+    # If current DB in-use is `blocksync` set to true. Else if current DB in-use is`blocksync_alt` set to false.
+    # true = pod created will run migrations on `blocksync_alt`
+    # false = pod created will run migrations on `blocksync`
+    useAlt = false
+  }
+  existing_blocksync_pod_label_name = "ixo-blocksync"
+  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
+}
 
 #DATABASE_URL : postgresql://cellnode:p^mv%7Bv|+^C^vkXlNoYRuBA)@ixo-postgres-primary.ixo-postgres.svc.cluster.local/cellnode
 #DATABASE_URL : postgresql://cellnode:p%5Emv%7Bv%7C%2B%5EC%5EvkXlNoYRuBA%29@ixo-postgres-primary.ixo-postgres.svc.cluster.local/cellnode

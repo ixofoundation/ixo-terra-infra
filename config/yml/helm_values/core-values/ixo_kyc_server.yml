@@ -45,6 +45,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-server#NOTIFICATION_SERVER_API_KEY>"
   - name: "INVESTOR_EVALUATION_AUTHORIZATION"
     value: "<path:${vault_mount}/data/ixo-kyc-server#INVESTOR_EVALUATION_AUTHORIZATION>"
+  - name: "SLACK_WEBHOOK_URL"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#SLACK_WEBHOOK_URL>"
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
   - name: "MIGRATE_DB_PROGRAMATICALLY"
