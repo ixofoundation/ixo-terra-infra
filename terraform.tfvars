@@ -89,6 +89,10 @@ pg_ixo = {
     { // 10
       username  = "notification-server"
       databases = ["notification-server"]
+    }, // 11
+    {
+      username  = "trading-bot-server"
+      databases = ["trading-bot-server"]
     }
   ]
   pg_version             = 15
