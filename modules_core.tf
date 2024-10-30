@@ -488,6 +488,90 @@ module "ixo_faq_assistant" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "ixo_guru" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_guru"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-guru"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-guru"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-guru.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_guru"]
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    SLACK_SIGNING_SECRET  = ""
+    SLACK_BOT_TOKEN       = ""
+    BOT_OAUTH_TOKEN       = ""
+    USER_OAUTH_TOKEN      = ""
+    SLACK_APP_LEVEL_TOKEN = ""
+
+    API_KEY                    = ""
+    QUEUE_CALLBACK_Root_Path   = ""
+    QSTASH_URL                 = ""
+    QSTASH_TOKEN               = ""
+    QSTASH_CURRENT_SIGNING_KEY = ""
+    QSTASH_NEXT_SIGNING_KEY    = ""
+    REDIS_URL                  = ""
+
+    AITABLE_BASE_TABLE_LINK = ""
+
+    AIRTABLE_API_KEY = ""
+    AIRTABLE_BASE_ID = ""
+
+    OPENAI_API_KEY = ""
+
+    PINECONE_API_KEY = ""
+    PINECONE_INDEX   = ""
+
+    LANGCHAIN_TRACING_V2 = ""
+    LANGCHAIN_ENDPOINT   = ""
+    LANGCHAIN_API_KEY    = ""
+    LANGCHAIN_PROJECT    = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_trading_bot_server" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_trading_bot_server"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-trading-bot-server"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-trading-bot-server"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-trading-bot-server.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_trading_bot_server"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[11].username
+        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[11].username]
+        rpc_url     = var.environments[terraform.workspace].rpc_url
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    POOL_ADDRESSES  = ""
+    MNEMONICS = ""
+    EXECUTE_RANDOM_TRADES = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "ixo_whizz" {
   count  = var.environments[terraform.workspace].enabled_services["ixo_whizz"] ? 1 : 0
   source = "./modules/argocd_application"

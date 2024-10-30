@@ -43,6 +43,8 @@ locals {
       auto_approve_offset         = ""
       ixo_iot_data                = ""
       ixo_notification_server     = ""
+      ixo_guru                    = ""
+      ixo_trading_bot_server      = ""
     }
     testnet = {
       ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
@@ -67,6 +69,8 @@ locals {
       auto_approve_offset         = "offset.auto-approve.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_iot_data                = ""
       ixo_notification_server     = ""
+      ixo_guru                    = ""
+      ixo_trading_bot_server      = ""
     }
     mainnet = {
       ixo_cellnode                         = "cellnode.${var.environments[terraform.workspace].domain}"
@@ -93,6 +97,8 @@ locals {
       auto_approve_offset                  = "offset.auto-approve.${var.environments[terraform.workspace].domain2}"
       ixo_iot_data                         = "iot-data.${var.environments[terraform.workspace].domain2}"
       ixo_notification_server              = "notifications.${var.environments[terraform.workspace].domain2}"
+      ixo_guru                             = "guru.${var.environments[terraform.workspace].domain2}"
+      ixo_trading_bot_server               = "trading.bot.${var.environments[terraform.workspace].domain2}"
     }
   }
 

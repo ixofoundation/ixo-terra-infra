@@ -1,0 +1,46 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-trading-bot-server-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: "NODE_ENV"
+    value: "development"
+  - name: "POOL_ADDRESSES"
+    value: "<path:${vault_mount}/data/ixo-trading-bot-server#POOL_ADDRESSES>"
+  - name: "MNEMONICS"
+    value: "<path:${vault_mount}/data/ixo-trading-bot-server#MNEMONICS>"
+  - name: "EXECUTE_RANDOM_TRADES"
+    value: "<path:${vault_mount}/data/ixo-trading-bot-server#EXECUTE_RANDOM_TRADES>"
+  - name: "DATABASE_URL"
+    value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
+  - name: "MIGRATE_DB_PROGRAMATICALLY"
+    value: "1"
+  - name: "DATABASE_USE_SSL"
+    value: "1"
+  - name: "RPC"
+    value: "${rpc_url}"
+service:
+  port: 3000
+resources:
+  requests:
+    memory: 200Mi
+    cpu: "50m"
+  limits:
+    memory: 350Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

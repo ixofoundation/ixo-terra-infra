@@ -69,6 +69,8 @@ variable "environments" {
         auto_approve_offset                  = false
         ixo_iot_data                         = false
         ixo_notification_server              = false
+        ixo_guru                             = false
+        ixo_trading_bot_server               = false
       }
     }
     testnet = {
@@ -102,6 +104,8 @@ variable "environments" {
         auto_approve_offset                  = true
         ixo_iot_data                         = false
         ixo_notification_server              = false
+        ixo_guru                             = false
+        ixo_trading_bot_server               = false
       }
     }
     mainnet = {
@@ -135,6 +139,8 @@ variable "environments" {
         auto_approve_offset                  = true
         ixo_iot_data                         = true
         ixo_notification_server              = true
+        ixo_guru                             = true
+        ixo_trading_bot_server               = true
       }
     }
   }
