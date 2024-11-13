@@ -5,6 +5,9 @@
 ## Override the full name of the installed chart.
 ##
 # fullnameOverride: ""
+image:
+  repository: ghcr.io/ixoworld/synapse
+  tag: v1.113.0-ixo.1
 config:
   enableRegistration: true
   macaroonSecretKey: <path:${kv_mount}/data/${app_name}#MACAROON_SECRET_KEY>

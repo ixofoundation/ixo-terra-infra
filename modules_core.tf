@@ -407,7 +407,7 @@ module "ixo_kyc_server" {
 
 module "ixo_redirects" {
   source          = "./modules/ixo_redirects"
-  nginx_namespace = module.argocd.namespaces_helm["nginx-ingress-controller"].metadata[0].name
+  nginx_namespace = kubernetes_namespace_v1.ingress_nginx.metadata[0].name
 }
 
 module "ixo_matrix_appservice_rooms" {
@@ -415,7 +415,7 @@ module "ixo_matrix_appservice_rooms" {
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-matrix-appservice-rooms"
-    namespace  = module.argocd.namespaces_helm["matrix"].metadata[0].name
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     owner      = "ixofoundation"
     repository = local.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-appservice-rooms"
@@ -535,6 +535,76 @@ module "ixo_guru" {
     LANGCHAIN_ENDPOINT   = ""
     LANGCHAIN_API_KEY    = ""
     LANGCHAIN_PROJECT    = ""
+
+    MATRIX_BASE_URL                  = ""
+    MATRIX_ORACLE_ADMIN_PASSWORD     = ""
+    MATRIX_ORACLE_ADMIN_ACCESS_TOKEN = ""
+    MATRIX_ORACLE_ADMIN_USER_ID      = ""
+    MATRIX_ORACLE_ADMIN_DEVICE_ID    = ""
+    MATRIX_TOKEN_KEY                 = ""
+    TAVILY_API_KEY                   = ""
+    NODE_ENV                         = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_guru_temp" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_ai_oracles_guru"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-ai-oracles-guru"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-ai-oracles-guru"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ai-oracles-guru.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_ai_oracles_guru"]
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    SLACK_SIGNING_SECRET  = ""
+    SLACK_BOT_TOKEN       = ""
+    BOT_OAUTH_TOKEN       = ""
+    USER_OAUTH_TOKEN      = ""
+    SLACK_APP_LEVEL_TOKEN = ""
+
+    API_KEY                    = ""
+    QUEUE_CALLBACK_Root_Path   = ""
+    QSTASH_URL                 = ""
+    QSTASH_TOKEN               = ""
+    QSTASH_CURRENT_SIGNING_KEY = ""
+    QSTASH_NEXT_SIGNING_KEY    = ""
+    REDIS_URL                  = ""
+
+    AITABLE_BASE_TABLE_LINK = ""
+
+    AIRTABLE_API_KEY = ""
+    AIRTABLE_BASE_ID = ""
+
+    OPENAI_API_KEY = ""
+
+    PINECONE_API_KEY = ""
+    PINECONE_INDEX   = ""
+
+    LANGCHAIN_TRACING_V2 = ""
+    LANGCHAIN_ENDPOINT   = ""
+    LANGCHAIN_API_KEY    = ""
+    LANGCHAIN_PROJECT    = ""
+
+    MATRIX_BASE_URL                  = ""
+    MATRIX_ORACLE_ADMIN_PASSWORD     = ""
+    MATRIX_ORACLE_ADMIN_ACCESS_TOKEN = ""
+    MATRIX_ORACLE_ADMIN_USER_ID      = ""
+    MATRIX_ORACLE_ADMIN_DEVICE_ID    = ""
+    MATRIX_TOKEN_KEY                 = ""
+    TAVILY_API_KEY                   = ""
+    NODE_ENV                         = ""
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
@@ -557,15 +627,15 @@ module "ixo_trading_bot_server" {
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[11].username
-        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[11].username]
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[11].username])
         rpc_url     = var.environments[terraform.workspace].rpc_url
       }
     )
   }
   create_kv = true
   kv_defaults = {
-    POOL_ADDRESSES  = ""
-    MNEMONICS = ""
+    POOL_ADDRESSES        = ""
+    MNEMONICS             = ""
     EXECUTE_RANDOM_TRADES = ""
   }
   argo_namespace   = module.argocd.argo_namespace

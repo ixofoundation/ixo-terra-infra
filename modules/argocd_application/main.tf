@@ -32,6 +32,7 @@ resource "kubectl_manifest" "application" {
       isOci          = var.application.helm.isOci
       chart          = var.application.helm.chart
       revision       = var.application.helm.revision
+      ignoreDifferences = var.application.helm.ignoreDifferences != null ? var.application.helm.ignoreDifferences : "[]"
       repository     = var.application.repository
       helm_values    = var.application.values_override != null ? var.application.values_override : ""
     }

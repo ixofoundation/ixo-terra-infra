@@ -12,7 +12,6 @@ variable "additional_manual_synthetic_monitoring_endpoints" {
   type = map(list(string))
   default = {
     devnet = [
-      "https://devnet-blocksync.ixo.earth",
       "https://signx.devnet.ixo.earth",
       "https://devnet.ixo.earth/rpc/"
     ]
@@ -25,7 +24,6 @@ variable "additional_manual_synthetic_monitoring_endpoints" {
     mainnet = [
       "https://coincache.ixo.earth",
       "https://relayer.assistant.ixo.earth",
-      "https://blocksync.ixo.earth",
       "https://reclaim.ixo.earth",
       "https://signx.ixo.earth",
       "https://ixo.rpc.m.stavr.tech",
@@ -34,6 +32,7 @@ variable "additional_manual_synthetic_monitoring_endpoints" {
   }
 }
 
+# IXO Infra Defaults
 variable "environments" {
   description = "Environment specific configurations"
   type        = map(any)
@@ -45,6 +44,21 @@ variable "environments" {
       domain               = "ixo.earth"
       domain2              = "ixo.earth"
       enabled_services = {
+        # Core
+        cert_manager                  = true
+        ingress_nginx                 = true
+        postgres_operator_crunchydata = true
+        prometheus_stack              = true
+        external_dns                  = true
+        dex                           = true
+        vault                         = true
+        loki                          = true
+        prometheus_blackbox_exporter  = true
+        tailscale                     = true
+        matrix                        = true
+        nfs_provisioner               = true
+        metrics_server                = true
+        # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
         ixo_blocksync_core                   = true
@@ -71,6 +85,7 @@ variable "environments" {
         ixo_notification_server              = false
         ixo_guru                             = false
         ixo_trading_bot_server               = false
+        ixo_ai_oracles_guru                  = false
       }
     }
     testnet = {
@@ -80,6 +95,21 @@ variable "environments" {
       domain2              = "ixo.earth"
       ipfs_service_mapping = "https://testnet-blocksync-graphql.ixo.earth/api/ipfs/"
       enabled_services = {
+        # Core
+        cert_manager                  = true
+        ingress_nginx                 = true
+        postgres_operator_crunchydata = true
+        prometheus_stack              = true
+        external_dns                  = true
+        dex                           = true
+        vault                         = true
+        loki                          = true
+        prometheus_blackbox_exporter  = true
+        tailscale                     = true
+        matrix                        = true
+        nfs_provisioner               = true
+        metrics_server                = true
+        # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
         ixo_blocksync_core                   = true
@@ -106,6 +136,7 @@ variable "environments" {
         ixo_notification_server              = false
         ixo_guru                             = false
         ixo_trading_bot_server               = false
+        ixo_ai_oracles_guru                  = false
       }
     }
     mainnet = {
@@ -115,6 +146,21 @@ variable "environments" {
       domain2              = "ixo.earth"
       ipfs_service_mapping = "https://blocksync-graphql.ixo.earth/api/ipfs/"
       enabled_services = {
+        # Core
+        cert_manager                  = true
+        ingress_nginx                 = true
+        postgres_operator_crunchydata = true
+        prometheus_stack              = true
+        external_dns                  = true
+        dex                           = true
+        vault                         = true
+        loki                          = true
+        prometheus_blackbox_exporter  = true
+        tailscale                     = true
+        matrix                        = true
+        nfs_provisioner               = true
+        metrics_server                = true
+        # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
         ixo_blocksync_core                   = true
@@ -141,6 +187,7 @@ variable "environments" {
         ixo_notification_server              = true
         ixo_guru                             = true
         ixo_trading_bot_server               = true
+        ixo_ai_oracles_guru                  = true
       }
     }
   }

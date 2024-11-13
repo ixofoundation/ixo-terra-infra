@@ -6,9 +6,10 @@ variable "application" {
       owner      = string
       repository = string
       helm = optional(object({
-        isOci    = bool
-        chart    = string
-        revision = string
+        isOci             = bool
+        chart             = string
+        revision          = string
+        ignoreDifferences = optional(string)
       }))
       path            = optional(string)
       values_override = optional(string)

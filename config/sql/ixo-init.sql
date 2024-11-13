@@ -30,3 +30,6 @@ GRANT CREATE ON SCHEMA "public" to "iot-data";
 
 \c 'notification-server'
 GRANT CREATE ON SCHEMA "public" to "notification-server";
+
+\c 'trading-bot-server'
+GRANT CREATE ON SCHEMA "public" to "trading-bot-server";
