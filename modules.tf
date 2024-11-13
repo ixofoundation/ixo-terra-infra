@@ -23,174 +23,326 @@ module "argocd" {
     }
   ]
   applications_helm = [
-    {
-      name              = "cert-manager"
-      namespace         = "cert-manager"
-      chart             = "cert-manager"
-      repository        = "https://charts.jetstack.io"
-      revision          = var.versions["cert-manager"]
-      ignoreDifferences = local.cert_manager_ignore_differences
-      values_override   = templatefile("${local.helm_values_config_path}/cert-manager-values.yml", {})
-    },
-    {
-      name              = "nginx-ingress-controller"
-      namespace         = "ingress-nginx"
-      chart             = "ingress-nginx"
-      revision          = var.versions["nginx-ingress-controller"]
-      repository        = "https://kubernetes.github.io/ingress-nginx"
-      ignoreDifferences = local.nginx_ignore_differences
-      values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
-        {
-          host = terraform.workspace == "testnet" || terraform.workspace == "mainnet" ? "${var.hostnames[terraform.workspace]}, ${var.hostnames["${terraform.workspace}_world"]}" : var.hostnames[terraform.workspace]
-        }
-      )
-    },
-    { # We use a fork of the main Operator helm chart to enable feature gates.
-      name            = "postgres-operator"
-      namespace       = "postgres-operator"
-      chart           = "pgo"
-      revision        = var.versions["postgres-operator"]
-      repository      = "https://github.com/ixofoundation/postgres-operator-examples"
-      path            = "helm/install"
-      isHelm          = false
-      values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
-    },
-    {
-      name              = "prometheus-stack"
-      namespace         = "prometheus"
-      chart             = "kube-prometheus-stack"
-      revision          = var.versions["prometheus-stack"]
-      repository        = "https://prometheus-community.github.io/helm-charts"
-      ignoreDifferences = local.prometheus_stack_ignore_differences
-      values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {
-        host                = var.hostnames[terraform.workspace]
-        blackbox_targets    = yamlencode(local.synthetic_monitoring_endpoints)
-        grafana_oidc_secret = random_password.grafana_dex_oidc_secret.result
-        dex_host            = var.hostnames["${terraform.workspace}_dex"]
-        org                 = var.org
-        environment         = terraform.workspace
-      })
-    },
-    {
-      name       = "external-dns"
-      namespace  = "external-dns"
-      chart      = "external-dns"
-      revision   = var.versions["external-dns"]
-      repository = "https://kubernetes-sigs.github.io/external-dns/"
-      values_override = templatefile("${local.helm_values_config_path}/external-dns-values.yml", {
-        VULTR_API_KEY = var.vultr_api_key
-      })
-    },
-    {
-      name       = "dex"
-      namespace  = "dex"
-      chart      = "dex"
-      revision   = var.versions["dex"]
-      repository = "https://charts.dexidp.io"
-      values_override = templatefile("${local.helm_values_config_path}/dex-values.yml",
-        {
-          vault_host           = var.hostnames["${terraform.workspace}_vault"]
-          host                 = var.hostnames["${terraform.workspace}_dex"]
-          github_client_id     = var.oidc_vault.clientId
-          github_client_secret = var.oidc_vault.clientSecret
-          vault_oidc_secret    = random_password.vault_dex_oidc_secret.result
-          grafana_oidc_secret  = random_password.grafana_dex_oidc_secret.result
-          grafana_host         = "${var.hostnames[terraform.workspace]}/grafana"
-          org                  = var.org
-        }
-      )
-    },
-    {
-      name              = "vault"
-      namespace         = "vault"
-      chart             = "vault"
-      revision          = var.versions["vault"]
-      repository        = "https://helm.releases.hashicorp.com"
-      ignoreDifferences = local.vault_ignore_differences
-      values_override = templatefile("${local.helm_values_config_path}/vault-values.yml",
-        {
-          project         = var.gcp_project_ids[terraform.workspace]
-          key_ring        = module.gcp_kms_vault.key_ring_name
-          crypto_key      = module.gcp_kms_vault.crypto_key_name
-          gcp_secret_name = module.gcp_kms_vault.gcp_key_secret_name
-          replicas        = 2
-          host            = var.hostnames["${terraform.workspace}_vault"]
-        }
-      )
-    },
-    {
-      name              = "loki"
-      namespace         = "loki"
-      chart             = "loki"
-      revision          = var.versions["loki"]
-      repository        = "https://grafana.github.io/helm-charts"
-      values_override   = templatefile("${local.helm_values_config_path}/loki-values.yml", {})
-      ignoreDifferences = local.loki_ignore_differences
-    },
-    {
-      name            = "prometheus-blackbox-exporter"
-      namespace       = "prometheus-blackbox-exporter"
-      chart           = "prometheus-blackbox-exporter"
-      revision        = var.versions["prometheus-blackbox-exporter"]
-      repository      = "https://prometheus-community.github.io/helm-charts"
-      values_override = templatefile("${local.helm_values_config_path}/prometheus-blackbox.yml", {})
-    },
-    {
-      name       = "tailscale"
-      namespace  = "tailscale"
-      chart      = "tailscale-operator"
-      revision   = var.versions["tailscale"]
-      repository = "https://pkgs.tailscale.com/helmcharts"
-      values_override = templatefile("${local.helm_values_config_path}/tailscale-values.yml",
-        {
-          clientId     = var.oidc_tailscale.clientId
-          clientSecret = var.oidc_tailscale.clientSecret
-          environment  = terraform.workspace
-        }
-      )
-    },
-    {
-      name       = "matrix"
-      namespace  = var.pg_matrix.namespace
-      chart      = "matrix-synapse"
-      revision   = var.versions["matrix"]
-      repository = "https://ananace.gitlab.io/charts"
-      values_override = templatefile("${local.helm_values_config_path}/matrix-values.yml",
-        {
-          pg_host         = "${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local"
-          pg_username     = "synapse"
-          pg_cluster_name = var.pg_matrix.pg_cluster_name
-          host            = var.hostnames["${terraform.workspace}_matrix"]
-          kv_mount        = local.vault_core_mount
-          app_name        = "matrix"
-          gcs_bucket_url  = google_storage_bucket.matrix_backups.url
-        }
-      )
-    },
-    {
-      name              = "nfs-provisioner"
-      namespace         = "nfs"
-      chart             = "nfs-server-provisioner"
-      revision          = "1.8.0"
-      repository        = "https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner"
-      ignoreDifferences = local.nfs_provisioner_ignore_differences
-      values_override   = templatefile("${local.helm_values_config_path}/nfs-values.yml", {})
-    },
-    {
-      name       = "metrics-server"
-      namespace  = "metrics-server"
-      chart      = "metrics-server"
-      revision   = var.versions["metrics-server"]
-      repository = "https://kubernetes-sigs.github.io/metrics-server/"
-    },
   ]
 }
 
+module "cert_manager" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["cert_manager"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "cert-manager"
+    namespace = kubernetes_namespace_v1.cert_manager.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci             = false
+      chart             = "cert-manager"
+      revision          = var.versions["cert-manager"]
+      ignoreDifferences = local.cert_manager_ignore_differences
+    }
+    repository      = "https://charts.jetstack.io"
+    values_override = templatefile("${local.helm_values_config_path}/cert-manager-values.yml", {})
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ingress_nginx" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["ingress_nginx"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "nginx-ingress-controller"
+    namespace = kubernetes_namespace_v1.ingress_nginx.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci             = false
+      chart             = "ingress-nginx"
+      revision          = var.versions["nginx-ingress-controller"]
+      ignoreDifferences = local.nginx_ignore_differences
+    }
+    repository = "https://kubernetes.github.io/ingress-nginx"
+    values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
+      {
+        host = terraform.workspace == "testnet" || terraform.workspace == "mainnet" ? "${var.hostnames[terraform.workspace]}, ${var.hostnames["${terraform.workspace}_world"]}" : var.hostnames[terraform.workspace]
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "postgres_operator_crunchydata" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["postgres_operator_crunchydata"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = { # We use a fork of the main Operator helm chart to enable feature gates.
+    name            = "postgres-operator"
+    namespace       = kubernetes_namespace_v1.postgres_operator.metadata[0].name
+    owner           = "ixofoundation"
+    revision        = var.versions["postgres-operator"]
+    repository      = "https://github.com/ixofoundation/postgres-operator-examples"
+    path            = "helm/install"
+    values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "prometheus_stack" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["prometheus_stack"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "prometheus-stack"
+    namespace = kubernetes_namespace_v1.prometheus_stack.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci             = false
+      chart             = "kube-prometheus-stack"
+      revision          = var.versions["prometheus-stack"]
+      ignoreDifferences = local.prometheus_stack_ignore_differences
+    }
+    repository = "https://prometheus-community.github.io/helm-charts"
+    values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {
+      host                = var.hostnames[terraform.workspace]
+      blackbox_targets    = yamlencode(local.synthetic_monitoring_endpoints)
+      grafana_oidc_secret = random_password.grafana_dex_oidc_secret.result
+      dex_host            = var.hostnames["${terraform.workspace}_dex"]
+      org                 = var.org
+      environment         = terraform.workspace
+    })
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "external_dns" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["external_dns"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "external-dns"
+    namespace = kubernetes_namespace_v1.external_dns.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci    = false
+      chart    = "external-dns"
+      revision = var.versions["external-dns"]
+    }
+    repository = "https://kubernetes-sigs.github.io/external-dns/"
+    values_override = templatefile("${local.helm_values_config_path}/external-dns-values.yml", {
+      VULTR_API_KEY = var.vultr_api_key
+    })
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "dex" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["dex"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "dex"
+    namespace = kubernetes_namespace_v1.dex.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci    = false
+      chart    = "dex"
+      revision = var.versions["dex"]
+    }
+    repository = "https://charts.dexidp.io"
+    values_override = templatefile("${local.helm_values_config_path}/dex-values.yml",
+      {
+        vault_host           = var.hostnames["${terraform.workspace}_vault"]
+        host                 = var.hostnames["${terraform.workspace}_dex"]
+        github_client_id     = var.oidc_vault.clientId
+        github_client_secret = var.oidc_vault.clientSecret
+        vault_oidc_secret    = random_password.vault_dex_oidc_secret.result
+        grafana_oidc_secret  = random_password.grafana_dex_oidc_secret.result
+        grafana_host         = "${var.hostnames[terraform.workspace]}/grafana"
+        org                  = var.org
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "vault" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["vault"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "vault"
+    namespace = kubernetes_namespace_v1.vault.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci             = false
+      chart             = "vault"
+      revision          = var.versions["vault"]
+      ignoreDifferences = local.vault_ignore_differences
+    }
+    repository = "https://helm.releases.hashicorp.com"
+    values_override = templatefile("${local.helm_values_config_path}/vault-values.yml",
+      {
+        project         = var.gcp_project_ids[terraform.workspace]
+        key_ring        = module.gcp_kms_vault.key_ring_name
+        crypto_key      = module.gcp_kms_vault.crypto_key_name
+        gcp_secret_name = module.gcp_kms_vault.gcp_key_secret_name
+        replicas        = 2
+        host            = var.hostnames["${terraform.workspace}_vault"]
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "loki" {
+  depends_on = [module.argocd, module.prometheus_stack]
+  count      = var.environments[terraform.workspace].enabled_services["loki"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "loki"
+    namespace = kubernetes_namespace_v1.loki.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci             = false
+      chart             = "loki"
+      revision          = var.versions["loki"]
+      ignoreDifferences = local.loki_ignore_differences
+    }
+    repository      = "https://grafana.github.io/helm-charts"
+    values_override = templatefile("${local.helm_values_config_path}/loki-values.yml", {})
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "prometheus_blackbox_exporter" {
+  depends_on = [module.argocd, module.prometheus_stack]
+  count      = var.environments[terraform.workspace].enabled_services["prometheus_blackbox_exporter"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "prometheus-blackbox-exporter"
+    namespace = kubernetes_namespace_v1.prometheus_blackbox_exporter.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci    = false
+      chart    = "prometheus-blackbox-exporter"
+      revision = var.versions["prometheus-blackbox-exporter"]
+    }
+    repository      = "https://prometheus-community.github.io/helm-charts"
+    values_override = templatefile("${local.helm_values_config_path}/prometheus-blackbox.yml", {})
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "tailscale" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["tailscale"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "tailscale"
+    namespace = kubernetes_namespace_v1.tailscale.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci    = false
+      chart    = "tailscale-operator"
+      revision = var.versions["tailscale"]
+    }
+    repository = "https://pkgs.tailscale.com/helmcharts"
+    values_override = templatefile("${local.helm_values_config_path}/tailscale-values.yml",
+      {
+        clientId     = var.oidc_tailscale.clientId
+        clientSecret = var.oidc_tailscale.clientSecret
+        environment  = terraform.workspace
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "matrix" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["matrix"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "matrix"
+    namespace = kubernetes_namespace_v1.matrix.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci    = false
+      chart    = "matrix-synapse"
+      revision = var.versions["matrix"]
+    }
+    repository = "https://ananace.gitlab.io/charts"
+    values_override = templatefile("${local.helm_values_config_path}/matrix-values.yml",
+      {
+        pg_host         = "${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local"
+        pg_username     = "synapse"
+        pg_cluster_name = var.pg_matrix.pg_cluster_name
+        host            = var.hostnames["${terraform.workspace}_matrix"]
+        kv_mount        = local.vault_core_mount
+        app_name        = "matrix"
+        gcs_bucket_url  = google_storage_bucket.matrix_backups.url
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "nfs_provisioner" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["nfs_provisioner"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "nfs-provisioner"
+    namespace = kubernetes_namespace_v1.nfs_provisioner.metadata[0].name
+    owner     = ""
+    helm = {
+      isOci             = false
+      chart             = "nfs-server-provisioner"
+      revision          = "1.8.0"
+      ignoreDifferences = local.nfs_provisioner_ignore_differences
+    }
+    repository      = "https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner"
+    values_override = templatefile("${local.helm_values_config_path}/nfs-values.yml", {})
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "metrics_server" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].enabled_services["metrics_server"] ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "metrics-server"
+    namespace  = kubernetes_namespace_v1.metrics_server.metadata[0].name
+    owner      = ""
+    repository = "https://kubernetes-sigs.github.io/metrics-server/"
+    helm = {
+      isOci    = false
+      chart    = "metrics-server"
+      revision = var.versions["metrics-server"]
+    }
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "matrix_admin" {
-  source = "./modules/argocd_application"
+  depends_on = [module.argocd, module.matrix]
+  source     = "./modules/argocd_application"
   application = {
     name       = "matrix-admin"
-    namespace  = var.pg_matrix.namespace
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     owner      = "ixofoundation"
     repository = local.ixo_terra_infra_repository
     path       = "charts/matrix-admin"
@@ -205,32 +357,19 @@ module "matrix_admin" {
   vault_mount_path = vault_mount.ixo.path
 }
 
-#module "hummingbot" {
-#  source = "./modules/argocd_application"
-#  application = {
-#    name = "hummingbot"
-#    namespace = kubernetes_namespace_v1.hummingbot.metadata[0].name
-#    owner = "hummingbot"
-#    repository = local.ixo_helm_chart_repository
-#    path = "charts/${terraform.workspace}/hummingbot/deploy"
-#  }
-#  argo_namespace   = module.argocd.argo_namespace
-#  vault_mount_path = vault_mount.ixo.path
-#}
-
 module "cert-issuer" {
   depends_on = [module.argocd]
   source     = "./modules/cert-manager"
 }
 
-module "postgres-operator" {
-  depends_on = [module.argocd]
+module "postgres-operator" { # Sets up Cluster Instances
+  depends_on = [module.argocd, module.postgres_operator_crunchydata]
   source     = "./modules/postgres-operator"
   clusters = [
     {
       # Matrix Postgres Cluster
       pg_cluster_name        = var.pg_matrix.pg_cluster_name
-      pg_cluster_namespace   = var.pg_matrix.namespace
+      pg_cluster_namespace   = kubernetes_namespace_v1.matrix.metadata[0].name
       pg_image               = var.pg_matrix.pg_image
       pg_image_tag           = var.pg_matrix.pg_image_tag
       pg_version             = var.pg_matrix.pg_version
@@ -275,8 +414,8 @@ module "ixo_loki_logs" {
 
   matchNamespaces = [
     kubernetes_namespace_v1.ixo_core.metadata[0].name,
-    module.argocd.namespaces_helm["nginx-ingress-controller"].metadata[0].name,
-    module.argocd.namespaces_helm["matrix"].metadata[0].name,
+    kubernetes_namespace_v1.ingress_nginx.metadata[0].name,
+    kubernetes_namespace_v1.matrix.metadata[0].name,
     kubernetes_namespace_v1.ixo-postgres.metadata[0].name
   ]
   name      = "ixo"
@@ -290,15 +429,17 @@ module "gcp_kms_vault" {
 }
 
 module "gcp_kms_matrix" {
-  source    = "./modules/gcp_kms"
-  name      = "matrix-${terraform.workspace}"
-  namespace = module.argocd.namespaces_helm["matrix"].metadata[0].name
+  depends_on = [module.matrix]
+  source     = "./modules/gcp_kms"
+  name       = "matrix-${terraform.workspace}"
+  namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
 }
 
 module "gcp_kms_core" {
-  source    = "./modules/gcp_kms"
-  name      = "core-${terraform.workspace}"
-  namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
+  depends_on = [module.argocd]
+  source     = "./modules/gcp_kms"
+  name       = "core-${terraform.workspace}"
+  namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
 }
 
 module "vault_init" {
@@ -323,10 +464,11 @@ module "vault_init" {
 }
 
 module "matrix_init" {
-  source = "./modules/matrix"
+  depends_on = [module.argocd, module.matrix]
+  source     = "./modules/matrix"
 
   kube_config_path = module.kubernetes_cluster.kubeconfig_path
-  namespace        = module.argocd.namespaces_helm["matrix"].metadata[0].name
+  namespace        = kubernetes_namespace_v1.matrix.metadata[0].name
   vault_mount_path = vault_mount.ixo.path
 }
 
@@ -359,15 +501,6 @@ module "external_dns_cloudflare" {
 #  source = "./modules/gce_csi_driver"
 #  service_account_dir = path.cwd
 #  kubeconfig_path = abspath(module.kubernetes_cluster.kubeconfig_path)
-#}
-
-#module "cosmos" {
-#  source          = "./modules/cosmos_operator"
-#  kubeconfig_path = abspath(module.kubernetes_cluster.kubeconfig_path)
-#  cosmos_operator = {
-#    image = "ghcr.io/strangelove-ventures/cosmos-operator"
-#    tag   = "v0.21.8"
-#  }
 #}
 
 resource "random_password" "mautrix_slack_as_token" {

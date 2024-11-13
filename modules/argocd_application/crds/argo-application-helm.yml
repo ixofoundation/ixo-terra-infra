@@ -5,9 +5,7 @@ metadata:
   namespace: ${argo_namespace}
 spec:
   ignoreDifferences:
-    - kind: Secret
-      jsonPointers:
-        - /data
+    ${indent(4, ignoreDifferences)}
   project: default
   syncPolicy:
     syncOptions:

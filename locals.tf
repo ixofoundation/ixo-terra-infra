@@ -14,7 +14,7 @@ locals {
   # IXO DNS Entries
   dns_for_environment = {
     for env, config in var.environments : env => {
-      for service, enabled in config.enabled_services : service => enabled ? local.dns_endpoints[env][service] : null
+      for service, enabled in config.enabled_services : service => enabled ? lookup(local.dns_endpoints[env], service, null) : null
     }
   }
 
@@ -45,6 +45,7 @@ locals {
       ixo_notification_server     = ""
       ixo_guru                    = ""
       ixo_trading_bot_server      = ""
+      ixo_ai_oracles_guru         = ""
     }
     testnet = {
       ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
@@ -71,12 +72,13 @@ locals {
       ixo_notification_server     = ""
       ixo_guru                    = ""
       ixo_trading_bot_server      = ""
+      ixo_ai_oracles_guru         = ""
     }
     mainnet = {
       ixo_cellnode                         = "cellnode.${var.environments[terraform.workspace].domain}"
       ixo_blocksync                        = "blocksync-graphql.${var.environments[terraform.workspace].domain2}"
       ixo_matrix_state_bot                 = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-      ixo_matrix_appservice_rooms          = "rooms.appservice.${var.hostnames["${terraform.workspace}_matrix"]}"
+      ixo_matrix_appservice_rooms          = "rooms.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
       ixo_blocksync_core                   = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
       claims_credentials_prospect          = "prospect.credentials2.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       claims_credentials_ecs               = "ecs.credentials.${var.environments[terraform.workspace].domain}"
@@ -99,6 +101,7 @@ locals {
       ixo_notification_server              = "notifications.${var.environments[terraform.workspace].domain2}"
       ixo_guru                             = "guru.${var.environments[terraform.workspace].domain2}"
       ixo_trading_bot_server               = "trading.bot.${var.environments[terraform.workspace].domain2}"
+      ixo_ai_oracles_guru                  = "guru2.${var.environments[terraform.workspace].domain2}"
     }
   }
 

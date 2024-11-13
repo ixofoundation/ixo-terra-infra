@@ -92,7 +92,7 @@ data "kubernetes_service_v1" "nfs" {
   depends_on = [module.argocd]
   metadata {
     name      = "nfs-server-provisioner"
-    namespace = module.argocd.namespaces_helm["nfs-provisioner"].metadata[0].name
+    namespace = kubernetes_namespace_v1.nfs_provisioner.metadata[0].name
   }
 }
 
@@ -115,26 +115,6 @@ resource "kubernetes_persistent_volume_claim_v1" "common" {
     storage_class_name = "nfs"
   }
 }
-
-#resource "kubernetes_persistent_volume_claim_v1" "shared_ops_storage" {
-#  depends_on = [module.argocd]
-#  metadata {
-#    name      = "${var.org}-shared-ops-storage"
-#    namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
-#    labels = {
-#      "app.kubernetes.io/name" = "${var.org}-shared-ops-storage"
-#    }
-#  }
-#  spec {
-#    access_modes = ["ReadWriteMany"]
-#    resources {
-#      requests = {
-#        storage = "100Gi"
-#      }
-#    }
-#    storage_class_name = "nfs"
-#  }
-#}
 
 resource "random_password" "vault_dex_oidc_secret" {
   length  = 16
