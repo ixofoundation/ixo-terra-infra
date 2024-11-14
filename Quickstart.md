@@ -7,6 +7,7 @@ This setup enables a minimal configuration to get started quickly. By default, V
 
 1. **Terraform**: Make sure Terraform is installed on your local machine.
 2. **Environment Variables**: Set the necessary environment variables for services enabled in `quickstart.tfvars`.
+3. **Vultr Cloud**: Make sure you have an account setup with Vultr as K8 is deployed on VKE.
 
 ## Step-by-Step Setup
 
