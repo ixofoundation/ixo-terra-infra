@@ -1,7 +1,7 @@
 
 # Quickstart Guide for ixo-terra-infra
 
-Welcome to the quickstart guide! This setup enables a minimal configuration to get started quickly. By default, Vault is enabled for secret management, but other services (e.g., Dex, Prometheus) are optional.
+This setup enables a minimal configuration to get started quickly. By default, Vault is enabled for secret management, but other services (e.g., Dex, Prometheus) are optional and will require additional setup.
 
 ## Prerequisites
 
