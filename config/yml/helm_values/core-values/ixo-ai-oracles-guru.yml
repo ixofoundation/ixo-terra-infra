@@ -77,6 +77,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#MATRIX_TOKEN_KEY>"
   - name: "TAVILY_API_KEY"
     value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#TAVILY_API_KEY>"
+  - name: "MATRIX_ORACLE_USER_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#MATRIX_ORACLE_USER_TOKEN>"
 service:
   port: 3000
 resources:

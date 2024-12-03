@@ -602,9 +602,80 @@ module "ixo_guru_temp" {
     MATRIX_ORACLE_ADMIN_ACCESS_TOKEN = ""
     MATRIX_ORACLE_ADMIN_USER_ID      = ""
     MATRIX_ORACLE_ADMIN_DEVICE_ID    = ""
+    MATRIX_ORACLE_USER_TOKEN         = ""
     MATRIX_TOKEN_KEY                 = ""
     TAVILY_API_KEY                   = ""
     NODE_ENV                         = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_giza_oracle" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_ai_oracles_giza"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-ai-oracles-giza"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-ai-oracles-giza"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ai-oracles-giza.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_ai_oracles_giza"]
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    SLACK_SIGNING_SECRET  = ""
+    SLACK_BOT_TOKEN       = ""
+    BOT_OAUTH_TOKEN       = ""
+    USER_OAUTH_TOKEN      = ""
+    SLACK_APP_LEVEL_TOKEN = ""
+
+    API_KEY                    = ""
+    REDIS_URL                  = ""
+
+    AITABLE_BASE_TABLE_LINK = ""
+
+    AIRTABLE_API_KEY = ""
+    AIRTABLE_BASE_ID = ""
+
+    OPENAI_API_KEY = ""
+
+    PINECONE_API_KEY = ""
+    PINECONE_INDEX   = ""
+
+    LANGCHAIN_TRACING_V2 = ""
+    LANGCHAIN_ENDPOINT   = ""
+    LANGCHAIN_API_KEY    = ""
+    LANGCHAIN_PROJECT    = ""
+
+    MATRIX_BASE_URL                  = ""
+    MATRIX_ORACLE_ADMIN_PASSWORD     = ""
+    MATRIX_ORACLE_ADMIN_ACCESS_TOKEN = ""
+    MATRIX_ORACLE_ADMIN_USER_ID      = ""
+    MATRIX_ORACLE_ADMIN_DEVICE_ID    = ""
+    MATRIX_ORACLE_USER_TOKEN         = ""
+    MATRIX_TOKEN_KEY                 = ""
+    TAVILY_API_KEY                   = ""
+    BLOCKSYNC_GRAPHQL_URL            = ""
+    SUPAMOTO_API_KEY                 = ""
+    GIZA_API_URL                     = ""
+    GIZA_PROVING_JOBS_API_URL        = ""
+    CRON_JOBS                        = "true"
+    ISSUER_DID                       = ""
+    CREDENTIALS_MNEMONIC             = ""
+    CELLNODE_URL                     = ""
+    RPC_URL                          = ""
+    SECP_MNEMONIC                    = ""
+    NETWORK                          = ""
+    NODE_ENV                         = ""
+    ALLOW_SLACK_BOT = ""
+    GIZA_DRY_RUN = ""
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
@@ -849,6 +920,37 @@ module "ixo_notification_server" {
     AIRTABLE_BASE_ID                = ""
     AIRTABLE_TABLE_NOTIFICATIONS_V2 = ""
     PUBLIC_AUTHORIZATION            = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "hermes" {
+  count  = var.environments[terraform.workspace].enabled_services["hermes"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "hermes"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/hermes"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/hermes.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["hermes"]
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    CHAIN_A_RPC_ADDR  = ""
+    CHAIN_A_GRPC_ADDR = ""
+    CHAIN_B_RPC_ADDR  = ""
+    CHAIN_B_GRPC_ADDR = ""
+
+    CHAIN_A_SECRET_KEY = ""
+    CHAIN_B_SECRET_KEY = ""
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
