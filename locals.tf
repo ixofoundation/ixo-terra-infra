@@ -102,6 +102,7 @@ locals {
       ixo_guru                             = "guru.${var.environments[terraform.workspace].domain2}"
       ixo_trading_bot_server               = "trading.bot.${var.environments[terraform.workspace].domain2}"
       ixo_ai_oracles_guru                  = "guru2.${var.environments[terraform.workspace].domain2}"
+      ixo_ai_oracles_giza                 = "giza.${var.environments[terraform.workspace].domain2}"
     }
   }
 

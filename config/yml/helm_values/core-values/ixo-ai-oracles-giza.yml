@@ -1,0 +1,110 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-ai-oracles-giza-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: "NODE_ENV"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#NODE_ENV>"
+  - name: "SLACK_SIGNING_SECRET"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#SLACK_SIGNING_SECRET>"
+  - name: "SLACK_BOT_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#SLACK_BOT_TOKEN>"
+  - name: "BOT_OAUTH_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#BOT_OAUTH_TOKEN>"
+  - name: "SLACK_APP_LEVEL_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#SLACK_APP_LEVEL_TOKEN>"
+  - name: "API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#API_KEY>"
+  - name: "REDIS_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#REDIS_URL>"
+  - name: "AITABLE_BASE_TABLE_LINK"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#AITABLE_BASE_TABLE_LINK>"
+  - name: "AIRTABLE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#AIRTABLE_API_KEY>"
+  - name: "AIRTABLE_BASE_ID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#AIRTABLE_BASE_ID>"
+  - name: "OPENAI_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#OPENAI_API_KEY>"
+  - name: "PINECONE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#PINECONE_API_KEY>"
+  - name: "PINECONE_INDEX"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#PINECONE_INDEX>"
+  - name: "LANGCHAIN_TRACING_V2"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#LANGCHAIN_TRACING_V2>"
+  - name: "LANGCHAIN_ENDPOINT"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#LANGCHAIN_ENDPOINT>"
+  - name: "LANGCHAIN_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#LANGCHAIN_API_KEY>"
+  - name: "LANGCHAIN_PROJECT"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#LANGCHAIN_PROJECT>"
+  - name: "TRAVEL_IMPACT_MODEL_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#TRAVEL_IMPACT_MODEL_API_KEY>"
+  - name: "MATRIX_BASE_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#MATRIX_BASE_URL>"
+  - name: "MATRIX_ORACLE_ADMIN_PASSWORD"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#MATRIX_ORACLE_ADMIN_PASSWORD>"
+  - name: "MATRIX_ORACLE_ADMIN_ACCESS_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#MATRIX_ORACLE_ADMIN_ACCESS_TOKEN>"
+  - name: "MATRIX_ORACLE_ADMIN_USER_ID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#MATRIX_ORACLE_ADMIN_USER_ID>"
+  - name: "MATRIX_ORACLE_ADMIN_DEVICE_ID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#MATRIX_ORACLE_ADMIN_DEVICE_ID>"
+  - name: "MATRIX_TOKEN_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#MATRIX_TOKEN_KEY>"
+  - name: "TAVILY_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#TAVILY_API_KEY>"
+  - name: "MATRIX_ORACLE_USER_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#MATRIX_ORACLE_USER_TOKEN>"
+  - name: "BLOCKSYNC_GRAPHQL_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#BLOCKSYNC_GRAPHQL_URL>"
+  - name: "SUPAMOTO_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#SUPAMOTO_API_KEY>"
+  - name: "GIZA_API_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#GIZA_API_URL>"
+  - name: "GIZA_PROVING_JOBS_API_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#GIZA_PROVING_JOBS_API_URL>"
+  - name: "CRON_JOBS"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#CRON_JOBS>"
+  - name: "ISSUER_DID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#ISSUER_DID>"
+  - name: "CREDENTIALS_MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#CREDENTIALS_MNEMONIC>"
+  - name: "CELLNODE_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#CELLNODE_URL>"
+  - name: "RPC_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#RPC_URL>"
+  - name: "SECP_MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#SECP_MNEMONIC>"
+  - name: "NETWORK"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#NETWORK>"
+  - name: "ALLOW_SLACK_BOT"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#ALLOW_SLACK_BOT>"
+  - name: "GIZA_DRY_RUN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#GIZA_DRY_RUN>"
+  - name: "USER_OAUTH_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#USER_OAUTH_TOKEN>"
+service:
+  port: 3000
+resources:
+  requests:
+    memory: 200Mi
+    cpu: "50m"
+  limits:
+    memory: 350Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

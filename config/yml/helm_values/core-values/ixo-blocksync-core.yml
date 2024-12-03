@@ -38,7 +38,7 @@ resources:
     memory: 300Mi
     cpu: "100m"
   limits:
-    memory: 600Mi
+    memory: 700Mi
 autoscaling:
   enabled: true
   minReplicas: 1

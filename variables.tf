@@ -58,6 +58,7 @@ variable "environments" {
         matrix                        = true
         nfs_provisioner               = true
         metrics_server                = true
+        hermes                        = true
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -86,6 +87,7 @@ variable "environments" {
         ixo_guru                             = false
         ixo_trading_bot_server               = false
         ixo_ai_oracles_guru                  = false
+        ixo_ai_oracles_giza                  = false
       }
     }
     testnet = {
@@ -109,6 +111,7 @@ variable "environments" {
         matrix                        = true
         nfs_provisioner               = true
         metrics_server                = true
+        hermes                        = false
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -137,6 +140,7 @@ variable "environments" {
         ixo_guru                             = false
         ixo_trading_bot_server               = false
         ixo_ai_oracles_guru                  = false
+        ixo_ai_oracles_giza                  = false
       }
     }
     mainnet = {
@@ -160,6 +164,7 @@ variable "environments" {
         matrix                        = true
         nfs_provisioner               = true
         metrics_server                = true
+        hermes                        = false
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -188,6 +193,7 @@ variable "environments" {
         ixo_guru                             = true
         ixo_trading_bot_server               = true
         ixo_ai_oracles_guru                  = true
+        ixo_ai_oracles_giza                  = true
       }
     }
   }
