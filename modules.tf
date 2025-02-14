@@ -111,6 +111,7 @@ module "prometheus_stack" {
       dex_host            = var.hostnames["${terraform.workspace}_dex"]
       org                 = var.org
       environment         = terraform.workspace
+      additional_scrape_metrics = var.additional_prometheus_scrape_metrics[terraform.workspace]
     })
   }
   argo_namespace   = module.argocd.argo_namespace
@@ -215,7 +216,12 @@ module "loki" {
       ignoreDifferences = local.loki_ignore_differences
     }
     repository      = "https://grafana.github.io/helm-charts"
-    values_override = templatefile("${local.helm_values_config_path}/loki-values.yml", {})
+    values_override = templatefile("${local.helm_values_config_path}/loki-values.yml",
+      {
+        gcs_bucket = google_storage_bucket.loki_logs_backups.name
+        service_account = indent(8, module.gcp_kms_loki.gcp_key_secret_data["key.json"])
+      }
+    )
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
@@ -408,6 +414,14 @@ module "postgres-operator" { # Sets up Cluster Instances
   gcs_key = file("${path.root}/credentials.json")
 }
 
+module "hyperlane_validator" {
+  source = "./modules/hyperlane"
+  aws_region = var.environments[terraform.workspace].aws_config.region
+  environment = terraform.workspace
+  chain_names = var.environments[terraform.workspace].hyperlane.chain_names
+  metadata_chains = var.environments[terraform.workspace].hyperlane.metadata_chains
+}
+
 module "ixo_loki_logs" {
   depends_on = [module.argocd]
   source     = "./modules/loki_logs"
@@ -433,6 +447,12 @@ module "gcp_kms_matrix" {
   source     = "./modules/gcp_kms"
   name       = "matrix-${terraform.workspace}"
   namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+}
+
+module "gcp_kms_loki" {
+  source     = "./modules/gcp_kms"
+  name       = "loki-${terraform.workspace}"
+  namespace  = kubernetes_namespace_v1.loki.metadata[0].name
 }
 
 module "gcp_kms_core" {
@@ -473,7 +493,6 @@ module "matrix_init" {
 }
 
 module "external_dns_cloudflare" {
-  count  = terraform.workspace == "testnet" || terraform.workspace == "mainnet" ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "external-dns-cloudflare"

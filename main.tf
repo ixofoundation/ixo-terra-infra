@@ -18,6 +18,10 @@ terraform {
       source  = "hashicorp/vault"
       version = "3.25.0"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 }
 
@@ -172,6 +176,33 @@ resource "google_storage_bucket" "matrix_backups" {
     }
     condition {
       age = 365 # Objects older than 365 days will be deleted
+    }
+  }
+
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "NEARLINE"
+    }
+    condition {
+      age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
+    }
+  }
+}
+
+resource "google_storage_bucket" "loki_logs_backups" {
+  location = "US"
+  name     = "${var.org}-${terraform.workspace}-loki-logs"
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      age = 730 # Objects older than 730 days will be deleted
     }
   }
 

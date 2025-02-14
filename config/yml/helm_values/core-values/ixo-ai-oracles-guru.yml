@@ -79,6 +79,36 @@ env:
     value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#TAVILY_API_KEY>"
   - name: "MATRIX_ORACLE_USER_TOKEN"
     value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#MATRIX_ORACLE_USER_TOKEN>"
+  - name: "ALLOW_SLACK_BOT"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#ALLOW_SLACK_BOT>"
+  - name: "BLOCKSYNC_GRAPHQL_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#BLOCKSYNC_GRAPHQL_URL>"
+  - name: "CELLNODE_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#CELLNODE_URL>"
+  - name: "CREDENTIALS_MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#CREDENTIALS_MNEMONIC>"
+  - name: "CRON_JOBS"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#CRON_JOBS>"
+  - name: "GIZA_API_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#GIZA_API_URL>"
+  - name: "GIZA_DRY_RUN"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#GIZA_DRY_RUN>"
+  - name: "GIZA_PROVING_JOBS_API_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#GIZA_PROVING_JOBS_API_URL>"
+  - name: "ISSUER_DID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#ISSUER_DID>"
+  - name: "NETWORK"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#NETWORK>"
+  - name: "ORACLE_ENTITY_DID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#ORACLE_ENTITY_DID>"
+  - name: "ORACLE_PROTOCOL_CLAIM_DID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#ORACLE_PROTOCOL_CLAIM_DID>"
+  - name: "RPC_URL"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#RPC_URL>"
+  - name: "SECP_MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#SECP_MNEMONIC>"
+  - name: "SUPAMOTO_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#SUPAMOTO_API_KEY>"
 service:
   port: 3000
 resources:
@@ -86,7 +116,7 @@ resources:
     memory: 200Mi
     cpu: "50m"
   limits:
-    memory: 350Mi
+    memory: 1Gi
 autoscaling:
   enabled: true
   minReplicas: 1

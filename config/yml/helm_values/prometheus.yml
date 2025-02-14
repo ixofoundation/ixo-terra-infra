@@ -54,6 +54,31 @@ prometheus:
         memory: 900Mi
     #https://github.com/CrunchyData/postgres-operator-examples/blob/main/kustomize/monitoring/prometheus/config/prometheus.yml
     additionalScrapeConfigs:
+      ${indent(6, additional_scrape_metrics)}
+      - job_name: 'cvms-exporter'
+        metrics_path: '/metrics'
+        scheme: 'http'
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [ __meta_kubernetes_service_name, __meta_kubernetes_namespace ]
+            action: keep
+            regex: ixo-cvms-exporter;core
+          - source_labels: [ __meta_kubernetes_endpoint_port_name ]
+            action: keep
+            regex: metrics
+      - job_name: 'hermes-telemetry'
+        metrics_path: '/metrics'
+        scheme: 'http'
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [ __meta_kubernetes_service_name, __meta_kubernetes_namespace ]
+            action: keep
+            regex: hermes-telemetry;core
+          - source_labels: [ __meta_kubernetes_endpoint_port_name ]
+            action: keep
+            regex: telemetry
       - job_name: blackbox
         metrics_path: /probe
         params:

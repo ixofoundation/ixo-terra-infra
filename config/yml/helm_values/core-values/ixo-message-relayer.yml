@@ -8,31 +8,25 @@ ingress:
   tls:
     - hosts:
         - ${host}
-      secretName: ixo-trading-bot-server-tls
+      secretName: ixo-message-relayer-tls
   hosts:
     - host: ${host}
       paths:
         - path: /
           pathType: Prefix
 env:
+  - name: "PORT"
+    value: "3000"
   - name: "NODE_ENV"
     value: "production"
-  - name: "POOL_ADDRESSES"
-    value: "<path:${vault_mount}/data/ixo-trading-bot-server#POOL_ADDRESSES>"
-  - name: "MNEMONICS"
-    value: "<path:${vault_mount}/data/ixo-trading-bot-server#MNEMONICS>"
-  - name: "EXECUTE_RANDOM_TRADES"
-    value: "<path:${vault_mount}/data/ixo-trading-bot-server#EXECUTE_RANDOM_TRADES>"
-  - name: "DATABASE_URL"
-    value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
+  - name: "AUTHORIZATION"
+    value: "<path:${vault_mount}/data/ixo-message-relayer#AUTHORIZATION>"
   - name: "MIGRATE_DB_PROGRAMATICALLY"
     value: "1"
   - name: "DATABASE_USE_SSL"
     value: "1"
-  - name: "RPC_URL"
-    value: "${rpc_url}"
-  - name: "PORT"
-    value: "3000"
+  - name: "DATABASE_URL"
+    value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
 service:
   port: 3000
 resources:

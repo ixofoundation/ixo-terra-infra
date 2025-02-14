@@ -93,6 +93,14 @@ pg_ixo = {
     {
       username  = "trading-bot-server"
       databases = ["trading-bot-server"]
+    }, // 12
+    {
+      username  = "payments-nest"
+      databases = ["payments-nest"]
+    },
+    { // 13
+      username = "message-relayer"
+      databases = ["message-relayer"]
     }
   ]
   pg_version             = 15
@@ -100,4 +108,43 @@ pg_ixo = {
   pgbackrest_image_tag   = "ubi8-2.47-2"
   pgmonitoring_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres-exporter"
   pgmonitoring_image_tag = "ubi8-5.5.0-0"
+}
+
+additional_prometheus_scrape_metrics = {
+  devnet = <<EOT
+- job_name: 'validator'
+  metrics_path: '/metrics'
+  scheme: 'http'
+  static_configs:
+    - targets:
+      - '139.84.231.209:9100'
+  relabel_configs:
+    - source_labels: [ __address__ ]
+      target_label: instance
+EOT
+  testnet = <<EOT
+- job_name: 'validator'
+  metrics_path: '/metrics'
+  scheme: 'http'
+  static_configs:
+    - targets:
+      - '45.76.34.6:9100'
+      - '136.244.107.1:9100'
+  relabel_configs:
+    - source_labels: [ __address__ ]
+      target_label: instance
+EOT
+  mainnet = <<EOT
+- job_name: 'validator'
+  metrics_path: '/metrics'
+  scheme: 'http'
+  static_configs:
+    - targets:
+      - '217.69.7.217:9100'
+      - '136.244.109.82:9100'
+      - '95.179.158.151:9100'
+  relabel_configs:
+    - source_labels: [ __address__ ]
+      target_label: instance
+EOT
 }

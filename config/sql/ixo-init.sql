@@ -33,3 +33,9 @@ GRANT CREATE ON SCHEMA "public" to "notification-server";
 
 \c 'trading-bot-server'
 GRANT CREATE ON SCHEMA "public" to "trading-bot-server";
+
+\c 'payments-nest'
+GRANT CREATE ON SCHEMA "public" to "payments-nest";
+
+\c 'message-relayer'
+GRANT CREATE ON SCHEMA "public" to "message-relayer";
