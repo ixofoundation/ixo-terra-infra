@@ -1,0 +1,18 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/ixofoundation/ixo-cvms-exporter
+  tag: latest
+  pullPolicy: IfNotPresent
+
+exporter:
+  port: 9200
+  logLevel: 4
+  logColorDisable: false
+
+resources:
+  requests:
+    memory: 100Mi
+    cpu: "10m"
+  limits:
+    memory: 200Mi

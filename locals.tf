@@ -10,7 +10,11 @@ locals {
     ]),
     lookup(var.additional_manual_synthetic_monitoring_endpoints, terraform.workspace, [])
   )
-  excluded_synthetic_monitoring = []
+  excluded_synthetic_monitoring = [
+    "ixo_trading_bot_server",
+    "hermes",
+    "ixo_registry_server"
+  ]
   # IXO DNS Entries
   dns_for_environment = {
     for env, config in var.environments : env => {
@@ -46,6 +50,9 @@ locals {
       ixo_guru                    = ""
       ixo_trading_bot_server      = ""
       ixo_ai_oracles_guru         = ""
+      ixo_payments_nest           = ""
+      ixo_message_relayer         = "signx.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_registry_server         = "dev.api.emerging.eco"
     }
     testnet = {
       ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
@@ -73,6 +80,10 @@ locals {
       ixo_guru                    = ""
       ixo_trading_bot_server      = ""
       ixo_ai_oracles_guru         = ""
+      ixo_ai_oracles_giza         = "gizatest.${var.environments[terraform.workspace].domain}"
+      ixo_payments_nest           = "payments.${terraform.workspace}.${var.environments[terraform.workspace].domain3}"
+      ixo_message_relayer         = "signx.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
+      ixo_registry_server         = "stage.api.emerging.eco"
     }
     mainnet = {
       ixo_cellnode                         = "cellnode.${var.environments[terraform.workspace].domain}"
@@ -102,7 +113,11 @@ locals {
       ixo_guru                             = "guru.${var.environments[terraform.workspace].domain2}"
       ixo_trading_bot_server               = "trading.bot.${var.environments[terraform.workspace].domain2}"
       ixo_ai_oracles_guru                  = "guru2.${var.environments[terraform.workspace].domain2}"
-      ixo_ai_oracles_giza                 = "giza.${var.environments[terraform.workspace].domain2}"
+      ixo_ai_oracles_giza                  = "giza.${var.environments[terraform.workspace].domain2}"
+      ixo_payments_nest                    = "payments.${var.environments[terraform.workspace].domain3}"
+      ixo_message_relayer                  = "signx.${var.environments[terraform.workspace].domain2}"
+      ixo_registry_server                  = "api.emerging.eco"
+      hermes                               = "hermes.${var.environments[terraform.workspace].domain2}"
     }
   }
 
@@ -150,8 +165,55 @@ locals {
         pathType = "Prefix"
       }]
   }]
-  cellnode_tls_hostnames = [for host in local.cellnode_hosts : host.host]
 
+  registry_server_hosts = terraform.workspace == "testnet" ? [
+    {
+      host = local.dns_for_environment[terraform.workspace]["ixo_registry_server"]
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    },
+    {
+      host = "${terraform.workspace}.api.${var.environments[terraform.workspace].domain}"
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    }
+    ] : terraform.workspace == "mainnet" ? [
+    {
+      host = local.dns_for_environment[terraform.workspace]["ixo_registry_server"]
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    },
+    {
+      host = "api.${var.environments[terraform.workspace].domain}"
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    }
+    ] : [
+    {
+      host = local.dns_for_environment[terraform.workspace]["ixo_registry_server"]
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    },
+    {
+      host = "${terraform.workspace}.api.${var.environments[terraform.workspace].domain}"
+      paths = [{
+        path     = "/"
+        pathType = "Prefix"
+      }]
+    }
+  ]
+  cellnode_tls_hostnames = [for host in local.cellnode_hosts : host.host]
+  registry_server_tls    = [for host in local.registry_server_hosts : host.host]
   # Vultr
   region_ids = { for city, id in var.region_ids : id => city }
 

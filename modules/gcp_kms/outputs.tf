@@ -9,3 +9,7 @@ output "crypto_key_name" {
 output "gcp_key_secret_name" {
   value = kubernetes_secret_v1.gcp_secret.metadata[0].name
 }
+
+output "gcp_key_secret_data" {
+  value = data.kubernetes_secret_v1.current_gcp_secret_value.data
+}

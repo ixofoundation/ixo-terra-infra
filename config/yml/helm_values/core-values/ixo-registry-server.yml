@@ -1,0 +1,35 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        ${indent(8, tls_hosts)}
+      secretName: ixo-registry-server-tls
+  hosts:
+    ${indent(4, hosts)}
+env:
+  - name: "PORT"
+    value: "8080"
+  - name: "MIGRATE_DB_PROGRAMATICALLY"
+    value: "1"
+  - name: "DATABASE_USE_SSL"
+    value: "1"
+  - name: "ENABLE_DB_WRITES"
+    value: "false"
+service:
+  port: 8080
+resources:
+  requests:
+    memory: 100Mi
+    cpu: "50m"
+  limits:
+    memory: 200Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

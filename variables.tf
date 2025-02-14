@@ -13,21 +13,25 @@ variable "additional_manual_synthetic_monitoring_endpoints" {
   default = {
     devnet = [
       "https://signx.devnet.ixo.earth",
-      "https://devnet.ixo.earth/rpc/"
+      "https://devnet.ixo.earth/rpc/",
+      "https://dev.api.emerging.eco/emerging-platform/v1/hello"
     ]
     testnet = [
       "https://payments.testnet.emerging.eco",
       "https://blockscan-pandora.ixo.earth",
       "https://signx.testnet.ixo.earth",
-      "https://testnet.ixo.earth/rpc/"
+      "https://testnet.ixo.earth/rpc/",
+      "https://stage.api.emerging.eco/emerging-platform/v1/hello"
     ]
     mainnet = [
       "https://coincache.ixo.earth",
-      "https://relayer.assistant.ixo.earth",
+      "https://trading.bot.ixo.earth/api/",
+      "https://hermes.ixo.earth/version",
       "https://reclaim.ixo.earth",
       "https://signx.ixo.earth",
       "https://ixo.rpc.m.stavr.tech",
-      "https://impacthub.ixo.world/rpc/"
+      "https://impacthub.ixo.world/rpc/",
+      "https://api.emerging.eco/emerging-platform/v1/hello"
     ]
   }
 }
@@ -43,6 +47,14 @@ variable "environments" {
       ipfs_service_mapping = "https://devnet-blocksync-graphql.ixo.earth/api/ipfs/" #TODO this possibly could be moved to local cluster address
       domain               = "ixo.earth"
       domain2              = "ixo.earth"
+      domain3              = ""
+      hyperlane = {
+        chain_names     = [""]
+        metadata_chains = [""]
+      }
+      aws_config = {
+        region = ""
+      }
       enabled_services = {
         # Core
         cert_manager                  = true
@@ -58,7 +70,7 @@ variable "environments" {
         matrix                        = true
         nfs_provisioner               = true
         metrics_server                = true
-        hermes                        = true
+        hermes                        = false
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -88,6 +100,10 @@ variable "environments" {
         ixo_trading_bot_server               = false
         ixo_ai_oracles_guru                  = false
         ixo_ai_oracles_giza                  = false
+        ixo_payments_nest                    = false
+        ixo_message_relayer                  = true
+        ixo_cvms_exporter                    = false
+        ixo_registry_server                  = true
       }
     }
     testnet = {
@@ -95,7 +111,15 @@ variable "environments" {
       rpc_url              = "https://testnet.ixo.earth/rpc/"
       domain               = "ixo.earth"
       domain2              = "ixo.earth"
+      domain3              = "emerging.eco"
       ipfs_service_mapping = "https://testnet-blocksync-graphql.ixo.earth/api/ipfs/"
+      hyperlane = {
+        chain_names     = ["relayer", "pandora8", "basesepolia"] # Ensure config.json's exist on S3 before applying, required.
+        metadata_chains = ["pandora8", "basesepolia"] # Ensure metadata.json's exist on S3 before applying, optional.
+      }
+      aws_config = {
+        region = "eu-north-1"
+      }
       enabled_services = {
         # Core
         cert_manager                  = true
@@ -140,7 +164,11 @@ variable "environments" {
         ixo_guru                             = false
         ixo_trading_bot_server               = false
         ixo_ai_oracles_guru                  = false
-        ixo_ai_oracles_giza                  = false
+        ixo_ai_oracles_giza                  = true
+        ixo_payments_nest                    = true
+        ixo_message_relayer                  = true
+        ixo_cvms_exporter                    = false
+        ixo_registry_server                  = true
       }
     }
     mainnet = {
@@ -148,7 +176,15 @@ variable "environments" {
       rpc_url              = "https://impacthub.ixo.world/rpc/"
       domain               = "ixo.world"
       domain2              = "ixo.earth"
+      domain3              = "emerging.eco"
       ipfs_service_mapping = "https://blocksync-graphql.ixo.earth/api/ipfs/"
+      hyperlane = {
+        chain_names     = ["pandora8"]
+        metadata_chains = [""]
+      }
+      aws_config = {
+        region = ""
+      }
       enabled_services = {
         # Core
         cert_manager                  = true
@@ -164,7 +200,7 @@ variable "environments" {
         matrix                        = true
         nfs_provisioner               = true
         metrics_server                = true
-        hermes                        = false
+        hermes                        = true
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -194,6 +230,10 @@ variable "environments" {
         ixo_trading_bot_server               = true
         ixo_ai_oracles_guru                  = true
         ixo_ai_oracles_giza                  = true
+        ixo_payments_nest                    = true
+        ixo_message_relayer                  = true
+        ixo_cvms_exporter                    = true
+        ixo_registry_server                  = true
       }
     }
   }
@@ -311,6 +351,16 @@ variable "pg_ixo" {
       pgmonitoring_image_tag = optional(string)
     }
   )
+}
+
+variable "additional_prometheus_scrape_metrics" {
+  type        = map(string)
+  description = "Additional prometheus scrape metrics config in yml."
+  default = {
+    devnet  = null
+    testnet = null
+    mainnet = null
+  }
 }
 
 variable "region_ids" {

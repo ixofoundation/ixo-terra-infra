@@ -95,6 +95,10 @@ env:
     value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#GIZA_DRY_RUN>"
   - name: "USER_OAUTH_TOKEN"
     value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#USER_OAUTH_TOKEN>"
+  - name: "ORACLE_ENTITY_DID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#ORACLE_ENTITY_DID>"
+  - name: "ORACLE_PROTOCOL_CLAIM_DID"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#ORACLE_PROTOCOL_CLAIM_DID>"
 service:
   port: 3000
 resources:

@@ -285,6 +285,50 @@ module "ixo_feegrant_nest" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "ixo_payments_nest" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_payments_nest"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-payments-nest"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-payments-nest"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_payments_nest.yml",
+      {
+        environment = terraform.workspace
+        rpc_url     = var.environments[terraform.workspace].rpc_url
+        host        = local.dns_for_environment[terraform.workspace]["ixo_payments_nest"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[12].username
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[12].username])
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION                           = ""
+    BLOCKSYNC_URL                           = ""
+    STRIPE_API_KEY                          = ""
+    STRIPE_WEBHOOK_SECRET                   = ""
+    NOTIFICATIONS_WORKER_URL                = ""
+    NOTIFICATIONS_WORKER_AUTH               = ""
+    RPC_URL                                 = ""
+    MNEMONIC                                = ""
+    NETWORK                                 = ""
+    CRYPTOCOM_WEBHOOK_SECRET                = ""
+    SENTRY_DSN                              = ""
+    COLLECTIONS_TO_SELL                     = ""
+    COLLECTIONS_TO_SELL_END_DATE_ADD_MONTHS = ""
+    TOKENS_TO_SELL                          = ""
+    TOKENS_TO_SELL_COLLECTIONS              = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "ixo_did_resolver" {
   count  = var.environments[terraform.workspace].enabled_services["ixo_did_resolver"] ? 1 : 0
   source = "./modules/argocd_application"
@@ -636,8 +680,8 @@ module "ixo_giza_oracle" {
     USER_OAUTH_TOKEN      = ""
     SLACK_APP_LEVEL_TOKEN = ""
 
-    API_KEY                    = ""
-    REDIS_URL                  = ""
+    API_KEY   = ""
+    REDIS_URL = ""
 
     AITABLE_BASE_TABLE_LINK = ""
 
@@ -674,8 +718,10 @@ module "ixo_giza_oracle" {
     SECP_MNEMONIC                    = ""
     NETWORK                          = ""
     NODE_ENV                         = ""
-    ALLOW_SLACK_BOT = ""
-    GIZA_DRY_RUN = ""
+    ALLOW_SLACK_BOT                  = ""
+    GIZA_DRY_RUN                     = ""
+    ORACLE_ENTITY_DID                = ""
+    ORACLE_PROTOCOL_CLAIM_DID        = ""
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
@@ -892,6 +938,35 @@ module "ixo_iot_data" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "ixo_message_relayer" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_message_relayer"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-message-relayer"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-message-relayer"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-message-relayer.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_message_relayer"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[13].username
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[13].username])
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    AUTHORIZATION = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "ixo_notification_server" {
   count  = var.environments[terraform.workspace].enabled_services["ixo_notification_server"] ? 1 : 0
   source = "./modules/argocd_application"
@@ -952,6 +1027,52 @@ module "hermes" {
     CHAIN_A_SECRET_KEY = ""
     CHAIN_B_SECRET_KEY = ""
   }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_cvms_exporter" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_cvms_exporter"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-cvms-exporter"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixofoundation"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-cvms-exporter"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cvms-exporter.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_cvms_exporter"]
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+  }
+  create_kv = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_dmrv_registry_server" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_registry_server"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-registry-server"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    owner      = "ixoworld"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-registry-server"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-registry-server.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_registry_server"]
+        vault_mount = vault_mount.ixo.path
+        hosts       = yamlencode(local.registry_server_hosts)
+        tls_hosts = yamlencode(local.registry_server_tls)
+      }
+    )
+  }
+  create_kv = false
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }

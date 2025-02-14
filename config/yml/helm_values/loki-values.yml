@@ -1,3 +1,4 @@
+deploymentMode: SingleBinary # TODO migrate to SimpleScalable or Distributed for HA when load increases
 loki:
   commonConfig:
     replication_factor: 1
@@ -7,6 +8,41 @@ loki:
     filesystem:
       chunks_directory: /var/loki/chunks
       rules_directory: /var/loki/rules
+  storage_config:
+    gcs:
+      bucket_name: ${gcs_bucket}
+      service_account: |
+        ${service_account}
+  compactor:
+    retention_enabled: true
+    compaction_interval: 10m
+    working_directory: /var/loki/data/retention
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+    delete_request_store: gcs
+  limits_config:
+    retention_period: 730h
+    retention_stream:
+      - selector: '{namespace="core"}'
+        priority: 1
+        period: 2160h
+      - selector: '{namespace="ixo-ingress"}'
+        priority: 1
+        period: 2160h
+  schemaConfig:
+    configs:
+      - from: "2025-01-01"
+        store: "tsdb"
+        object_store: "filesystem"
+        schema: "v13"
+        index:
+          prefix: "index_"
+          period: 24h
+chunksCache:
+  enabled: true
+  allocatedMemory: 2048
+compactor:
+  replicas: 0
 singleBinary:
   replicas: 1
   persistence:
@@ -16,7 +52,7 @@ read:
   persistence:
     storageClass: vultr-block-storage-hdd
     size: 40Gi
-  replicas: 2
+  replicas: 0 #TODO * DISTRIBUTED deployment setup.
   resources:
     requests:
       memory: 256Mi
@@ -27,7 +63,7 @@ backend:
   persistence:
     storageClass: vultr-block-storage-hdd
     size: 40Gi
-  replicas: 2
+  replicas: 0
   resources:
     requests:
       memory: 512Mi
@@ -38,7 +74,7 @@ write:
   persistence:
     storageClass: vultr-block-storage-hdd
     size: 40Gi
-  replicas: 2
+  replicas: 0
   resources:
     requests:
       memory: 256Mi

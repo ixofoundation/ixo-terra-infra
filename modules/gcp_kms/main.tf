@@ -22,3 +22,11 @@ resource "kubernetes_secret_v1" "gcp_secret" {
     "key.json" = "" # To be added manually
   }
 }
+
+data "kubernetes_secret_v1" "current_gcp_secret_value" {
+  depends_on = [kubernetes_secret_v1.gcp_secret]
+  metadata {
+    name = "gcp-key-secret"
+    namespace = var.namespace
+  }
+}
