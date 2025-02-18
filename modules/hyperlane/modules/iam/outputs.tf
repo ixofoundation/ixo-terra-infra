@@ -2,6 +2,10 @@ output "ecs_user_arn" {
   value = aws_iam_user.ecs_user.arn
 }
 
+output "ecs_user_name" {
+  value = aws_iam_user.ecs_user.name
+}
+
 output "ecs_user_access_key_id_arn" {
   value = aws_ssm_parameter.key_id.arn
 }

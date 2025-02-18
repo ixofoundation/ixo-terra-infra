@@ -8,9 +8,7 @@ resource "aws_iam_policy" "s3_access_policy" {
       {
         Effect = "Allow",
         Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:ListBucket"
+          "s3:*"
         ],
         Resource = [
           "arn:aws:s3:::${aws_s3_bucket.configs_bucket.bucket}",
@@ -26,4 +24,10 @@ resource "aws_iam_policy" "s3_access_policy" {
 resource "aws_iam_role_policy_attachment" "ecs_task_s3_policy_attachment" {
   role       = var.ecs_task_role_name
   policy_arn = aws_iam_policy.s3_access_policy.arn
+}
+
+resource "aws_iam_policy_attachment" "ecs_user_s3_policy_attachment" {
+  users = [var.validator_iam_user_name]
+  policy_arn = aws_iam_policy.s3_access_policy.arn
+  name       = "${var.validator_iam_user_name}-s3-attachment"
 }

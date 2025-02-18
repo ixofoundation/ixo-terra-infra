@@ -15,6 +15,7 @@ module "s3" {
   source = "../s3"
 
   validator_name         = var.validator_name
+  validator_iam_user_name = module.iam_kms.ecs_user_name
   validator_iam_user_arn = module.iam_kms.ecs_user_arn
   ecs_task_role_name = module.iam_kms.validator_execution_role_name
   ecs_task_role_arn = module.iam_kms.validator_task_role_arn
@@ -42,7 +43,7 @@ resource "aws_ecs_task_definition" "validator" {
   container_definitions = jsonencode([
     {
       name  = "validator",
-      image = "gcr.io/abacus-labs-dev/hyperlane-agent:${var.validator_image_version}",
+      image = "${var.validator_image}:${var.validator_image_version}",
       user  = "1000:1000",
       environment = [
         {
@@ -91,11 +92,16 @@ resource "aws_ecs_task_definition" "validator" {
           ls /hyperlane_configs
           sleep 5
         done;
-        exec ./validator \
-          --checkpointSyncer.type s3 \
-          --checkpointSyncer.bucket ${module.s3.validator_bucket_id} \
-          --checkpointSyncer.region ${var.aws_region} \
-          --validator.region ${var.aws_region}
+        if echo "${var.validator_name}" | grep -q "relayer"; then
+          echo "Running as relayer agent"
+          exec ./relayer
+        else
+          exec ./validator \
+            --checkpointSyncer.type s3 \
+            --checkpointSyncer.bucket ${module.s3.validator_bucket_id} \
+            --checkpointSyncer.region ${var.aws_region} \
+            --validator.region ${var.aws_region}
+        fi
         EOT
       ],
       logConfiguration = {
@@ -110,7 +116,7 @@ resource "aws_ecs_task_definition" "validator" {
     },
     {
       name      = "aws-cli-sidecar",
-      image     = "amazonlinux:2",
+      image     = "public.ecr.aws/amazonlinux/amazonlinux:2",
       cpu       = 256,
       memory    = 512,
       essential = false,

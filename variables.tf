@@ -115,7 +115,7 @@ variable "environments" {
       ipfs_service_mapping = "https://testnet-blocksync-graphql.ixo.earth/api/ipfs/"
       hyperlane = {
         chain_names     = ["relayer", "pandora8", "basesepolia"] # Ensure config.json's exist on S3 before applying, required.
-        metadata_chains = ["pandora8", "basesepolia"] # Ensure metadata.json's exist on S3 before applying, optional.
+        metadata_chains = ["relayer", "pandora8", "basesepolia"] # Ensure metadata.json's exist on S3 before applying, optional.
       }
       aws_config = {
         region = "eu-north-1"

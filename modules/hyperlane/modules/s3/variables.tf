@@ -15,3 +15,7 @@ variable "ecs_task_role_name" {
 variable "ecs_task_role_arn" {
   type = string
 }
+
+variable "validator_iam_user_name" {
+  type = string
+}
