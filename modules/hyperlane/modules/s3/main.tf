@@ -12,8 +12,8 @@ resource "aws_s3_bucket_public_access_block" "validator_bucket_public_access_blo
 
   block_public_acls       = true  # Blocks public ACLs from being added to the bucket
   ignore_public_acls      = true  # Ignores any public ACLs currently associated with the bucket
-  block_public_policy     = true  # Allows public bucket policies (not recommended for sensitive data)
-  restrict_public_buckets = true  # Allows unrestricted public access to the bucket (not recommended for sensitive data)
+  block_public_policy     = false # Allows public bucket policies (not recommended for sensitive data)
+  restrict_public_buckets = false # Allows unrestricted public access to the bucket (not recommended for sensitive data)
 }
 
 # This resource defines a bucket policy that allows public read access to the bucket and its objects.
@@ -25,12 +25,10 @@ resource "aws_s3_bucket_policy" "validator_bucket_policy" {
     Statement = [
       {
         Effect    = "Allow",
-        Principal = {
-          "AWS" = var.ecs_task_role_arn
-        },
+        Principal = "*",
         Action = [
           "s3:GetObject",  # Allows retrieval of objects from the bucket
-          "s3:ListBucket"  # Allows listing of the objects within the bucket
+          "s3:ListBucket",  # Allows listing of the objects within the bucket
         ],
         Resource = [
           "${aws_s3_bucket.validator_bucket.arn}",  # Bucket ARN

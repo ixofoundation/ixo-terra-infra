@@ -58,6 +58,11 @@ variable "aws_log_group" {
   default     = "DefaultLogGroup"
 }
 
+variable "validator_image" {
+  type        = string
+  default     = "gcr.io/abacus-labs-dev/hyperlane-agent"
+}
+
 variable "validator_image_version" {
   description = "The name of the log group to write to"
   type        = string

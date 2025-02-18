@@ -11,6 +11,9 @@ module "hyperlane_validator" {
   validator_name    = "impacthub-${var.environment}-${each.value}"
   origin_chain_name = each.value
 
+  validator_image = "ghcr.io/ixofoundation/hyperlane-monorepo"
+  validator_image_version = "v0.0.2-ixo"
+
   aws_region               = var.aws_region
   validator_cluster_id     = aws_ecs_cluster.validator_cluster.id
   validator_subnet_id      = aws_subnet.validator_subnet.id
