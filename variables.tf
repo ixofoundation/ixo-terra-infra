@@ -71,6 +71,7 @@ variable "environments" {
         nfs_provisioner               = true
         metrics_server                = true
         hermes                        = false
+        hyperlane_validator           = false
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -136,6 +137,7 @@ variable "environments" {
         nfs_provisioner               = true
         metrics_server                = true
         hermes                        = false
+        hyperlane_validator           = true
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -179,11 +181,11 @@ variable "environments" {
       domain3              = "emerging.eco"
       ipfs_service_mapping = "https://blocksync-graphql.ixo.earth/api/ipfs/"
       hyperlane = {
-        chain_names     = ["pandora8"]
-        metadata_chains = [""]
+        chain_names     = ["ixo5", "base", "relayer"]
+        metadata_chains = ["ixo5", "base", "relayer"]
       }
       aws_config = {
-        region = ""
+        region = "eu-north-1"
       }
       enabled_services = {
         # Core
@@ -201,6 +203,7 @@ variable "environments" {
         nfs_provisioner               = true
         metrics_server                = true
         hermes                        = true
+        hyperlane_validator           = true
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true

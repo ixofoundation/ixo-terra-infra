@@ -1,5 +1,9 @@
-provider "aws" {
-  region = var.aws_region # Set the AWS region for the provider
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+    }
+  }
 }
 
 # Configure a Hyperlane Validator
@@ -46,7 +50,7 @@ resource "aws_cloudwatch_log_group" "ecs_logs_init" {
 }
 
 resource "aws_ecs_cluster" "validator_cluster" {
-  name = "ixo-hyperlane-validator-cluster" # Name of the ECS cluster for the validator
+  name = "ixo-${var.environment}-hyperlane-validator-cluster" # Name of the ECS cluster for the validator
 }
 
 resource "aws_vpc" "validator_vpc" {
@@ -114,7 +118,7 @@ resource "aws_route_table_association" "private_subnet_association" {
 }
 
 resource "aws_security_group" "validator_sg" {
-  name   = "validator-sg"           # Name of the security group for the validator
+  name   = "validator-${var.environment}-sg"           # Name of the security group for the validator
   vpc_id = aws_vpc.validator_vpc.id # Associate with the VPC
 
   # prometheus

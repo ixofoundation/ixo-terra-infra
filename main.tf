@@ -46,6 +46,10 @@ provider "vultr" {
   retry_limit = 3
 }
 
+provider "aws" {
+  region = var.environments[terraform.workspace].aws_config.region
+}
+
 # For Initial Cluster Setup, This userpass needs to be manually created.
 provider "vault" {
   auth_login_userpass {

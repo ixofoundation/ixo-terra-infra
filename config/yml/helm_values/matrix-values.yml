@@ -209,6 +209,8 @@ ingress:
         - matrix.${host}
       secretName: matrix-tls
 synapse:
+  strategy:
+    type: Recreate
   extraEnv:
     - name: GOOGLE_APPLICATION_CREDENTIALS
       value: /secrets/gcp/key.json
