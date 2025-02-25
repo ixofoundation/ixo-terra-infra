@@ -416,6 +416,10 @@ module "postgres-operator" { # Sets up Cluster Instances
 
 module "hyperlane_validator" {
   source = "./modules/hyperlane"
+  count      = var.environments[terraform.workspace].enabled_services["hyperlane_validator"] ? 1 : 0
+  providers = {
+    aws = aws
+  }
   aws_region = var.environments[terraform.workspace].aws_config.region
   environment = terraform.workspace
   chain_names = var.environments[terraform.workspace].hyperlane.chain_names
