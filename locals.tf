@@ -53,6 +53,8 @@ locals {
       ixo_payments_nest           = ""
       ixo_message_relayer         = "signx.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_registry_server         = "dev.api.emerging.eco"
+      ixo_matrix_bids_bot         = "bid.bot.devmx.${var.environments[terraform.workspace].domain}"
+      ixo_matrix_claims_bot = "claim.bot.devmx.${var.environments[terraform.workspace].domain}"
     }
     testnet = {
       ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
@@ -84,6 +86,8 @@ locals {
       ixo_payments_nest           = "payments.${terraform.workspace}.${var.environments[terraform.workspace].domain3}"
       ixo_message_relayer         = "signx.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
       ixo_registry_server         = "stage.api.emerging.eco"
+      ixo_matrix_bids_bot         = ""
+      ixo_matrix_claims_bot = ""
     }
     mainnet = {
       ixo_cellnode                         = "cellnode.${var.environments[terraform.workspace].domain}"
@@ -118,6 +122,8 @@ locals {
       ixo_message_relayer                  = "signx.${var.environments[terraform.workspace].domain2}"
       ixo_registry_server                  = "api.emerging.eco"
       hermes                               = "hermes.${var.environments[terraform.workspace].domain2}"
+      ixo_matrix_bids_bot                  = ""
+      ixo_matrix_claims_bot = ""
     }
   }
 

@@ -14,6 +14,10 @@ config:
 
 # https://matrix-org.github.io/synapse/latest/usage/configuration/config_documentation.html
 extraConfig:
+  enable_authenticated_media: false
+  media_retention:
+    local_media_lifetime: null
+    remote_media_lifetime: 14d
   rc_message:
     per_second: 3
     burst_count: 40
@@ -177,6 +181,15 @@ ingress:
   ## Generate traefik-compatible regex paths instead of nginx-compatible ones.
   ##
   traefikPaths: false
+
+  paths:
+    - path: /health
+      pathType: Prefix
+      backend:
+        service:
+          name: matrix-synapse
+          port:
+            number: 8008
 
   ## Annotations to apply to the created ingress resource.
   ##

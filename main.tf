@@ -140,6 +140,15 @@ resource "kubernetes_namespace_v1" "external_dns_cloudflare" {
   }
 }
 
+resource "aws_iam_openid_connect_provider" "github_oidc" {
+  count = terraform.workspace == "mainnet" ? 1 : 0
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = ["sts.amazonaws.com"]
+
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"] # GitHub's current thumbprint (verify if needed)
+}
+
 resource "google_storage_bucket" "postgres_backups" {
   location = "US"
   name     = "${var.org}-${terraform.workspace}-core-postgres"

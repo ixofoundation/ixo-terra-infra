@@ -46,13 +46,13 @@ controller:
           rewrite ^/(.*)$ https://explorer.ixo.earth/testnet-ixo redirect;
       }
       if ($host = "blockscan.ixo.world") {
-          rewrite ^/$ https://explorer.ixo.earth/ixo redirect;
-          rewrite ^/ixo$ https://explorer.ixo.earth/ixo redirect;
-          rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/ixo/tx/$1 redirect;
-          rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/ixo/block/$1 redirect;
+          rewrite ^/$ https://staking-explorer.com/explorer/impacthub redirect;
+          rewrite ^/ixo$ https://staking-explorer.com/explorer/impacthub redirect;
+          rewrite ^/ixo/transactions/(.*)$ https://staking-explorer.com/transaction.php?chain=impacthub&tx=$1 redirect;
+          rewrite ^/ixo/blocks/(.*)$ https://staking-explorer.com/block.php?chain=impacthub&height=$1 redirect;
           rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/ixo/gov/$1 redirect;
-          rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/ixo/account/$1 redirect;
-          rewrite ^/(.*)$ https://explorer.ixo.earth/ixo redirect;
+          rewrite ^/ixo/accounts/(.*)$ https://staking-explorer.com/account.php?chain=impacthub&addr=$1 redirect;
+          rewrite ^/(.*)$ https://staking-explorer.com/explorer/impacthub redirect;
       }
   addHeaders:
     Host: "$host"

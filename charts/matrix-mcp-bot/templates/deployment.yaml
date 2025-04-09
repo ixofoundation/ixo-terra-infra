@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "matrix-mcp-bot.fullname" . }}
+  labels:
+    {{- include "matrix-mcp-bot.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "matrix-mcp-bot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "matrix-mcp-bot.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: MATRIX_HOMESERVER_URL
+              value: {{ .Values.matrix.homeserverUrl }}
+            - name: MATRIX_USER_ID
+              value: {{ .Values.matrix.userId }}
+            - name: MATRIX_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: matrix-mcp-bot-secret
+                  key: access-token
+            - name: MCP_SERVER_URL
+              value: {{ .Values.mcp.serverUrl }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }} 
