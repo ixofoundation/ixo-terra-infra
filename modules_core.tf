@@ -477,6 +477,52 @@ module "ixo_matrix_appservice_rooms" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "ixo_matrix_bids_bot" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_matrix_bids_bot"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-matrix-bids-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    owner      = "ixoworld"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-bids-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_bids_bot.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
+        vault_mount = vault_mount.ixo.path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups.url}/bot/bids"
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_matrix_claims_bot" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_matrix_claims_bot"] ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-matrix-claims-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    owner      = "ixoworld"
+    repository = local.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-claims-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_claims_bot.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
+        vault_mount = vault_mount.ixo.path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups.url}/bot/claims"
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "ixo_faq_assistant" {
   count  = var.environments[terraform.workspace].enabled_services["ixo_faq_assistant"] ? 1 : 0
   source = "./modules/argocd_application"
@@ -1048,7 +1094,7 @@ module "ixo_cvms_exporter" {
       }
     )
   }
-  create_kv = false
+  create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
 }
@@ -1068,13 +1114,35 @@ module "ixo_dmrv_registry_server" {
         host        = local.dns_for_environment[terraform.workspace]["ixo_registry_server"]
         vault_mount = vault_mount.ixo.path
         hosts       = yamlencode(local.registry_server_hosts)
-        tls_hosts = yamlencode(local.registry_server_tls)
+        tls_hosts   = yamlencode(local.registry_server_tls)
       }
     )
   }
-  create_kv = false
+  create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_agent_images_slack" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_agent_images_slack"] ? 1 : 0
+  source = "./modules/aws/lambda_function"
+  providers = {
+    aws = aws
+  }
+
+  aws_region        = var.environments[terraform.workspace].aws_config.region
+  github_repo_name  = "agent-images-slack"
+  github_repo_org   = "ixoworld"
+  function_fileName = "./modules/aws/lambda_function/dummy.zip"
+  function_handler  = "worker.lambda_handler"
+  function_name     = "agent-images-slack-${terraform.workspace}"
+  function_runtime  = "python3.9"
+}
+
+module "ixo_aws_iam" {
+  count  = var.environments[terraform.workspace].enabled_services["ixo_aws_iam"] ? 1 : 0
+  source = "./modules/aws/iam_ixo"
+  users  = var.environments[terraform.workspace].aws_config.iam_users
 }
 
 #module "ixo_ussd" {

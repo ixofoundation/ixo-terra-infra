@@ -1,20 +1,20 @@
 # Versioning for all services.
 versions = {
-  kubernetes_cluster           = "v1.30.0+1"
-  argocd                       = "7.5.0"  # https://artifacthub.io/packages/helm/argo/argo-cd
-  cert-manager                 = "1.15.3" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
-  nginx-ingress-controller     = "4.11.2" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
+  kubernetes_cluster           = "v1.32.2+1"
+  argocd                       = "7.8.23"  # https://artifacthub.io/packages/helm/argo/argo-cd
+  cert-manager                 = "1.17.1" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
+  nginx-ingress-controller     = "4.12.1" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
   postgres-operator            = "5.6.1"  # https://access.crunchydata.com/documentation/postgres-operator/5.5/installation/helm
-  prometheus-stack             = "62.3.1" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
+  prometheus-stack             = "70.4.2" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
   external-dns                 = "1.14.5" # https://artifacthub.io/packages/helm/external-dns/external-dns
-  vault                        = "0.28.1" # https://artifacthub.io/packages/helm/hashicorp/vault
-  loki                         = "6.10.2" # https://artifacthub.io/packages/helm/grafana/loki
-  prometheus-blackbox-exporter = "9.0.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
-  dex                          = "0.19.1" # https://artifacthub.io/packages/helm/dex/dex
-  tailscale                    = "1.72.1" # https://pkgs.tailscale.com/helmcharts/index.yaml
-  matrix                       = "3.11.3" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
-  openebs                      = "3.10.0" # https://artifacthub.io/packages/helm/openebs/openebs
-  metrics-server               = "3.12.1" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
+  vault                        = "0.30.0" # https://artifacthub.io/packages/helm/hashicorp/vault
+  loki                         = "6.29.0" # https://artifacthub.io/packages/helm/grafana/loki
+  prometheus-blackbox-exporter = "9.4.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
+  dex                          = "0.23.0" # https://artifacthub.io/packages/helm/dex/dex
+  tailscale                    = "1.82.0" # https://pkgs.tailscale.com/helmcharts/index.yaml
+  matrix                       = "3.11.7" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
+  openebs                      = "4.2.0" # https://artifacthub.io/packages/helm/openebs/openebs
+  metrics-server               = "3.12.2" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
   nfs                          = "1.8.0"  # https://artifacthub.io/packages/helm/nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner
   hummingbot                   = "0.2.0"
 }
@@ -130,9 +130,22 @@ EOT
     - targets:
       - '45.76.34.6:9100'
       - '136.244.107.1:9100'
+      - '95.179.129.70:9100'
   relabel_configs:
     - source_labels: [ __address__ ]
       target_label: instance
+- job_name: 'validator_cosmos'
+  metrics_path: '/metrics/validators'
+  scheme: 'http'
+  static_configs:
+    - targets:
+      - '95.179.129.70:9300'
+- job_name: 'validator_tendermint'
+  metrics_path: '/'
+  scheme: 'http'
+  static_configs:
+    - targets:
+      - '95.179.129.70:26660'
 EOT
   mainnet = <<EOT
 - job_name: 'validator'
@@ -140,9 +153,31 @@ EOT
   scheme: 'http'
   static_configs:
     - targets:
-      - '217.69.7.217:9100'
       - '136.244.109.82:9100'
       - '95.179.158.151:9100'
+      - '45.32.233.84:9100'
+  relabel_configs:
+    - source_labels: [ __address__ ]
+      target_label: instance
+- job_name: 'validator_cosmos'
+  metrics_path: '/metrics/validators'
+  scheme: 'http'
+  static_configs:
+    - targets:
+      - '136.244.109.82:9300'
+      - '95.179.158.151:9300'
+      - '45.32.233.84:9300'
+  relabel_configs:
+    - source_labels: [ __address__ ]
+      target_label: instance
+- job_name: 'validator_tendermint'
+  metrics_path: '/'
+  scheme: 'http'
+  static_configs:
+    - targets:
+      - '136.244.109.82:26660'
+      - '95.179.158.151:26660'
+      - '45.32.233.84:26660'
   relabel_configs:
     - source_labels: [ __address__ ]
       target_label: instance

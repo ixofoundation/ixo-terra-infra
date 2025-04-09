@@ -1,0 +1,6 @@
+apiVersion: v2
+name: matrix-mcp-bot
+description: A Matrix bot that integrates with MCP for AI model interactions
+type: application
+version: 0.1.0
+appVersion: "1.0.0" 

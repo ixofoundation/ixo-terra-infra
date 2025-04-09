@@ -14,14 +14,16 @@ variable "additional_manual_synthetic_monitoring_endpoints" {
     devnet = [
       "https://signx.devnet.ixo.earth",
       "https://devnet.ixo.earth/rpc/",
-      "https://dev.api.emerging.eco/emerging-platform/v1/hello"
+      "https://dev.api.emerging.eco/emerging-platform/v1/hello",
+      "https://devmx.ixo.earth/health"
     ]
     testnet = [
       "https://payments.testnet.emerging.eco",
       "https://blockscan-pandora.ixo.earth",
       "https://signx.testnet.ixo.earth",
       "https://testnet.ixo.earth/rpc/",
-      "https://stage.api.emerging.eco/emerging-platform/v1/hello"
+      "https://stage.api.emerging.eco/emerging-platform/v1/hello",
+      "https://testmx.ixo.earth/health"
     ]
     mainnet = [
       "https://coincache.ixo.earth",
@@ -31,7 +33,8 @@ variable "additional_manual_synthetic_monitoring_endpoints" {
       "https://signx.ixo.earth",
       "https://ixo.rpc.m.stavr.tech",
       "https://impacthub.ixo.world/rpc/",
-      "https://api.emerging.eco/emerging-platform/v1/hello"
+      "https://api.emerging.eco/emerging-platform/v1/hello",
+      "https://mx.ixo.earth/health"
     ]
   }
 }
@@ -53,7 +56,8 @@ variable "environments" {
         metadata_chains = [""]
       }
       aws_config = {
-        region = ""
+        region    = "eu-north-1"
+        iam_users = [""] // mainnet only
       }
       enabled_services = {
         # Core
@@ -72,6 +76,7 @@ variable "environments" {
         metrics_server                = true
         hermes                        = false
         hyperlane_validator           = false
+        aws_vpc                       = true
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -105,6 +110,10 @@ variable "environments" {
         ixo_message_relayer                  = true
         ixo_cvms_exporter                    = false
         ixo_registry_server                  = true
+        ixo_agent_images_slack               = false
+        ixo_aws_iam                          = false
+        ixo_matrix_bids_bot                  = true
+        ixo_matrix_claims_bot = true
       }
     }
     testnet = {
@@ -119,7 +128,8 @@ variable "environments" {
         metadata_chains = ["relayer", "pandora8", "basesepolia"] # Ensure metadata.json's exist on S3 before applying, optional.
       }
       aws_config = {
-        region = "eu-north-1"
+        region    = "eu-north-1"
+        iam_users = [""] // mainnet only
       }
       enabled_services = {
         # Core
@@ -138,6 +148,7 @@ variable "environments" {
         metrics_server                = true
         hermes                        = false
         hyperlane_validator           = true
+        aws_vpc                       = false
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -171,6 +182,10 @@ variable "environments" {
         ixo_message_relayer                  = true
         ixo_cvms_exporter                    = false
         ixo_registry_server                  = true
+        ixo_agent_images_slack               = false
+        ixo_aws_iam                          = false
+        ixo_matrix_bids_bot                  = false
+        ixo_matrix_claims_bot = false
       }
     }
     mainnet = {
@@ -185,7 +200,8 @@ variable "environments" {
         metadata_chains = ["ixo5", "base", "relayer"]
       }
       aws_config = {
-        region = "eu-north-1"
+        region    = "eu-north-1"
+        iam_users = ["peterbulovec"]
       }
       enabled_services = {
         # Core
@@ -204,6 +220,7 @@ variable "environments" {
         metrics_server                = true
         hermes                        = true
         hyperlane_validator           = true
+        aws_vpc                       = false
         # IXO
         ixo_cellnode                         = true
         ixo_blocksync                        = true
@@ -237,6 +254,10 @@ variable "environments" {
         ixo_message_relayer                  = true
         ixo_cvms_exporter                    = true
         ixo_registry_server                  = true
+        ixo_agent_images_slack               = true
+        ixo_aws_iam                          = true
+        ixo_matrix_bids_bot                  = false
+        ixo_matrix_claims_bot = false
       }
     }
   }

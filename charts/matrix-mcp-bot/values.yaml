@@ -1,0 +1,19 @@
+image:
+  repository: ghcr.io/ixoworld/matrix-mcp-bot
+  tag: latest
+  pullPolicy: Always
+
+matrix:
+  homeserverUrl: "https://matrix.ixo.earth"
+  userId: "@mcp-bot:matrix.ixo.earth"
+
+mcp:
+  serverUrl: "http://localhost:8000"  # This will be the internal MCP server URL
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi 

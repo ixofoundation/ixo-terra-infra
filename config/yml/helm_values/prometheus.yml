@@ -167,6 +167,8 @@ prometheus:
                 - role: pod
                   label: app.kubernetes.io/component=crunchy-alertmanager
 grafana:
+  plugins:
+    - nline-plotlyjs-panel
   env:
     CLIENT_SECRET: ${grafana_oidc_secret}
   deploymentStrategy:
