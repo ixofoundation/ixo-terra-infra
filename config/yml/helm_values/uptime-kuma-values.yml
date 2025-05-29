@@ -1,0 +1,32 @@
+useDeploy: true
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  annotations:
+    ingress.kubernetes.io/proxy-body-size: 100M
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  tls:
+    - hosts:
+      - ${host}
+      secretName: uptime-kuma-tls
+
+volume:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 40Gi
+  storageClassName: "vultr-block-storage-hdd"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+    

@@ -1,0 +1,80 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-subscriptions-oracle-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: "NODE_ENV"
+    value: "production"
+  - name: "STRIPE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_API_KEY>"
+  - name: "CHAIN_NETWORK"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#CHAIN_NETWORK>"
+  - name: "ALLOWED_STRIPE_PLANS"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#ALLOWED_STRIPE_PLANS>"
+  - name: "BLOCKSYNC_GRAPHQL_URL"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#BLOCKSYNC_GRAPHQL_URL>"
+  - name: "SUBSCRIPTION_PROTOCOL_DID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#SUBSCRIPTION_PROTOCOL_DID>"
+  - name: "ORACLE_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#ORACLE_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID>"
+  - name: "SUBSCRIPTION_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#SUBSCRIPTION_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID>"
+  - name: "RPC_URL"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#RPC_URL>"
+  - name: "SECP_MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#SECP_MNEMONIC>"
+  - name: "DID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#DID>"
+  - name: "RELAYER_NODE"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#RELAYER_NODE>"
+  - name: "MATRIX_ACCESS_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#MATRIX_ACCESS_TOKEN>"
+  - name: "STRIPE_WEBHOOK_SECRET"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_WEBHOOK_SECRET>"
+  - name: "STRIPE_PRO_PLAN_ID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_PRO_PLAN_ID>"
+  - name: "STRIPE_TEAM_PLAN_ID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_TEAM_PLAN_ID>"
+  - name: "STRIPE_ECOSYSTEM_PLAN_ID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_ECOSYSTEM_PLAN_ID>"
+  - name: "STRIPE_TOP_UP_1500_PLAN_ID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_TOP_UP_1500_PLAN_ID>"
+  - name: "STRIPE_TRIAL_PERIOD_DAYS"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_TRIAL_PERIOD_DAYS>"
+  - name: "STRIPE_TOP_UP_1000_PLAN_ID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_TOP_UP_1000_PLAN_ID>"
+  - name: "STRIPE_TOP_UP_100K_PLAN_ID"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_TOP_UP_100K_PLAN_ID>"
+  - name: "DENOM"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#DENOM>"
+  - name: "SLACK_ALERT_WEBHOOK_URL"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#SLACK_ALERT_WEBHOOK_URL>"
+  - name: "PORTAL_SUCCESS_URL"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#PORTAL_SUCCESS_URL>"
+  - name: "PORTAL_CANCEL_URL"
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#PORTAL_CANCEL_URL>"
+service:
+  port: 4200
+resources:
+  requests:
+    memory: 200Mi
+    cpu: "50m"
+  limits:
+    memory: 350Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

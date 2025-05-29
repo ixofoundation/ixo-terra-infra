@@ -40,12 +40,11 @@ resource "kubectl_manifest" "application" {
     {
       name           = var.application.name
       namespace      = var.application.namespace
-      owner          = var.application.owner
       argo_namespace = var.argo_namespace
       workspace      = terraform.workspace
       repository     = var.application.repository
       helm_values    = var.application.values_override != null ? var.application.values_override : ""
-      path           = var.application.path != null ? var.application.path : "charts/${terraform.workspace}/${var.application.owner}/${var.application.name}"
+      path           = var.application.path
     }
   )
 }

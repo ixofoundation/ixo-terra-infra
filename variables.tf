@@ -9,258 +9,30 @@ variable "cloudflare_api_token" {
 }
 
 variable "additional_manual_synthetic_monitoring_endpoints" {
-  type = map(list(string))
-  default = {
-    devnet = [
-      "https://signx.devnet.ixo.earth",
-      "https://devnet.ixo.earth/rpc/",
-      "https://dev.api.emerging.eco/emerging-platform/v1/hello",
-      "https://devmx.ixo.earth/health"
-    ]
-    testnet = [
-      "https://payments.testnet.emerging.eco",
-      "https://blockscan-pandora.ixo.earth",
-      "https://signx.testnet.ixo.earth",
-      "https://testnet.ixo.earth/rpc/",
-      "https://stage.api.emerging.eco/emerging-platform/v1/hello",
-      "https://testmx.ixo.earth/health"
-    ]
-    mainnet = [
-      "https://coincache.ixo.earth",
-      "https://trading.bot.ixo.earth/api/",
-      "https://hermes.ixo.earth/version",
-      "https://reclaim.ixo.earth",
-      "https://signx.ixo.earth",
-      "https://ixo.rpc.m.stavr.tech",
-      "https://impacthub.ixo.world/rpc/",
-      "https://api.emerging.eco/emerging-platform/v1/hello",
-      "https://mx.ixo.earth/health"
-    ]
-  }
+  description = "Additional manual synthetic monitoring endpoints for each environment"
+  type        = map(list(string))
 }
 
 # IXO Infra Defaults
 variable "environments" {
   description = "Environment specific configurations"
-  type        = map(any)
-  default = {
-    devnet = {
-      cluster_firewall     = true
-      rpc_url              = "https://devnet.ixo.earth/rpc/"
-      ipfs_service_mapping = "https://devnet-blocksync-graphql.ixo.earth/api/ipfs/" #TODO this possibly could be moved to local cluster address
-      domain               = "ixo.earth"
-      domain2              = "ixo.earth"
-      domain3              = ""
-      hyperlane = {
-        chain_names     = [""]
-        metadata_chains = [""]
-      }
-      aws_config = {
-        region    = "eu-north-1"
-        iam_users = [""] // mainnet only
-      }
-      enabled_services = {
-        # Core
-        cert_manager                  = true
-        ingress_nginx                 = true
-        postgres_operator_crunchydata = true
-        prometheus_stack              = true
-        external_dns                  = true
-        dex                           = true
-        vault                         = true
-        loki                          = true
-        prometheus_blackbox_exporter  = true
-        tailscale                     = true
-        matrix                        = true
-        nfs_provisioner               = true
-        metrics_server                = true
-        hermes                        = false
-        hyperlane_validator           = false
-        aws_vpc                       = true
-        # IXO
-        ixo_cellnode                         = true
-        ixo_blocksync                        = true
-        ixo_blocksync_core                   = true
-        ixo_feegrant_nest                    = true
-        ixo_did_resolver                     = true
-        ixo_faucet                           = true
-        ixo_matrix_state_bot                 = true
-        ixo_matrix_appservice_rooms          = true
-        claims_credentials_ecs               = true
-        claims_credentials_prospect          = true
-        claims_credentials_carbon            = true
-        claims_credentials_umuzi             = true
-        claims_credentials_claimformprotocol = false
-        claims_credentials_did               = false
-        ixo_deeplink_server                  = false
-        ixo_kyc_server                       = false
-        ixo_faq_assistant                    = false
-        ixo_coin_server                      = false
-        ixo_stake_reward_claimer             = false
-        ixo_ussd                             = false
-        ixo_whizz                            = false
-        auto_approve_offset                  = false
-        ixo_iot_data                         = false
-        ixo_notification_server              = false
-        ixo_guru                             = false
-        ixo_trading_bot_server               = false
-        ixo_ai_oracles_guru                  = false
-        ixo_ai_oracles_giza                  = false
-        ixo_payments_nest                    = false
-        ixo_message_relayer                  = true
-        ixo_cvms_exporter                    = false
-        ixo_registry_server                  = true
-        ixo_agent_images_slack               = false
-        ixo_aws_iam                          = false
-        ixo_matrix_bids_bot                  = true
-        ixo_matrix_claims_bot = true
-      }
-    }
-    testnet = {
-      cluster_firewall     = true
-      rpc_url              = "https://testnet.ixo.earth/rpc/"
-      domain               = "ixo.earth"
-      domain2              = "ixo.earth"
-      domain3              = "emerging.eco"
-      ipfs_service_mapping = "https://testnet-blocksync-graphql.ixo.earth/api/ipfs/"
-      hyperlane = {
-        chain_names     = ["relayer", "pandora8", "basesepolia"] # Ensure config.json's exist on S3 before applying, required.
-        metadata_chains = ["relayer", "pandora8", "basesepolia"] # Ensure metadata.json's exist on S3 before applying, optional.
-      }
-      aws_config = {
-        region    = "eu-north-1"
-        iam_users = [""] // mainnet only
-      }
-      enabled_services = {
-        # Core
-        cert_manager                  = true
-        ingress_nginx                 = true
-        postgres_operator_crunchydata = true
-        prometheus_stack              = true
-        external_dns                  = true
-        dex                           = true
-        vault                         = true
-        loki                          = true
-        prometheus_blackbox_exporter  = true
-        tailscale                     = true
-        matrix                        = true
-        nfs_provisioner               = true
-        metrics_server                = true
-        hermes                        = false
-        hyperlane_validator           = true
-        aws_vpc                       = false
-        # IXO
-        ixo_cellnode                         = true
-        ixo_blocksync                        = true
-        ixo_blocksync_core                   = true
-        ixo_feegrant_nest                    = true
-        ixo_did_resolver                     = true
-        ixo_faucet                           = true
-        ixo_matrix_state_bot                 = true
-        ixo_matrix_appservice_rooms          = true
-        claims_credentials_ecs               = true
-        claims_credentials_prospect          = true
-        claims_credentials_carbon            = true
-        claims_credentials_umuzi             = false
-        claims_credentials_claimformprotocol = false
-        claims_credentials_did               = true
-        ixo_deeplink_server                  = false
-        ixo_kyc_server                       = true
-        ixo_faq_assistant                    = false
-        ixo_coin_server                      = false
-        ixo_stake_reward_claimer             = false
-        ixo_ussd                             = false
-        ixo_whizz                            = false
-        auto_approve_offset                  = true
-        ixo_iot_data                         = false
-        ixo_notification_server              = false
-        ixo_guru                             = false
-        ixo_trading_bot_server               = false
-        ixo_ai_oracles_guru                  = false
-        ixo_ai_oracles_giza                  = true
-        ixo_payments_nest                    = true
-        ixo_message_relayer                  = true
-        ixo_cvms_exporter                    = false
-        ixo_registry_server                  = true
-        ixo_agent_images_slack               = false
-        ixo_aws_iam                          = false
-        ixo_matrix_bids_bot                  = false
-        ixo_matrix_claims_bot = false
-      }
-    }
-    mainnet = {
-      cluster_firewall     = true
-      rpc_url              = "https://impacthub.ixo.world/rpc/"
-      domain               = "ixo.world"
-      domain2              = "ixo.earth"
-      domain3              = "emerging.eco"
-      ipfs_service_mapping = "https://blocksync-graphql.ixo.earth/api/ipfs/"
-      hyperlane = {
-        chain_names     = ["ixo5", "base", "relayer"]
-        metadata_chains = ["ixo5", "base", "relayer"]
-      }
-      aws_config = {
-        region    = "eu-north-1"
-        iam_users = ["peterbulovec"]
-      }
-      enabled_services = {
-        # Core
-        cert_manager                  = true
-        ingress_nginx                 = true
-        postgres_operator_crunchydata = true
-        prometheus_stack              = true
-        external_dns                  = true
-        dex                           = true
-        vault                         = true
-        loki                          = true
-        prometheus_blackbox_exporter  = true
-        tailscale                     = true
-        matrix                        = true
-        nfs_provisioner               = true
-        metrics_server                = true
-        hermes                        = true
-        hyperlane_validator           = true
-        aws_vpc                       = false
-        # IXO
-        ixo_cellnode                         = true
-        ixo_blocksync                        = true
-        ixo_blocksync_core                   = true
-        ixo_feegrant_nest                    = true
-        ixo_did_resolver                     = true
-        ixo_faucet                           = false
-        ixo_matrix_state_bot                 = true
-        ixo_matrix_appservice_rooms          = true
-        claims_credentials_ecs               = true
-        claims_credentials_prospect          = false
-        claims_credentials_carbon            = true
-        claims_credentials_umuzi             = false
-        claims_credentials_claimformprotocol = true
-        claims_credentials_did               = true
-        ixo_deeplink_server                  = true
-        ixo_kyc_server                       = true
-        ixo_faq_assistant                    = true
-        ixo_coin_server                      = true
-        ixo_stake_reward_claimer             = true
-        ixo_ussd                             = false
-        ixo_whizz                            = true
-        auto_approve_offset                  = true
-        ixo_iot_data                         = true
-        ixo_notification_server              = true
-        ixo_guru                             = true
-        ixo_trading_bot_server               = true
-        ixo_ai_oracles_guru                  = true
-        ixo_ai_oracles_giza                  = true
-        ixo_payments_nest                    = true
-        ixo_message_relayer                  = true
-        ixo_cvms_exporter                    = true
-        ixo_registry_server                  = true
-        ixo_agent_images_slack               = true
-        ixo_aws_iam                          = true
-        ixo_matrix_bids_bot                  = false
-        ixo_matrix_claims_bot = false
-      }
-    }
-  }
+  type = map(object({
+    cluster_firewall = bool
+    aws_region      = string
+    aws_iam_users   = list(string)
+    rpc_url         = optional(string)
+    ipfs_service_mapping = optional(string)
+    hyperlane = object({
+      chain_names     = list(string)
+      metadata_chains = list(string)
+    })
+    application_configs = map(object({
+      enabled = bool
+      domain  = optional(string)
+      dns_endpoint = optional(string)
+      dns_prefix = optional(string)
+    }))
+  }))
 }
 
 variable "versions" {
@@ -275,27 +47,6 @@ variable "gcp_project_ids" {
     devnet  = "devsecops-415617"
     testnet = "devsecops-415617"
     mainnet = "devsecops-415617"
-  }
-}
-
-variable "hostnames" {
-  description = "Environment specific hostnames configurations"
-  type        = map(string)
-  default = {
-    devnet         = "devnetkb.ixo.earth"
-    devnet_vault   = "vault.devnet.ixo.earth"
-    devnet_dex     = "dex.devnet.ixo.earth"
-    devnet_matrix  = "devmx.ixo.earth"
-    testnet        = "testnetkb.ixo.earth"
-    testnet_world  = "testnetkb.ixo.world"
-    testnet_vault  = "vault.testnet.ixo.earth"
-    testnet_dex    = "dex.testnet.ixo.earth"
-    testnet_matrix = "testmx.ixo.earth"
-    mainnet        = "mainnetkb.ixo.earth"
-    mainnet_vault  = "vault.mainnet.ixo.earth"
-    mainnet_dex    = "dex.mainnet.ixo.earth"
-    mainnet_matrix = "mx.ixo.earth"
-    mainnet_world  = "mainnet.ixo.world"
   }
 }
 
@@ -423,4 +174,29 @@ variable "region_ids" {
     waw = "Warsaw"
     yto = "Toronto"
   }
+}
+
+variable "domains" {
+  description = "Map of domain identifiers to actual domain names"
+  type        = map(string)
+  
+  validation {
+    condition = length(var.domains) > 0
+    error_message = "At least one domain mapping must be provided."
+  }
+}
+
+variable "ixo_helm_chart_repository" {
+  description = "Git repository URL for IXO Helm charts"
+  type        = string
+}
+
+variable "ixo_terra_infra_repository" {
+  description = "Git repository URL for IXO Terraform infrastructure"
+  type        = string
+}
+
+variable "vault_core_mount" {
+  description = "Vault mount path for core IXO services"
+  type        = string
 }

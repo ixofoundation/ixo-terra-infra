@@ -1,0 +1,18 @@
+image:
+  allowReset: true
+  repository: chromadb/chroma
+  apiVersion: "latest"
+  base: ""
+
+chromadb:
+  auth:
+    enabled: false
+  dataVolumeSize: 40Gi
+  dataVolumeStorageClass: 'vultr-block-storage-hdd'
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 200Mi
+  limits:
+    memory: 600Mi

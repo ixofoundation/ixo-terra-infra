@@ -39,3 +39,9 @@ GRANT CREATE ON SCHEMA "public" to "payments-nest";
 
 \c 'message-relayer'
 GRANT CREATE ON SCHEMA "public" to "message-relayer";
+
+\c 'subscriptions-oracle-bot'
+GRANT CREATE ON SCHEMA "public" to "subscriptions-oracle-bot";
+
+\c 'observable-framework-builder'
+GRANT CREATE ON SCHEMA "public" to "observable-framework-builder";

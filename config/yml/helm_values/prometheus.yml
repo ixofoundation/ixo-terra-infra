@@ -124,7 +124,16 @@ prometheus:
           # Convert postgres-operator.crunchydata.com/role to role
           - source_labels: [ __meta_kubernetes_pod_label_postgres_operator_crunchydata_com_role ]
             target_label: role
-
+      - job_name: 'loki' # Loki Scrapes
+        kubernetes_sd_configs:
+          - role: service
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_namespace]
+            action: keep
+            regex: loki;loki
+          - source_labels: [__meta_kubernetes_service_port_name]
+            action: keep
+            regex: http-metrics
       - job_name: 'crunchy-postgres-exporter-v4'
         kubernetes_sd_configs:
           - role: pod
@@ -183,6 +192,10 @@ grafana:
     finalizers:
       - kubernetes.io/pvc-protection
   grafana.ini:
+    database:
+      wal: true
+      cache_mode: shared
+      migration_locking: false
     auth.generic_oauth:
       client_id: grafana-client
       client_secret: $__env{CLIENT_SECRET}
@@ -210,6 +223,7 @@ grafana:
     hosts:
       - ${host}
     path: /grafana(/|$)(.*)
+    pathType: ImplementationSpecific
     tls:
       - secretName: grafana-tls
         hosts:
