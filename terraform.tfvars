@@ -1,3 +1,21 @@
+# Domain mappings
+# Define the actual domains for each domain identifier used in application configs.
+# If you're customizing this for your own deployment, ensure all domain keys 
+# referenced in the application_configs below are defined here.
+domains = {
+  ixoworld = "ixo.world"     # Used for mainnet production services
+  ixoearth = "ixo.earth"     # Used for development and community services  
+  emerging = "emerging.eco"   # Used for emerging ecosystem services
+}
+
+# Organization name - used for resource naming and identification
+org = "ixofoundation"
+
+# Repository configuration
+ixo_helm_chart_repository = "https://github.com/ixofoundation/ixo-helm-charts"
+ixo_terra_infra_repository = "https://github.com/ixofoundation/ixo-terra-infra"
+vault_core_mount = "ixo_core"
+
 # Versioning for all services.
 versions = {
   kubernetes_cluster           = "v1.32.2+1"
@@ -6,7 +24,7 @@ versions = {
   nginx-ingress-controller     = "4.12.1" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
   postgres-operator            = "5.6.1"  # https://access.crunchydata.com/documentation/postgres-operator/5.5/installation/helm
   prometheus-stack             = "70.4.2" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
-  external-dns                 = "1.14.5" # https://artifacthub.io/packages/helm/external-dns/external-dns
+  external-dns                 = "1.16.1" # https://artifacthub.io/packages/helm/external-dns/external-dns
   vault                        = "0.30.0" # https://artifacthub.io/packages/helm/hashicorp/vault
   loki                         = "6.29.0" # https://artifacthub.io/packages/helm/grafana/loki
   prometheus-blackbox-exporter = "9.4.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
@@ -17,6 +35,884 @@ versions = {
   metrics-server               = "3.12.2" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
   nfs                          = "1.8.0"  # https://artifacthub.io/packages/helm/nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner
   hummingbot                   = "0.2.0"
+  uptime-kuma                  = "2.21.2" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
+  chromadb                     = "0.1.23" # https://github.com/amikos-tech/chromadb-chart
+}
+
+# Environment base configurations (static values only)
+environments = {
+  devnet = {
+    cluster_firewall = true
+    aws_region      = "eu-north-1"
+    aws_iam_users   = []
+    rpc_url         = "https://devnet.ixo.earth/rpc/"
+    ipfs_service_mapping = "https://ipfs.gateway.ixo.world"
+    hyperlane = {
+      chain_names     = [""]
+      metadata_chains = [""]
+    }
+    application_configs = {
+      # Core Infrastructure Services
+      cert_manager = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      ingress_nginx = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      postgres_operator_crunchydata = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      prometheus_stack = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "devnetkb.ixo.earth"  # Main monitoring/grafana host
+      }
+      external_dns = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      dex = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "dex"
+      }
+      vault = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "vault"
+      }
+      loki = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      prometheus_blackbox_exporter = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      tailscale = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      matrix = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "devmx.ixo.earth"
+      }
+      nfs_provisioner = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      metrics_server = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      hermes = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      hyperlane_validator = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      aws_vpc = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      uptime_kuma = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "status.devnet.ixo.earth"
+      }
+      chromadb = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      
+      # IXO Services
+      ixo_cellnode = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "devnet-cellnode.ixo.earth"
+      }
+      ixo_blocksync = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "devnet-blocksync-graphql.ixo.earth"
+      }
+      ixo_blocksync_core = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "ixo-blocksync-core.devnetkb.ixo.earth"
+      }
+      ixo_feegrant_nest = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "feegrant"
+      }
+      ixo_did_resolver = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "resolver"
+      }
+      ixo_faucet = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "faucet"
+      }
+      ixo_matrix_state_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "state.bot.devmx.ixo.earth"
+      }
+      ixo_matrix_appservice_rooms = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "rooms.bot.devmx.ixo.earth"
+      }
+      claims_credentials_ecs = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "ecs.credentials.devnet.ixo.earth"
+      }
+      claims_credentials_prospect = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "prospect.credentials.devnet.ixo.earth"
+      }
+      claims_credentials_carbon = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "carbon.credentials.devnet.ixo.earth"
+      }
+      claims_credentials_umuzi = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "umuzi.credentials.devnet.ixo.earth"
+      }
+      claims_credentials_claimformprotocol = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      claims_credentials_did = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "didoracle.credentials.devnet.ixo.earth"
+      }
+      ixo_deeplink_server = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "deeplink"
+      }
+      ixo_kyc_server = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "kyc"
+      }
+      ixo_faq_assistant = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_coin_server = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_stake_reward_claimer = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_ussd = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_whizz = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      auto_approve_offset = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_iot_data = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_notification_server = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_guru = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_trading_bot_server = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_ai_oracles_guru = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_ai_oracles_giza = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "giza.devnet.ixo.earth"
+      }
+      ixo_payments_nest = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_message_relayer = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "signx.devnet.ixo.earth"
+      }
+      ixo_cvms_exporter = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_registry_server = {
+        enabled = true
+        domain = "ixoearth" # Domain 1 
+        dns_endpoint = "dev.api.emerging.eco" # Domain 2
+      }
+      ixo_agent_images_slack = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_aws_iam = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_matrix_bids_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "bid.bot.devmx.ixo.earth"
+      }
+      ixo_matrix_claims_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.devmx.ixo.earth"
+      }
+      ixo_subscriptions_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "subscriptions.oracle.devnet.ixo.earth"
+      }
+      ixo_subscriptions_oracle_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "subscriptions.bot.devnet.ixo.earth"
+      }
+      ixo_jokes_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "jokes.oracle.devnet.ixo.earth"
+      }
+      ixo_observable_framework_builder = {
+        enabled = false
+        domain = "ixoearth"
+      }
+    }
+  }
+  testnet = {
+    cluster_firewall = true
+    aws_region      = "eu-north-1"
+    aws_iam_users   = []
+    rpc_url         = "https://testnet.ixo.earth/rpc/"
+    ipfs_service_mapping = "https://ipfs.gateway.ixo.world"
+    hyperlane = {
+      chain_names     = ["relayer", "pandora8", "basesepolia"]
+      metadata_chains = ["relayer", "pandora8", "basesepolia"]
+    }
+    application_configs = {
+      # Core Infrastructure Services
+      cert_manager = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      ingress_nginx = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      postgres_operator_crunchydata = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      prometheus_stack = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "testnetkb.ixo.earth"  # Main monitoring/grafana host
+      }
+      external_dns = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      dex = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "dex"
+      }
+      vault = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "vault"
+      }
+      loki = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      prometheus_blackbox_exporter = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      tailscale = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      matrix = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "testmx.ixo.earth"
+      }
+      nfs_provisioner = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      metrics_server = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      hermes = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      hyperlane_validator = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      aws_vpc = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      uptime_kuma = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      chromadb = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      
+      # IXO Services
+      ixo_cellnode = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "testnet-cellnode.ixo.earth"
+      }
+      ixo_blocksync = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "testnet-blocksync-graphql.ixo.earth"
+      }
+      ixo_blocksync_core = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "ixo-blocksync-core.testnetkb.ixo.earth"
+      }
+      ixo_feegrant_nest = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "feegrant"
+      }
+      ixo_did_resolver = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "resolver"
+      }
+      ixo_faucet = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "faucet"
+      }
+      ixo_matrix_state_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "state.bot.testmx.ixo.earth"
+      }
+      ixo_matrix_appservice_rooms = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "rooms.bot.testmx.ixo.earth"
+      }
+      claims_credentials_ecs = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "ecs.credentials.testnet.ixo.earth"
+      }
+      claims_credentials_prospect = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "prospect.credentials.testnet.ixo.earth"
+      }
+      claims_credentials_carbon = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "carbon.credentials.testnet.ixo.earth"
+      }
+      claims_credentials_umuzi = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      claims_credentials_claimformprotocol = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      claims_credentials_did = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "didoracle.credentials.testnet.ixo.earth"
+      }
+      ixo_deeplink_server = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "deeplink"
+      }
+      ixo_kyc_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "kyc"
+      }
+      ixo_faq_assistant = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_coin_server = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_stake_reward_claimer = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_ussd = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_whizz = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      auto_approve_offset = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "offset.auto-approve.testnet.ixo.earth"
+      }
+      ixo_iot_data = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_notification_server = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_guru = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_trading_bot_server = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_ai_oracles_guru = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_ai_oracles_giza = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "gizatest.ixo.earth"
+      }
+      ixo_payments_nest = {
+        enabled = true
+        domain = "emerging"
+        dns_endpoint = "payments.testnet.emerging.eco"
+      }
+      ixo_message_relayer = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "signx.testnet.ixo.earth"
+      }
+      ixo_cvms_exporter = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_registry_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "stage.api.emerging.eco"
+      }
+      ixo_agent_images_slack = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_aws_iam = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_matrix_bids_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "bid.bot.testmx.ixo.earth"
+      }
+      ixo_matrix_claims_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.testmx.ixo.earth"
+      }
+      ixo_subscriptions_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "subscriptions.oracle.testnet.ixo.earth"
+      }
+      ixo_subscriptions_oracle_bot = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "subscriptions.bot.testnet.ixo.earth"
+      }
+      ixo_jokes_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "jokes.oracle.testnet.ixo.earth"
+      }
+      ixo_observable_framework_builder = {
+        enabled = false
+        domain = "ixoearth"
+      }
+    }
+  }
+  mainnet = {
+    cluster_firewall = true
+    aws_region      = "eu-north-1"
+    aws_iam_users   = ["peterbulovec"]
+    rpc_url         = "https://impacthub.ixo.world/rpc/"
+    ipfs_service_mapping = "https://ipfs.gateway.ixo.world"
+    hyperlane = {
+      chain_names     = ["ixo5", "base", "relayer"]
+      metadata_chains = ["ixo5", "base", "relayer"]
+    }
+    application_configs = {
+      # Core Infrastructure Services
+      cert_manager = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      ingress_nginx = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      postgres_operator_crunchydata = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      prometheus_stack = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "mainnetkb.ixo.earth"  # Main monitoring/grafana host
+      }
+      external_dns = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      dex = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "dex"
+      }
+      vault = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "vault"
+      }
+      loki = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      prometheus_blackbox_exporter = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      tailscale = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      matrix = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "mx.ixo.earth"
+      }
+      nfs_provisioner = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      metrics_server = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      hermes = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "hermes.ixo.earth"
+      }
+      hyperlane_validator = {
+        enabled = true
+        domain = "ixoworld"
+      }
+      aws_vpc = {
+        enabled = false
+        domain = "ixoworld"
+      }
+      uptime_kuma = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "status.mainnet.ixo.world"
+      }
+      chromadb = {
+        enabled = false
+        domain = "ixoworld"
+      }
+      
+      # IXO Services
+      ixo_cellnode = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "cellnode.ixo.world"
+      }
+      ixo_blocksync = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "blocksync-graphql.ixo.earth"
+      }
+      ixo_blocksync_core = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "ixo-blocksync-core.mainnetkb.ixo.earth"
+      }
+      ixo_feegrant_nest = {
+        enabled = true
+        domain = "ixoworld"
+        dns_prefix = "feegrant"
+      }
+      ixo_did_resolver = {
+        enabled = true
+        domain = "ixoworld"
+        dns_prefix = "resolver"
+      }
+      ixo_faucet = {
+        enabled = false
+        domain = "ixoworld"
+        dns_endpoint = "faucet2.mainnetkb.ixo.earth"
+      }
+      ixo_matrix_state_bot = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "state.bot.mx.ixo.earth"
+      }
+      ixo_matrix_appservice_rooms = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "rooms.bot.mx.ixo.earth"
+      }
+      claims_credentials_ecs = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "ecs.credentials.ixo.world"
+      }
+      claims_credentials_prospect = {
+        enabled = false
+        domain = "ixoworld"
+        dns_endpoint = "prospect.credentials2.mainnet.ixo.world"
+      }
+      claims_credentials_carbon = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "carbon.credentials.ixo.world"
+      }
+      claims_credentials_umuzi = {
+        enabled = false
+        domain = "ixoworld"
+        dns_endpoint = "umuzi.credentials2.mainnet.ixo.world"
+      }
+      claims_credentials_claimformprotocol = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "claimformobjects.credentials.ixo.world"
+      }
+      claims_credentials_did = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "didoracle.credentials.ixo.earth"
+      }
+      ixo_deeplink_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "x.ixo.earth"
+      }
+      ixo_kyc_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "kyc.oracle.ixo.earth"
+      }
+      ixo_faq_assistant = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "faq.assistant.ixo.earth"
+      }
+      ixo_coin_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "coincache.ixo.earth"
+      }
+      ixo_stake_reward_claimer = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "reclaim.ixo.earth"
+      }
+      ixo_ussd = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      ixo_whizz = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "whizz.assistant.ixo.earth"
+      }
+      auto_approve_offset = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "offset.auto-approve.ixo.earth"
+      }
+      ixo_iot_data = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "iot-data"
+      }
+      ixo_notification_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "notifications.ixo.earth"
+      }
+      ixo_guru = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "guru.ixo.earth"
+      }
+      ixo_trading_bot_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "trading.bot.ixo.earth"
+      }
+      ixo_ai_oracles_guru = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "guru2.ixo.earth"
+      }
+      ixo_ai_oracles_giza = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "giza.ixo.earth"
+      }
+      ixo_payments_nest = {
+        enabled = true
+        domain = "emerging"
+        dns_endpoint = "payments.emerging.eco"
+      }
+      ixo_message_relayer = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "signx.ixo.earth"
+      }
+      ixo_cvms_exporter = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      ixo_registry_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "api.emerging.eco"
+      }
+      ixo_agent_images_slack = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      ixo_aws_iam = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      ixo_matrix_bids_bot = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "bid.bot.mx.ixo.earth"
+      }
+      ixo_matrix_claims_bot = {
+        enabled = true
+        domain = "ixoworld"
+        dns_endpoint = "claim.bot.mx.ixo.earth"
+      }
+      ixo_subscriptions_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "subscriptions.oracle.ixo.earth"
+      }
+      ixo_subscriptions_oracle_bot = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "subscriptions.bot.ixo.earth"
+      }
+      ixo_jokes_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "jokes.oracle.ixo.earth"
+      }
+      ixo_observable_framework_builder = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "builder.observable"
+      }
+    }
+  }
+}
+
+# Additional manual synthetic monitoring endpoints
+additional_manual_synthetic_monitoring_endpoints = {
+  devnet = [
+    "https://signx.devnet.ixo.earth",
+    "https://devnet.ixo.earth/rpc/",
+    "https://dev.api.emerging.eco/emerging-platform/v1/hello",
+    "https://devmx.ixo.earth/health"
+  ]
+  testnet = [
+    "https://payments.testnet.emerging.eco",
+    "https://blockscan-pandora.ixo.earth",
+    "https://signx.testnet.ixo.earth",
+    "https://testnet.ixo.earth/rpc/",
+    "https://stage.api.emerging.eco/emerging-platform/v1/hello",
+    "https://testmx.ixo.earth/health"
+  ]
+  mainnet = [
+    "https://coincache.ixo.earth",
+    "https://trading.bot.ixo.earth/api/",
+    "https://hermes.ixo.earth/version",
+    "https://reclaim.ixo.earth",
+    "https://signx.ixo.earth",
+    "https://ixo.rpc.m.stavr.tech",
+    "https://impacthub.ixo.world/rpc/",
+    "https://api.emerging.eco/emerging-platform/v1/hello",
+    "https://mx.ixo.earth/health",
+    "https://ipfs.gateway.ixo.world/health"
+  ]
 }
 
 # Postgres Matrix Synapse
@@ -101,6 +997,14 @@ pg_ixo = {
     { // 13
       username = "message-relayer"
       databases = ["message-relayer"]
+    },
+    { // 14
+      username = "subscriptions-oracle-bot"
+      databases = ["subscriptions-oracle-bot"]
+    },
+    { // 15
+      username = "observable-framework-builder"
+      databases = ["observable-framework-builder"]
     }
   ]
   pg_version             = 15

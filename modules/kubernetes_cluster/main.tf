@@ -1,33 +1,29 @@
-terraform {
-  required_providers {
-    vultr = {
-      source = "vultr/vultr"
-    }
-  }
+# Vultr cluster module
+module "vultr_cluster" {
+  count  = var.cloud_provider == "vultr" ? 1 : 0
+  source = "./modules/vultr"
+  
+  # Pass all Vultr-specific variables
+  cluster_region              = var.vultr.cluster_region
+  cluster_label               = var.vultr.cluster_label
+  k8_version                  = var.vultr.k8_version
+  cluster_firewall            = var.vultr.cluster_firewall
+  ha_controlplanes            = var.vultr.ha_controlplanes
+  initial_node_pool_quantity  = var.vultr.initial_node_pool_quantity
+  initial_node_pool_plan      = var.vultr.initial_node_pool_plan
+  initial_node_pool_label     = var.vultr.initial_node_pool_label
+  initial_node_pool_scaler    = var.vultr.initial_node_pool_scaler
+  initial_node_pool_min_nodes = var.vultr.initial_node_pool_min_nodes
+  initial_node_pool_max_nodes = var.vultr.initial_node_pool_max_nodes
 }
 
-resource "vultr_kubernetes" "k8" {
-  lifecycle {
-    ignore_changes = [node_pools[0].node_quantity]
-  }
-  provider         = vultr
-  region           = var.cluster_region
-  label            = var.cluster_label
-  version          = var.k8_version
-  enable_firewall  = var.cluster_firewall
-  ha_controlplanes = var.ha_controlplanes
-
-  node_pools {
-    node_quantity = var.initial_node_pool_quantity
-    plan          = var.initial_node_pool_plan
-    label         = var.initial_node_pool_label
-    auto_scaler   = var.initial_node_pool_scaler
-    min_nodes     = var.initial_node_pool_min_nodes
-    max_nodes     = var.initial_node_pool_max_nodes
-  }
-}
-
-resource "local_file" "kubeconfig" {
-  content  = base64decode(vultr_kubernetes.k8.kube_config)
-  filename = local.kubeconfig_filename
-}
+# Future AWS cluster module
+# module "aws_cluster" {
+#   count  = var.cloud_provider == "aws" ? 1 : 0
+#   source = "./aws"
+#   
+#   # Pass AWS-specific variables
+#   cluster_version = var.aws.cluster_version
+#   region         = var.aws.region
+#   # ... other AWS variables
+# }

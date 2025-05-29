@@ -8,20 +8,20 @@ resource "kubernetes_secret_v1" "repository" { // Common ArgoCD Git Repository f
   }
   data = {
     type : "git"
-    url : local.ixo_helm_chart_repository
+    url : var.ixo_helm_chart_repository
     githubAppID : 1
     githubAppInstallationID : 2
   }
 }
 
 module "ixo_cellnode" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_cellnode"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_cellnode"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-cellnode"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-cellnode"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cellnode.yml",
       {
         environment = terraform.workspace
@@ -42,14 +42,14 @@ module "ixo_cellnode" {
 }
 
 module "ixo_matrix_state_bot" {
-  count      = var.environments[terraform.workspace].enabled_services["ixo_matrix_state_bot"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["ixo_matrix_state_bot"].enabled ? 1 : 0
   depends_on = [kubernetes_persistent_volume_claim_v1.common]
   source     = "./modules/argocd_application"
   application = {
     name       = "ixo-matrix-state-bot"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-state-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-matrix-state-bot.yml",
       {
         host       = local.dns_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
@@ -63,13 +63,13 @@ module "ixo_matrix_state_bot" {
 }
 
 module "ixo_blocksync_core" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_blocksync_core"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_blocksync_core"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-blocksync-core"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-blocksync-core"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-core.yml",
       {
         environment = terraform.workspace
@@ -88,13 +88,13 @@ module "ixo_blocksync_core" {
 }
 
 module "ixo_blocksync" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_blocksync"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_blocksync"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-blocksync"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-blocksync"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
         environment          = terraform.workspace
@@ -118,13 +118,12 @@ module "ixo_blocksync" {
 }
 
 module "credentials_prospect" {
-  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_prospect"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["claims_credentials_prospect"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-prospect"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_prospect.yml",
       {
@@ -141,13 +140,12 @@ module "credentials_prospect" {
 }
 
 module "ecs" {
-  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_ecs"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["claims_credentials_ecs"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-ecs"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_ecs.yml",
       {
@@ -155,7 +153,7 @@ module "ecs" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_ecs"]
         vault_mount = vault_mount.ixo.path
-        cellnode    = terraform.workspace == "mainnet" ? "https://cellnode.ixo.world" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+        cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
@@ -168,13 +166,12 @@ module "ecs" {
 }
 
 module "carbon" {
-  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_carbon"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["claims_credentials_carbon"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-carbon"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_carbon.yml",
       {
@@ -182,7 +179,7 @@ module "carbon" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_carbon"]
         vault_mount = vault_mount.ixo.path
-        cellnode    = terraform.workspace == "mainnet" ? "https://cellnode.ixo.world" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+        cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
@@ -192,13 +189,12 @@ module "carbon" {
 }
 
 module "claimformprotocol" {
-  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_claimformprotocol"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["claims_credentials_claimformprotocol"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-claimformprotocol"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_claimformprotocol.yml",
       {
@@ -206,7 +202,7 @@ module "claimformprotocol" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_claimformprotocol"]
         vault_mount = vault_mount.ixo.path
-        cellnode    = terraform.workspace == "mainnet" ? "https://cellnode.ixo.world" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+        cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
@@ -216,13 +212,12 @@ module "claimformprotocol" {
 }
 
 module "umuzi" {
-  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_umuzi"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["claims_credentials_umuzi"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-umuzi"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_umuzi.yml",
       {
@@ -239,13 +234,12 @@ module "umuzi" {
 }
 
 module "did" {
-  count  = var.environments[terraform.workspace].enabled_services["claims_credentials_did"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["claims_credentials_did"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "claims-credentials-did"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_did.yml",
       {
@@ -253,7 +247,7 @@ module "did" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_did"]
         vault_mount = vault_mount.ixo.path
-        cellnode    = terraform.workspace == "mainnet" ? "https://cellnode.ixo.world" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+        cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
@@ -263,13 +257,12 @@ module "did" {
 }
 
 module "ixo_feegrant_nest" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_feegrant_nest"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_feegrant_nest"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-feegrant-nest"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-feegrant-nest"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_feegrant_nest.yml",
       {
@@ -286,13 +279,12 @@ module "ixo_feegrant_nest" {
 }
 
 module "ixo_payments_nest" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_payments_nest"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_payments_nest"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-payments-nest"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-payments-nest"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_payments_nest.yml",
       {
@@ -330,13 +322,12 @@ module "ixo_payments_nest" {
 }
 
 module "ixo_did_resolver" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_did_resolver"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_did_resolver"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-did-resolver"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-did-resolver"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_did_resolver.yml",
       {
@@ -353,13 +344,12 @@ module "ixo_did_resolver" {
 }
 
 module "ixo_faucet" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_faucet"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_faucet"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-faucet"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-faucet"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_faucet.yml",
       {
@@ -376,13 +366,12 @@ module "ixo_faucet" {
 }
 
 module "ixo_deeplink_server" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_deeplink_server"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_deeplink_server"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-deeplink-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-deeplink-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_deeplink_server.yml",
       {
@@ -410,13 +399,12 @@ module "ixo_deeplink_server" {
 }
 
 module "ixo_kyc_server" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_kyc_server"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_kyc_server"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-kyc-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-kyc-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_server.yml",
       {
@@ -455,13 +443,12 @@ module "ixo_redirects" {
 }
 
 module "ixo_matrix_appservice_rooms" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_matrix_appservice_rooms"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_appservice_rooms"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-matrix-appservice-rooms"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-appservice-rooms"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_appservice_rooms.yml",
       {
@@ -478,13 +465,12 @@ module "ixo_matrix_appservice_rooms" {
 }
 
 module "ixo_matrix_bids_bot" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_matrix_bids_bot"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_bids_bot"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-matrix-bids-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
-    owner      = "ixoworld"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-bids-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_bids_bot.yml",
       {
@@ -501,13 +487,12 @@ module "ixo_matrix_bids_bot" {
 }
 
 module "ixo_matrix_claims_bot" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_matrix_claims_bot"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_claims_bot"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-matrix-claims-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
-    owner      = "ixoworld"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-claims-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_claims_bot.yml",
       {
@@ -524,13 +509,12 @@ module "ixo_matrix_claims_bot" {
 }
 
 module "ixo_faq_assistant" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_faq_assistant"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_faq_assistant"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-faq-assistant"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/faq-assistant"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-faq-assistant.yml",
       {
@@ -579,13 +563,12 @@ module "ixo_faq_assistant" {
 }
 
 module "ixo_guru" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_guru"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_guru"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-guru"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-guru"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-guru.yml",
       {
@@ -640,13 +623,12 @@ module "ixo_guru" {
 }
 
 module "ixo_guru_temp" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_ai_oracles_guru"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_guru"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-ai-oracles-guru"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixoworld/ixo-ai-oracles-guru"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ai-oracles-guru.yml",
       {
@@ -702,13 +684,12 @@ module "ixo_guru_temp" {
 }
 
 module "ixo_giza_oracle" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_ai_oracles_giza"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_giza"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-ai-oracles-giza"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixoworld/ixo-ai-oracles-giza"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ai-oracles-giza.yml",
       {
@@ -774,13 +755,12 @@ module "ixo_giza_oracle" {
 }
 
 module "ixo_trading_bot_server" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_trading_bot_server"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_trading_bot_server"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-trading-bot-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-trading-bot-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-trading-bot-server.yml",
       {
@@ -805,14 +785,108 @@ module "ixo_trading_bot_server" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "ixo_subscriptions_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-subscriptions-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/subscriptions-oracle"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-subscriptions-oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_subscriptions_oracle"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[11].username
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[11].username])
+        rpc_url     = var.environments[terraform.workspace].rpc_url
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    STRIPE_API_KEY        = ""
+    CHAIN_NETWORK             = ""
+    ALLOWED_STRIPE_PLANS = ""
+    BLOCKSYNC_GRAPHQL_URL = ""
+    SUBSCRIPTION_PROTOCOL_DID = ""
+    ORACLE_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID = ""
+    SUBSCRIPTION_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID = ""
+    RPC_URL = ""
+    SECP_MNEMONIC = ""
+    DID = ""
+    RELAYER_NODE = ""
+    MATRIX_ACCESS_TOKEN = ""
+    STRIPE_WEBHOOK_SECRET = ""
+    STRIPE_PRO_PLAN_ID = ""
+    STRIPE_TEAM_PLAN_ID = ""
+    STRIPE_ECOSYSTEM_PLAN_ID = ""
+    STRIPE_TOP_UP_1500_PLAN_ID = ""
+    STRIPE_TRIAL_PERIOD_DAYS = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_subscriptions_oracle_bot" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-subscriptions-oracle-bot"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/subscriptions-oracle-bot-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-subscriptions-oracle-bot.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_subscriptions_oracle_bot"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[14].username
+        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[14].username]
+      }
+    )
+  }
+  create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
+module "ixo_jokes_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_jokes_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-jokes-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/jokes-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-jokes-oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_jokes_oracle"]
+        vault_mount = vault_mount.ixo.path
+      }
+    )
+    create_kv = true
+    argo_namespace = module.argocd.argo_namespace
+    vault_mount_path = vault_mount.ixo.path
+  }
+  create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "ixo_whizz" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_whizz"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_whizz"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-whizz"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-whizz"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-whizz.yml",
       {
@@ -863,13 +937,12 @@ module "ixo_whizz" {
 }
 
 module "ixo_coin_server" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_coin_server"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_coin_server"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-coin-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-coin-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-coin-server.yml",
       {
@@ -893,13 +966,12 @@ module "ixo_coin_server" {
 }
 
 module "ixo_stake_reward_claimer" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_stake_reward_claimer"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_stake_reward_claimer"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-stake-reward-claimer"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-stake-reward-claimer"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-stake-reward-claimer.yml",
       {
@@ -921,13 +993,12 @@ module "ixo_stake_reward_claimer" {
 }
 
 module "ixo_offset_auto_approve" {
-  count  = var.environments[terraform.workspace].enabled_services["auto_approve_offset"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["auto_approve_offset"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "auto-approve-offset"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-auto-approve-agent"
     values_override = templatefile("${local.helm_values_config_path}/core-values/auto_approve_offset.yml",
       {
@@ -956,13 +1027,12 @@ module "ixo_offset_auto_approve" {
 }
 
 module "ixo_iot_data" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_iot_data"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_iot_data"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-iot-data"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-iot-data"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-iot-data.yml",
       {
@@ -985,13 +1055,12 @@ module "ixo_iot_data" {
 }
 
 module "ixo_message_relayer" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_message_relayer"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_message_relayer"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-message-relayer"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-message-relayer"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-message-relayer.yml",
       {
@@ -1014,13 +1083,12 @@ module "ixo_message_relayer" {
 }
 
 module "ixo_notification_server" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_notification_server"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_notification_server"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-notification-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-notification-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-notification-server.yml",
       {
@@ -1047,13 +1115,12 @@ module "ixo_notification_server" {
 }
 
 module "hermes" {
-  count  = var.environments[terraform.workspace].enabled_services["hermes"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["hermes"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "hermes"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/hermes"
     values_override = templatefile("${local.helm_values_config_path}/core-values/hermes.yml",
       {
@@ -1078,13 +1145,12 @@ module "hermes" {
 }
 
 module "ixo_cvms_exporter" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_cvms_exporter"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_cvms_exporter"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-cvms-exporter"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-cvms-exporter"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cvms-exporter.yml",
       {
@@ -1100,13 +1166,12 @@ module "ixo_cvms_exporter" {
 }
 
 module "ixo_dmrv_registry_server" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_registry_server"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_registry_server"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
     name       = "ixo-registry-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    owner      = "ixoworld"
-    repository = local.ixo_helm_chart_repository
+    repository = var.ixo_helm_chart_repository
     path       = "charts/${terraform.workspace}/ixoworld/ixo-registry-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-registry-server.yml",
       {
@@ -1123,14 +1188,39 @@ module "ixo_dmrv_registry_server" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "ixo_observable_framework_builder" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_observable_framework_builder"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-observable-framework-builder"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/observable-framework-builder"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_observable_framework_builder.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
+        vault_mount = vault_mount.ixo.path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[15].username
+        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[15].username])
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "ixo_agent_images_slack" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_agent_images_slack"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_agent_images_slack"].enabled ? 1 : 0
   source = "./modules/aws/lambda_function"
   providers = {
     aws = aws
   }
 
-  aws_region        = var.environments[terraform.workspace].aws_config.region
+  aws_region        = var.environments[terraform.workspace].aws_region
   github_repo_name  = "agent-images-slack"
   github_repo_org   = "ixoworld"
   function_fileName = "./modules/aws/lambda_function/dummy.zip"
@@ -1140,19 +1230,18 @@ module "ixo_agent_images_slack" {
 }
 
 module "ixo_aws_iam" {
-  count  = var.environments[terraform.workspace].enabled_services["ixo_aws_iam"] ? 1 : 0
+  count  = var.environments[terraform.workspace].application_configs["ixo_aws_iam"].enabled ? 1 : 0
   source = "./modules/aws/iam_ixo"
-  users  = var.environments[terraform.workspace].aws_config.iam_users
+  users  = var.environments[terraform.workspace].aws_iam_users
 }
 
 #module "ixo_ussd" {
-#  count  = var.environments[terraform.workspace].enabled_services["ixo_ussd"] ? 1 : 0
+#  count  = var.environments[terraform.workspace].application_configs["ixo_ussd"].enabled ? 1 : 0
 #  source = "./modules/argocd_application"
 #  application = {
 #    name       = "ixo-ussd"
 #    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-#    owner      = "ixofoundation"
-#    repository = local.ixo_helm_chart_repository
+#    repository = var.ixo_helm_chart_repository
 #    path       = "charts/${terraform.workspace}/ixofoundation/ixo-ussd"
 #    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ussd.yml",
 #      {

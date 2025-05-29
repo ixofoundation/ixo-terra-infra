@@ -75,3 +75,15 @@ resource "kubernetes_namespace_v1" "metrics_server" {
     name = "metrics-server"
   }
 }
+
+resource "kubernetes_namespace_v1" "uptime_kuma" {
+  metadata {
+    name = "uptime-kuma"
+  }
+}
+
+resource "kubernetes_namespace_v1" "chromadb" {
+  metadata {
+    name = "chromadb"
+  }
+}

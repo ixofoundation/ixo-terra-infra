@@ -1,129 +1,67 @@
 locals {
-  # IXO
-  ixo_helm_chart_repository  = "https://github.com/ixofoundation/ixo-helm-charts"
-  ixo_terra_infra_repository = "https://github.com/ixofoundation/ixo-terra-infra"
-  vault_core_mount           = "ixo_core"
+  # Extract all unique domain keys used in application configs
+  used_domain_keys = toset(flatten([
+    for env, env_config in var.environments : [
+      for service, config in env_config.application_configs : config.domain
+      if config.domain != null
+    ]
+  ]))
+  
+  # Validate that all used domain keys exist in the domains variable
+  domain_validation = {
+    for key in local.used_domain_keys : key => lookup(var.domains, key, null) != null
+  }
+  
   synthetic_monitoring_endpoints = concat(
     compact([
-      for app, dns_endpoint in local.dns_for_environment[terraform.workspace] :
-      contains(local.excluded_synthetic_monitoring, app) || dns_endpoint == null ? null : "https://${dns_endpoint}"
+      for app, config in var.environments[terraform.workspace].application_configs :
+      contains(local.excluded_synthetic_monitoring, app) || !config.enabled ? null : (
+        config.dns_prefix != null ? (
+          terraform.workspace == "mainnet" ? "https://${config.dns_prefix}.${var.domains[config.domain]}" : "https://${config.dns_prefix}.${terraform.workspace}.${var.domains[config.domain]}"
+        ) : config.dns_endpoint != null ? "https://${config.dns_endpoint}" : null
+      )
     ]),
     lookup(var.additional_manual_synthetic_monitoring_endpoints, terraform.workspace, [])
   )
   excluded_synthetic_monitoring = [
+    # Application services that shouldn't be monitored
     "ixo_trading_bot_server",
     "hermes",
-    "ixo_registry_server"
+    "ixo_registry_server",
+    # Infrastructure services that shouldn't be monitored via blackbox
+    "cert_manager",
+    "ingress_nginx", 
+    "postgres_operator_crunchydata",
+    "prometheus_stack",
+    "external_dns",
+    "dex",
+    "vault", 
+    "loki",
+    "prometheus_blackbox_exporter",
+    "tailscale",
+    "matrix",
+    "nfs_provisioner",
+    "metrics_server",
+    "hyperlane_validator",
+    "aws_vpc",
+    "chromadb"
   ]
-  # IXO DNS Entries
+  
+  # IXO DNS Entries - extract from application configs
   dns_for_environment = {
-    for env, config in var.environments : env => {
-      for service, enabled in config.enabled_services : service => enabled ? lookup(local.dns_endpoints[env], service, null) : null
+    for env, env_config in var.environments : env => {
+      for service, config in env_config.application_configs : service => config.enabled ? (
+        config.dns_prefix != null ? (
+          env == "mainnet" ? "${config.dns_prefix}.${var.domains[config.domain]}" : "${config.dns_prefix}.${env}.${var.domains[config.domain]}"
+        ) : config.dns_endpoint != null ? config.dns_endpoint : null
+      ) : null
     }
   }
 
-  dns_endpoints = {
-    devnet = {
-      ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
-      ixo_blocksync               = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
-      ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-      ixo_matrix_appservice_rooms = "rooms.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-      ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
-      claims_credentials_prospect = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_ecs      = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_carbon   = "carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_umuzi    = "umuzi.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_did      = "didoracle.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_feegrant_nest           = "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_did_resolver            = "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_faucet                  = "faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_deeplink_server         = "deeplink.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_kyc_server              = "kyc.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_faq_assistant           = ""
-      ixo_coin_server             = ""
-      ixo_stake_reward_claimer    = ""
-      ixo_ussd                    = ""
-      ixo_whizz                   = ""
-      auto_approve_offset         = ""
-      ixo_iot_data                = ""
-      ixo_notification_server     = ""
-      ixo_guru                    = ""
-      ixo_trading_bot_server      = ""
-      ixo_ai_oracles_guru         = ""
-      ixo_payments_nest           = ""
-      ixo_message_relayer         = "signx.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_registry_server         = "dev.api.emerging.eco"
-      ixo_matrix_bids_bot         = "bid.bot.devmx.${var.environments[terraform.workspace].domain}"
-      ixo_matrix_claims_bot = "claim.bot.devmx.${var.environments[terraform.workspace].domain}"
-    }
-    testnet = {
-      ixo_cellnode                = "${terraform.workspace}-cellnode.${var.environments[terraform.workspace].domain}"
-      ixo_blocksync               = "${terraform.workspace}-blocksync-graphql.${var.environments[terraform.workspace].domain}"
-      ixo_matrix_state_bot        = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-      ixo_matrix_appservice_rooms = "rooms.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-      ixo_blocksync_core          = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
-      claims_credentials_prospect = "prospect.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_ecs      = "ecs.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_carbon   = "carbon.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_did      = "didoracle.credentials.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_feegrant_nest           = "feegrant.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_did_resolver            = "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_faucet                  = "faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_deeplink_server         = "deeplink.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_kyc_server              = "kyc.devnet.${var.environments[terraform.workspace].domain}"
-      ixo_faq_assistant           = ""
-      ixo_coin_server             = ""
-      ixo_stake_reward_claimer    = ""
-      ixo_ussd                    = ""
-      ixo_whizz                   = ""
-      auto_approve_offset         = "offset.auto-approve.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_iot_data                = ""
-      ixo_notification_server     = ""
-      ixo_guru                    = ""
-      ixo_trading_bot_server      = ""
-      ixo_ai_oracles_guru         = ""
-      ixo_ai_oracles_giza         = "gizatest.${var.environments[terraform.workspace].domain}"
-      ixo_payments_nest           = "payments.${terraform.workspace}.${var.environments[terraform.workspace].domain3}"
-      ixo_message_relayer         = "signx.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      ixo_registry_server         = "stage.api.emerging.eco"
-      ixo_matrix_bids_bot         = ""
-      ixo_matrix_claims_bot = ""
-    }
-    mainnet = {
-      ixo_cellnode                         = "cellnode.${var.environments[terraform.workspace].domain}"
-      ixo_blocksync                        = "blocksync-graphql.${var.environments[terraform.workspace].domain2}"
-      ixo_matrix_state_bot                 = "state.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-      ixo_matrix_appservice_rooms          = "rooms.bot.${var.hostnames["${terraform.workspace}_matrix"]}"
-      ixo_blocksync_core                   = "ixo-blocksync-core.${var.hostnames[terraform.workspace]}"
-      claims_credentials_prospect          = "prospect.credentials2.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_ecs               = "ecs.credentials.${var.environments[terraform.workspace].domain}"
-      claims_credentials_carbon            = "carbon.credentials.${var.environments[terraform.workspace].domain}"
-      claims_credentials_umuzi             = "umuzi.credentials2.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-      claims_credentials_claimformprotocol = "claimformobjects.credentials.${var.environments[terraform.workspace].domain}"
-      claims_credentials_did               = "didoracle.credentials.${var.environments[terraform.workspace].domain2}"
-      ixo_feegrant_nest                    = "feegrant.${var.environments[terraform.workspace].domain}"
-      ixo_did_resolver                     = "resolver.${var.environments[terraform.workspace].domain}"
-      ixo_faucet                           = "faucet2.${var.hostnames[terraform.workspace]}"
-      ixo_deeplink_server                  = "x.${var.environments[terraform.workspace].domain2}"
-      ixo_kyc_server                       = "kyc.oracle.${var.environments[terraform.workspace].domain2}"
-      ixo_faq_assistant                    = "faq.assistant.${var.environments[terraform.workspace].domain2}"
-      ixo_coin_server                      = "coincache.${var.environments[terraform.workspace].domain2}"
-      ixo_stake_reward_claimer             = "reclaim.${var.environments[terraform.workspace].domain2}"
-      ixo_ussd                             = ""
-      ixo_whizz                            = "whizz.assistant.${var.environments[terraform.workspace].domain2}"
-      auto_approve_offset                  = "offset.auto-approve.${var.environments[terraform.workspace].domain2}"
-      ixo_iot_data                         = "iot-data.${var.environments[terraform.workspace].domain2}"
-      ixo_notification_server              = "notifications.${var.environments[terraform.workspace].domain2}"
-      ixo_guru                             = "guru.${var.environments[terraform.workspace].domain2}"
-      ixo_trading_bot_server               = "trading.bot.${var.environments[terraform.workspace].domain2}"
-      ixo_ai_oracles_guru                  = "guru2.${var.environments[terraform.workspace].domain2}"
-      ixo_ai_oracles_giza                  = "giza.${var.environments[terraform.workspace].domain2}"
-      ixo_payments_nest                    = "payments.${var.environments[terraform.workspace].domain3}"
-      ixo_message_relayer                  = "signx.${var.environments[terraform.workspace].domain2}"
-      ixo_registry_server                  = "api.emerging.eco"
-      hermes                               = "hermes.${var.environments[terraform.workspace].domain2}"
-      ixo_matrix_bids_bot                  = ""
-      ixo_matrix_claims_bot = ""
+  # Helper function to get domain from application config
+  get_domain = {
+    for env, env_config in var.environments : env => {
+      for service, config in env_config.application_configs : service => config.enabled && config.domain != null ? var.domains[config.domain] : null
     }
   }
 
@@ -136,14 +74,16 @@ locals {
       }]
     },
     {
-      host = "cellnode-pandora.${var.environments[terraform.workspace].domain}" # cellnode-pandora.ixo.earth
+      host = "cellnode-pandora.${var.domains[var.environments[terraform.workspace].application_configs["ixo_cellnode"].domain]}" # cellnode-pandora.ixo.earth
       paths = [{
         path     = "/"
         pathType = "Prefix"
       }]
     },
     {
-      host = "cellnode-pandora.${var.environments["mainnet"].domain}" # cellnode-pandora.ixo.world
+      # NOTE: Hardcoded "ixoworld" - this creates a cross-domain alias (testnet service on .world domain)
+      # Cannot easily be made dynamic without restructuring the multi-host logic
+      host = "cellnode-pandora.${var.domains["ixoworld"]}" # cellnode-pandora.ixo.world  
       paths = [{
         path     = "/"
         pathType = "Prefix"
@@ -158,7 +98,9 @@ locals {
       }]
     },
     {
-      host = "cellnode.${var.environments[terraform.workspace].domain2}" # cellnode.ixo.earth
+      # NOTE: Hardcoded "ixoearth" - this creates a cross-domain alias (mainnet service on .earth domain)  
+      # Cannot easily be made dynamic without restructuring the multi-host logic
+      host = "cellnode.${var.domains["ixoearth"]}" # cellnode.ixo.earth
       paths = [{
         path     = "/"
         pathType = "Prefix"
@@ -181,7 +123,7 @@ locals {
       }]
     },
     {
-      host = "${terraform.workspace}.api.${var.environments[terraform.workspace].domain}"
+      host = "${terraform.workspace}.api.${var.domains[var.environments[terraform.workspace].application_configs["ixo_registry_server"].domain]}"
       paths = [{
         path     = "/"
         pathType = "Prefix"
@@ -196,7 +138,7 @@ locals {
       }]
     },
     {
-      host = "api.${var.environments[terraform.workspace].domain}"
+      host = "api.${var.domains[var.environments[terraform.workspace].application_configs["ixo_registry_server"].domain]}"
       paths = [{
         path     = "/"
         pathType = "Prefix"
@@ -211,7 +153,7 @@ locals {
       }]
     },
     {
-      host = "${terraform.workspace}.api.${var.environments[terraform.workspace].domain}"
+      host = "${terraform.workspace}.api.${var.domains[var.environments[terraform.workspace].application_configs["ixo_registry_server"].domain]}"
       paths = [{
         path     = "/"
         pathType = "Prefix"
@@ -220,6 +162,7 @@ locals {
   ]
   cellnode_tls_hostnames = [for host in local.cellnode_hosts : host.host]
   registry_server_tls    = [for host in local.registry_server_hosts : host.host]
+  
   # Vultr
   region_ids = { for city, id in var.region_ids : id => city }
 

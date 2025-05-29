@@ -1,17 +1,28 @@
 module "kubernetes_cluster" {
-  source                  = "./modules/kubernetes_cluster"
-  cluster_firewall        = lookup(var.environments[terraform.workspace], "cluster_firewall", false)
-  cluster_label           = "ixo-cluster-${terraform.workspace}"
-  initial_node_pool_label = "ixo-${terraform.workspace}"
-  initial_node_pool_plan  = "vhf-3c-8gb"
-  k8_version              = var.versions["kubernetes_cluster"]
-  cluster_region          = local.region_ids["Amsterdam"]
+  source         = "./modules/kubernetes_cluster"
+  cloud_provider = "vultr"
+  
+  vultr = {
+    cluster_firewall            = lookup(var.environments[terraform.workspace], "cluster_firewall", false)
+    cluster_label               = "ixo-cluster-${terraform.workspace}"
+    initial_node_pool_label     = "ixo-${terraform.workspace}"
+    initial_node_pool_plan      = "vhf-3c-8gb"
+    k8_version                  = var.versions["kubernetes_cluster"]
+    cluster_region              = local.region_ids["Amsterdam"]
+    ha_controlplanes            = false
+    initial_node_pool_quantity  = 2
+    initial_node_pool_scaler    = true
+    initial_node_pool_min_nodes = 2
+    initial_node_pool_max_nodes = 4
+  }
 }
 
 module "argocd" {
   depends_on           = [module.kubernetes_cluster]
   source               = "./modules/argocd"
-  hostnames            = var.hostnames
+  hostnames            = {
+    (terraform.workspace) = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
+  }
   github_client_id     = var.oidc_argo.clientId
   github_client_secret = var.oidc_argo.clientSecret
   argo_version         = var.versions["argocd"]
@@ -19,21 +30,39 @@ module "argocd" {
   git_repositories = [
     {
       name       = "ixofoundation"
-      repository = local.ixo_helm_chart_repository
+      repository = var.ixo_helm_chart_repository
     }
   ]
   applications_helm = [
   ]
 }
 
+module "chromadb" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].application_configs["chromadb"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "chromadb"
+    namespace = kubernetes_namespace_v1.chromadb.metadata[0].name
+    helm = {
+      isOci             = false
+      chart             = "chromadb"
+      revision          = var.versions["chromadb"]
+    }
+    repository      = "https://amikos-tech.github.io/chromadb-chart/"
+    values_override = templatefile("${local.helm_values_config_path}/chromadb-values.yml", {})
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "cert_manager" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["cert_manager"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["cert_manager"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "cert-manager"
     namespace = kubernetes_namespace_v1.cert_manager.metadata[0].name
-    owner     = ""
     helm = {
       isOci             = false
       chart             = "cert-manager"
@@ -49,12 +78,11 @@ module "cert_manager" {
 
 module "ingress_nginx" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["ingress_nginx"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["ingress_nginx"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "nginx-ingress-controller"
     namespace = kubernetes_namespace_v1.ingress_nginx.metadata[0].name
-    owner     = ""
     helm = {
       isOci             = false
       chart             = "ingress-nginx"
@@ -64,7 +92,7 @@ module "ingress_nginx" {
     repository = "https://kubernetes.github.io/ingress-nginx"
     values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
       {
-        host = terraform.workspace == "testnet" || terraform.workspace == "mainnet" ? "${var.hostnames[terraform.workspace]}, ${var.hostnames["${terraform.workspace}_world"]}" : var.hostnames[terraform.workspace]
+        host = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
       }
     )
   }
@@ -74,13 +102,11 @@ module "ingress_nginx" {
 
 module "postgres_operator_crunchydata" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["postgres_operator_crunchydata"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = { # We use a fork of the main Operator helm chart to enable feature gates.
     name            = "postgres-operator"
     namespace       = kubernetes_namespace_v1.postgres_operator.metadata[0].name
-    owner           = "ixofoundation"
-    revision        = var.versions["postgres-operator"]
     repository      = "https://github.com/ixofoundation/postgres-operator-examples"
     path            = "helm/install"
     values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
@@ -91,12 +117,11 @@ module "postgres_operator_crunchydata" {
 
 module "prometheus_stack" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["prometheus_stack"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["prometheus_stack"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "prometheus-stack"
     namespace = kubernetes_namespace_v1.prometheus_stack.metadata[0].name
-    owner     = ""
     helm = {
       isOci             = false
       chart             = "kube-prometheus-stack"
@@ -105,10 +130,10 @@ module "prometheus_stack" {
     }
     repository = "https://prometheus-community.github.io/helm-charts"
     values_override = templatefile("${local.helm_values_config_path}/prometheus.yml", {
-      host                = var.hostnames[terraform.workspace]
+      host                = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
       blackbox_targets    = yamlencode(local.synthetic_monitoring_endpoints)
       grafana_oidc_secret = random_password.grafana_dex_oidc_secret.result
-      dex_host            = var.hostnames["${terraform.workspace}_dex"]
+      dex_host            = local.dns_for_environment[terraform.workspace]["dex"]
       org                 = var.org
       environment         = terraform.workspace
       additional_scrape_metrics = var.additional_prometheus_scrape_metrics[terraform.workspace]
@@ -118,36 +143,34 @@ module "prometheus_stack" {
   vault_mount_path = vault_mount.ixo.path
 }
 
-module "external_dns" {
-  depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["external_dns"] ? 1 : 0
-  source     = "./modules/argocd_application"
-  application = {
-    name      = "external-dns"
-    namespace = kubernetes_namespace_v1.external_dns.metadata[0].name
-    owner     = ""
-    helm = {
-      isOci    = false
-      chart    = "external-dns"
-      revision = var.versions["external-dns"]
-    }
-    repository = "https://kubernetes-sigs.github.io/external-dns/"
-    values_override = templatefile("${local.helm_values_config_path}/external-dns-values.yml", {
-      VULTR_API_KEY = var.vultr_api_key
-    })
-  }
-  argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
-}
+# module "external_dns" {
+#   depends_on = [module.argocd]
+#   count      = var.environments[terraform.workspace].application_configs["external_dns"].enabled ? 1 : 0
+#   source     = "./modules/argocd_application"
+#   application = {
+#     name      = "external-dns"
+#     namespace = kubernetes_namespace_v1.external_dns.metadata[0].name
+#     helm = {
+#       isOci    = false
+#       chart    = "external-dns"
+#       revision = var.versions["external-dns"]
+#     }
+#     repository = "https://kubernetes-sigs.github.io/external-dns/"
+#     values_override = templatefile("${local.helm_values_config_path}/external-dns-values.yml", {
+#       VULTR_API_KEY = var.vultr_api_key
+#     })
+#   }
+#   argo_namespace   = module.argocd.argo_namespace
+#   vault_mount_path = vault_mount.ixo.path
+# }
 
 module "dex" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["dex"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["dex"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "dex"
     namespace = kubernetes_namespace_v1.dex.metadata[0].name
-    owner     = ""
     helm = {
       isOci    = false
       chart    = "dex"
@@ -156,13 +179,13 @@ module "dex" {
     repository = "https://charts.dexidp.io"
     values_override = templatefile("${local.helm_values_config_path}/dex-values.yml",
       {
-        vault_host           = var.hostnames["${terraform.workspace}_vault"]
-        host                 = var.hostnames["${terraform.workspace}_dex"]
+        vault_host           = local.dns_for_environment[terraform.workspace]["vault"]
+        host                 = local.dns_for_environment[terraform.workspace]["dex"]
         github_client_id     = var.oidc_vault.clientId
         github_client_secret = var.oidc_vault.clientSecret
         vault_oidc_secret    = random_password.vault_dex_oidc_secret.result
         grafana_oidc_secret  = random_password.grafana_dex_oidc_secret.result
-        grafana_host         = "${var.hostnames[terraform.workspace]}/grafana"
+        grafana_host         = "${local.dns_for_environment[terraform.workspace]["prometheus_stack"]}/grafana"
         org                  = var.org
       }
     )
@@ -173,12 +196,11 @@ module "dex" {
 
 module "vault" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["vault"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["vault"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "vault"
     namespace = kubernetes_namespace_v1.vault.metadata[0].name
-    owner     = ""
     helm = {
       isOci             = false
       chart             = "vault"
@@ -193,7 +215,7 @@ module "vault" {
         crypto_key      = module.gcp_kms_vault.crypto_key_name
         gcp_secret_name = module.gcp_kms_vault.gcp_key_secret_name
         replicas        = 2
-        host            = var.hostnames["${terraform.workspace}_vault"]
+        host            = local.dns_for_environment[terraform.workspace]["vault"]
       }
     )
   }
@@ -203,12 +225,11 @@ module "vault" {
 
 module "loki" {
   depends_on = [module.argocd, module.prometheus_stack]
-  count      = var.environments[terraform.workspace].enabled_services["loki"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["loki"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "loki"
     namespace = kubernetes_namespace_v1.loki.metadata[0].name
-    owner     = ""
     helm = {
       isOci             = false
       chart             = "loki"
@@ -229,12 +250,11 @@ module "loki" {
 
 module "prometheus_blackbox_exporter" {
   depends_on = [module.argocd, module.prometheus_stack]
-  count      = var.environments[terraform.workspace].enabled_services["prometheus_blackbox_exporter"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["prometheus_blackbox_exporter"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "prometheus-blackbox-exporter"
     namespace = kubernetes_namespace_v1.prometheus_blackbox_exporter.metadata[0].name
-    owner     = ""
     helm = {
       isOci    = false
       chart    = "prometheus-blackbox-exporter"
@@ -249,12 +269,11 @@ module "prometheus_blackbox_exporter" {
 
 module "tailscale" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["tailscale"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["tailscale"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "tailscale"
     namespace = kubernetes_namespace_v1.tailscale.metadata[0].name
-    owner     = ""
     helm = {
       isOci    = false
       chart    = "tailscale-operator"
@@ -275,12 +294,11 @@ module "tailscale" {
 
 module "matrix" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["matrix"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "matrix"
     namespace = kubernetes_namespace_v1.matrix.metadata[0].name
-    owner     = ""
     helm = {
       isOci    = false
       chart    = "matrix-synapse"
@@ -292,8 +310,8 @@ module "matrix" {
         pg_host         = "${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local"
         pg_username     = "synapse"
         pg_cluster_name = var.pg_matrix.pg_cluster_name
-        host            = var.hostnames["${terraform.workspace}_matrix"]
-        kv_mount        = local.vault_core_mount
+        host            = local.dns_for_environment[terraform.workspace]["matrix"]
+        kv_mount        = var.vault_core_mount
         app_name        = "matrix"
         gcs_bucket_url  = google_storage_bucket.matrix_backups.url
       }
@@ -305,12 +323,11 @@ module "matrix" {
 
 module "nfs_provisioner" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["nfs_provisioner"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["nfs_provisioner"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name      = "nfs-provisioner"
     namespace = kubernetes_namespace_v1.nfs_provisioner.metadata[0].name
-    owner     = ""
     helm = {
       isOci             = false
       chart             = "nfs-server-provisioner"
@@ -326,12 +343,11 @@ module "nfs_provisioner" {
 
 module "metrics_server" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].enabled_services["metrics_server"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["metrics_server"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
     name       = "metrics-server"
     namespace  = kubernetes_namespace_v1.metrics_server.metadata[0].name
-    owner      = ""
     repository = "https://kubernetes-sigs.github.io/metrics-server/"
     helm = {
       isOci    = false
@@ -343,18 +359,40 @@ module "metrics_server" {
   vault_mount_path = vault_mount.ixo.path
 }
 
+module "uptime_kuma" {
+  count      = var.environments[terraform.workspace].application_configs["uptime_kuma"].enabled ? 1 : 0
+  depends_on = [module.argocd]
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "uptime-kuma"
+    namespace  = kubernetes_namespace_v1.uptime_kuma.metadata[0].name
+    repository = "https://dirsigler.github.io/uptime-kuma-helm"
+    helm = {
+      isOci    = false
+      chart    = "uptime-kuma"
+      revision = var.versions["uptime-kuma"]
+    }
+    values_override = templatefile("${local.helm_values_config_path}/uptime-kuma-values.yml", {
+        host = local.dns_for_environment[terraform.workspace]["uptime_kuma"]
+      })
+    argo_namespace   = module.argocd.argo_namespace
+    vault_mount_path = vault_mount.ixo.path
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = vault_mount.ixo.path
+}
+
 module "matrix_admin" {
   depends_on = [module.argocd, module.matrix]
   source     = "./modules/argocd_application"
   application = {
     name       = "matrix-admin"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
-    owner      = "ixofoundation"
-    repository = local.ixo_terra_infra_repository
+    repository = var.ixo_terra_infra_repository
     path       = "charts/matrix-admin"
     values_override = templatefile("${local.helm_values_config_path}/matrix-admin.yml",
       {
-        matrix_host = var.hostnames["${terraform.workspace}_matrix"]
+        matrix_host = local.dns_for_environment[terraform.workspace]["matrix"]
         app_name    = "matrix-admin"
       }
     )
@@ -416,11 +454,11 @@ module "postgres-operator" { # Sets up Cluster Instances
 
 module "hyperlane_validator" {
   source = "./modules/hyperlane"
-  count      = var.environments[terraform.workspace].enabled_services["hyperlane_validator"] ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["hyperlane_validator"].enabled ? 1 : 0
   providers = {
     aws = aws
   }
-  aws_region = var.environments[terraform.workspace].aws_config.region
+  aws_region = var.environments[terraform.workspace].aws_region
   environment = terraform.workspace
   chain_names = var.environments[terraform.workspace].hyperlane.chain_names
   metadata_chains = var.environments[terraform.workspace].hyperlane.metadata_chains
@@ -480,9 +518,9 @@ module "vault_init" {
   kubernetes_host          = module.kubernetes_cluster.endpoint
   argo_namespace           = module.argocd.argo_namespace
   argo_policy              = file("${path.root}/config/vault/argocd_policy.hcl")
-  dex_host                 = var.hostnames["${terraform.workspace}_dex"]
+  dex_host                 = local.dns_for_environment[terraform.workspace]["dex"]
   oidc_client_secret       = random_password.vault_dex_oidc_secret.result
-  vault_host               = var.hostnames["${terraform.workspace}_vault"]
+  vault_host               = local.dns_for_environment[terraform.workspace]["vault"]
   vault_terraform_password = var.vultr_api_key
   org                      = var.org
 }
@@ -501,7 +539,6 @@ module "external_dns_cloudflare" {
   application = {
     name       = "external-dns-cloudflare"
     namespace  = kubernetes_namespace_v1.external_dns_cloudflare.metadata[0].name
-    owner      = ""
     repository = "https://kubernetes-sigs.github.io/external-dns/"
     helm = {
       isOci    = false

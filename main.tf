@@ -47,7 +47,7 @@ provider "vultr" {
 }
 
 provider "aws" {
-  region = var.environments[terraform.workspace].aws_config.region
+  region = var.environments[terraform.workspace].aws_region
 }
 
 # For Initial Cluster Setup, This userpass needs to be manually created.
@@ -55,7 +55,7 @@ provider "vault" {
   auth_login_userpass {
     username = "terraform"
   }
-  address = "https://${var.hostnames["${terraform.workspace}_vault"]}/"
+  address = "https://${local.dns_for_environment[terraform.workspace]["vault"]}/"
 }
 
 provider "google" {
@@ -87,7 +87,7 @@ resource "kubernetes_namespace_v1" "ixo-postgres" {
 # TODO Migrate Vault to OIDC issuer for root token to have Terraform create Mounts securely when moving to CI/CD.
 resource "vault_mount" "ixo" {
   depends_on = [module.gcp_kms_vault, module.vault_init, module.argocd]
-  path       = local.vault_core_mount
+  path       = var.vault_core_mount
   type       = "kv-v2"
   options = {
     version = "2"

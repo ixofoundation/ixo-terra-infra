@@ -3,7 +3,6 @@ variable "application" {
     {
       name       = string
       namespace  = string
-      owner      = string
       repository = string
       helm = optional(object({
         isOci             = bool
