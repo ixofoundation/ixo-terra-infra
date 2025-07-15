@@ -7,7 +7,7 @@
 # fullnameOverride: ""
 image:
   repository: ghcr.io/ixoworld/synapse
-  tag: v1.113.0-ixo.1
+  tag: v1.132.0-ixo.1
 config:
   enableRegistration: true
   macaroonSecretKey: <path:${kv_mount}/data/${app_name}#MACAROON_SECRET_KEY>
@@ -133,7 +133,7 @@ persistence:
   enabled: true
   # existingClaim: synapse-data
 #  storageClass: "nfs"
-  storageClass: "vultr-block-storage-hdd"
+  storageClass: ${storage_class}
   accessMode: ReadWriteOnce
   size: 40Gi
 

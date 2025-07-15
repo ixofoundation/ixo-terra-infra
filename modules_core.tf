@@ -28,9 +28,9 @@ module "ixo_cellnode" {
         hosts       = yamlencode(local.cellnode_hosts)
         tls_hosts   = yamlencode(local.cellnode_tls_hostnames)
         rpc_url     = var.environments[terraform.workspace].rpc_url
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgUsername  = var.pg_ixo.pg_users[1].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[1].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[1].username])
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
       }
@@ -38,7 +38,7 @@ module "ixo_cellnode" {
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_matrix_state_bot" {
@@ -53,13 +53,15 @@ module "ixo_matrix_state_bot" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-matrix-state-bot.yml",
       {
         host       = local.dns_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
-        gcs_bucket = "${google_storage_bucket.matrix_backups.url}/bot/state"
+        gcs_bucket = "${google_storage_bucket.matrix_backups[0].url}/bot/state"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
       }
     )
   }
   create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_blocksync_core" {
@@ -75,16 +77,62 @@ module "ixo_blocksync_core" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_blocksync_core"]
-        pgUsername  = var.pg_ixo.pg_users[2].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username])
-        pgCluster   = var.pg_ixo.pg_cluster_name
-        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        vault_mount = local.vault_mount_path
       }
     )
   }
-  create_kv        = false
+  create_kv        = true
+  kv_defaults = {
+    "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[2].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[2].username])}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[2].username}"
+  }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_memory_engine" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_memory_engine"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-memory-engine"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/memory-engine"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_memory_engine.yml",
+      {
+        environment = terraform.workspace
+        vault_mount = local.vault_mount_path
+        neo4j_uri = "neo4j://neo4j.neo4j.svc.cluster.local"
+        neo4j_port = "7687"
+        neo4j_user = "neo4j"
+        neo4j_password = random_password.neo4j_password.result
+        host = local.dns_for_environment[terraform.workspace]["ixo_memory_engine"]
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_companion" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_companion"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-companion"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/companion"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_companion.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_companion"]
+        vault_mount = local.vault_mount_path
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_blocksync" {
@@ -98,23 +146,23 @@ module "ixo_blocksync" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
         environment          = terraform.workspace
-        vault_mount          = vault_mount.ixo.path
+        vault_mount          = local.vault_mount_path
         rpc_url              = var.environments[terraform.workspace].rpc_url
         ipfs_service_mapping = var.environments[terraform.workspace].ipfs_service_mapping
         host                 = local.dns_for_environment[terraform.workspace]["ixo_blocksync"]
         pgCluster            = var.pg_ixo.pg_cluster_name
         pgNamespace          = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername_core      = var.pg_ixo.pg_users[2].username
-        pgPassword_core      = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[2].username])
+        pgPassword_core      = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[2].username])
       }
     )
   }
   create_kv = true
   kv_defaults = {
-    "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[3].username}:${urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username])}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
+    "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[3].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[3].username])}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "credentials_prospect" {
@@ -130,13 +178,13 @@ module "credentials_prospect" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_prospect"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ecs" {
@@ -152,7 +200,7 @@ module "ecs" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_ecs"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
@@ -162,7 +210,7 @@ module "ecs" {
     "REMOTE_CONTEXTS" = "[ \"https://w3id.org/ixo/context/v1\" ]" # TODO this can be moved to an application config in future.
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "carbon" {
@@ -178,14 +226,14 @@ module "carbon" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_carbon"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "claimformprotocol" {
@@ -201,14 +249,14 @@ module "claimformprotocol" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_claimformprotocol"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "umuzi" {
@@ -224,13 +272,13 @@ module "umuzi" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_umuzi"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "did" {
@@ -246,14 +294,14 @@ module "did" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_did"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
       }
     )
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_feegrant_nest" {
@@ -269,13 +317,13 @@ module "ixo_feegrant_nest" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_feegrant_nest"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_payments_nest" {
@@ -291,11 +339,11 @@ module "ixo_payments_nest" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_payments_nest"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[12].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[12].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[12].username])
       }
     )
   }
@@ -318,7 +366,7 @@ module "ixo_payments_nest" {
     TOKENS_TO_SELL_COLLECTIONS              = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_did_resolver" {
@@ -334,13 +382,13 @@ module "ixo_did_resolver" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_did_resolver"] # "resolver.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
   create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_faucet" {
@@ -356,13 +404,13 @@ module "ixo_faucet" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_faucet"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_deeplink_server" {
@@ -377,11 +425,11 @@ module "ixo_deeplink_server" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_deeplink_server"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[4].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[4].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[4].username])
       }
     )
   }
@@ -395,7 +443,7 @@ module "ixo_deeplink_server" {
     FALLBACK_URL         = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_kyc_server" {
@@ -411,11 +459,11 @@ module "ixo_kyc_server" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_server"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[5].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[5].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[5].username])
       }
     )
   }
@@ -434,7 +482,7 @@ module "ixo_kyc_server" {
     SLACK_WEBHOOK_URL           = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_redirects" {
@@ -454,14 +502,16 @@ module "ixo_matrix_appservice_rooms" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
-        vault_mount = vault_mount.ixo.path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups.url}/bot/rooms"
+        vault_mount = local.vault_mount_path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/rooms"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
       }
     )
   }
   create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_matrix_bids_bot" {
@@ -476,14 +526,16 @@ module "ixo_matrix_bids_bot" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
-        vault_mount = vault_mount.ixo.path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups.url}/bot/bids"
+        vault_mount = local.vault_mount_path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/bids"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
       }
     )
   }
   create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_matrix_claims_bot" {
@@ -498,14 +550,16 @@ module "ixo_matrix_claims_bot" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
-        vault_mount = vault_mount.ixo.path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups.url}/bot/claims"
+        vault_mount = local.vault_mount_path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/claims"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
       }
     )
   }
   create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_faq_assistant" {
@@ -520,11 +574,11 @@ module "ixo_faq_assistant" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_faq_assistant"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[7].username
-        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[7].username]
+        pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[7].username]
       }
     )
   }
@@ -559,7 +613,7 @@ module "ixo_faq_assistant" {
     QUEUE_CALLBACK_Root_Path   = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_guru" {
@@ -574,7 +628,7 @@ module "ixo_guru" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_guru"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
@@ -619,7 +673,7 @@ module "ixo_guru" {
     NODE_ENV                         = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_guru_temp" {
@@ -634,7 +688,7 @@ module "ixo_guru_temp" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_ai_oracles_guru"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
@@ -680,7 +734,7 @@ module "ixo_guru_temp" {
     NODE_ENV                         = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_giza_oracle" {
@@ -695,7 +749,7 @@ module "ixo_giza_oracle" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_ai_oracles_giza"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
@@ -751,7 +805,7 @@ module "ixo_giza_oracle" {
     ORACLE_PROTOCOL_CLAIM_DID        = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_trading_bot_server" {
@@ -766,11 +820,11 @@ module "ixo_trading_bot_server" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_trading_bot_server"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[11].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[11].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[11].username])
         rpc_url     = var.environments[terraform.workspace].rpc_url
       }
     )
@@ -782,7 +836,7 @@ module "ixo_trading_bot_server" {
     EXECUTE_RANDOM_TRADES = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_subscriptions_oracle" {
@@ -797,11 +851,11 @@ module "ixo_subscriptions_oracle" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_subscriptions_oracle"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[11].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[11].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[11].username])
         rpc_url     = var.environments[terraform.workspace].rpc_url
       }
     )
@@ -828,7 +882,7 @@ module "ixo_subscriptions_oracle" {
     STRIPE_TRIAL_PERIOD_DAYS = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_subscriptions_oracle_bot" {
@@ -838,22 +892,47 @@ module "ixo_subscriptions_oracle_bot" {
     name       = "ixo-subscriptions-oracle-bot"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/subscriptions-oracle-bot-app"
+    path       = "charts/${terraform.workspace}/ixoworld/subscription-oracle-bot-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-subscriptions-oracle-bot.yml",
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_subscriptions_oracle_bot"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[14].username
-        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[14].username]
+        pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[14].username]
       }
     )
   }
   create_kv = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_pathgen_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_pathgen_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-pathgen-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/pathgen-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-pathgen-oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_pathgen_oracle"]
+        vault_mount = local.vault_mount_path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[16].username
+        pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[16].username]  
+      }
+    )
+  }
+  create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_jokes_oracle" {
@@ -868,16 +947,20 @@ module "ixo_jokes_oracle" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_jokes_oracle"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[17].username
+        pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[17].username]
       }
     )
     create_kv = true
     argo_namespace = module.argocd.argo_namespace
-    vault_mount_path = vault_mount.ixo.path
+    vault_mount_path = local.vault_mount_path
   }
   create_kv = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_whizz" {
@@ -892,11 +975,11 @@ module "ixo_whizz" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_whizz"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[8].username
-        pgPassword  = module.postgres-operator.database_password[var.pg_ixo.pg_users[8].username]
+        pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[8].username]
       }
     )
   }
@@ -933,7 +1016,7 @@ module "ixo_whizz" {
     QUEUE_CALLBACK_Root_Path   = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_coin_server" {
@@ -948,11 +1031,11 @@ module "ixo_coin_server" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_coin_server"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[6].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[6].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[6].username])
       }
     )
   }
@@ -962,7 +1045,7 @@ module "ixo_coin_server" {
     COINGECKO_API_KEY = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_stake_reward_claimer" {
@@ -977,7 +1060,7 @@ module "ixo_stake_reward_claimer" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_stake_reward_claimer"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         rpc_url     = var.environments[terraform.workspace].rpc_url
       }
     )
@@ -989,7 +1072,7 @@ module "ixo_stake_reward_claimer" {
     MNEMONIC      = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_offset_auto_approve" {
@@ -1005,7 +1088,7 @@ module "ixo_offset_auto_approve" {
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["auto_approve_offset"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
@@ -1023,7 +1106,7 @@ module "ixo_offset_auto_approve" {
     NOTIFICATIONS_TEMPLATE_IDS = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_iot_data" {
@@ -1038,11 +1121,11 @@ module "ixo_iot_data" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_iot_data"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[9].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[9].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[9].username])
       }
     )
   }
@@ -1051,7 +1134,7 @@ module "ixo_iot_data" {
     AUTHORIZATION = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_message_relayer" {
@@ -1066,11 +1149,11 @@ module "ixo_message_relayer" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_message_relayer"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[13].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[13].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[13].username])
       }
     )
   }
@@ -1079,7 +1162,7 @@ module "ixo_message_relayer" {
     AUTHORIZATION = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_notification_server" {
@@ -1094,11 +1177,11 @@ module "ixo_notification_server" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_notification_server"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[10].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[10].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[10].username])
       }
     )
   }
@@ -1111,7 +1194,7 @@ module "ixo_notification_server" {
     PUBLIC_AUTHORIZATION            = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "hermes" {
@@ -1126,7 +1209,7 @@ module "hermes" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["hermes"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
@@ -1141,7 +1224,7 @@ module "hermes" {
     CHAIN_B_SECRET_KEY = ""
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_cvms_exporter" {
@@ -1156,13 +1239,13 @@ module "ixo_cvms_exporter" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_cvms_exporter"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
       }
     )
   }
   create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_dmrv_registry_server" {
@@ -1177,7 +1260,7 @@ module "ixo_dmrv_registry_server" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_registry_server"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         hosts       = yamlencode(local.registry_server_hosts)
         tls_hosts   = yamlencode(local.registry_server_tls)
       }
@@ -1185,7 +1268,7 @@ module "ixo_dmrv_registry_server" {
   }
   create_kv        = false
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_observable_framework_builder" {
@@ -1200,17 +1283,19 @@ module "ixo_observable_framework_builder" {
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
-        vault_mount = vault_mount.ixo.path
+        vault_mount = local.vault_mount_path
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[15].username
-        pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[15].username])
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[15].username])
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
       }
     )
   }
   create_kv        = true
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ixo_agent_images_slack" {
@@ -1247,20 +1332,20 @@ module "ixo_aws_iam" {
 #      {
 #        environment = terraform.workspace
 #        host        = local.dns_for_environment[terraform.workspace]["ixo_ussd"]
-#        vault_mount = vault_mount.ixo.path
+#        vault_mount = local.vault_mount_path
 #      }
 #    )
 #  }
 #  argo_namespace   = module.argocd.argo_namespace
-#  vault_mount_path = vault_mount.ixo.path
+#  vault_mount_path = local.vault_mount_path
 #}
 
-#module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
+# module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
 #  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
 #  source     = "./modules/ixo_blocksync_migration"
 #  db_info = {
 #    pgUsername  = var.pg_ixo.pg_users[3].username
-#    pgPassword  = urlencode(module.postgres-operator.database_password[var.pg_ixo.pg_users[3].username])
+#    pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[3].username])
 #    pgCluster   = var.pg_ixo.pg_cluster_name
 #    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
 #    # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
@@ -1270,8 +1355,32 @@ module "ixo_aws_iam" {
 #    useAlt = false
 #  }
 #  existing_blocksync_pod_label_name = "ixo-blocksync"
+#  migration_pod_name                = "ixo-blocksync-migration"
 #  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
-#}
+# }
+
+# module "blocksyn_core_migration" { # Note this will be commented in/out only for new releases to blocksync-core that require re-indexing the DB.
+# #  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
+#  source     = "./modules/ixo_blocksync_migration"
+#  db_info = {
+#    pgUsername  = var.pg_ixo.pg_users[2].username
+#    pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[2].username])
+#    pgCluster   = var.pg_ixo.pg_cluster_name
+#    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+#    # This is to determine whether we are indexing blocksync-core or blocksync-core_alt for the new version. eg if we are running in `blocksync-core_alt` then set this to false so we index `blocksync-core` for the new version.
+#    # If current DB in-use is `blocksync-core` set to true. Else if current DB in-use is`blocksync-core_alt` set to false.
+#    # true = pod created will run migrations on `blocksync-core_alt`
+#    # false = pod created will run migrations on `blocksync-core`
+#    useAlt = true
+#  }
+#  image = "ghcr.io/ixofoundation/ixo-blocksync-core:v0.1.0-develop.14"
+#  existing_blocksync_pod_label_name = "ixo-blocksync-core"
+#  env_overrides = {
+#   RPC = "https://archive.impacthub.ixo.earth/rpc/"
+#  }
+#  migration_pod_name                = "ixo-blocksync-core-migration"
+#  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
+# }
 
 #DATABASE_URL : postgresql://cellnode:p^mv%7Bv|+^C^vkXlNoYRuBA)@ixo-postgres-primary.ixo-postgres.svc.cluster.local/cellnode
 #DATABASE_URL : postgresql://cellnode:p%5Emv%7Bv%7C%2B%5EC%5EvkXlNoYRuBA%29@ixo-postgres-primary.ixo-postgres.svc.cluster.local/cellnode

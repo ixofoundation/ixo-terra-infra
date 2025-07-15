@@ -7,22 +7,22 @@ data "kubernetes_resources" "blocksync_pod" {
 
 resource "kubernetes_pod_v1" "this" {
   metadata {
-    name      = "blocksync-migration"
+    name      = var.migration_pod_name
     namespace = var.namespace
     labels = {
-      "app.kubernetes.io/name"    = "blocksync-migration"
+      "app.kubernetes.io/name"    = var.migration_pod_name
       "app.kubernetes.io/part-of" = "ixo"
     }
   }
   spec {
     container {
-      name  = "blocksync-migration"
-      image = local.blocksync_pod.spec.containers[0].image
+      name  = var.migration_pod_name
+      image = var.image == "null" ? local.blocksync_pod.spec.containers[0].image : var.image
       dynamic "env" {
-        for_each = { for env_var in local.blocksync_pod.spec.containers[0].env : env_var.name => env_var.value }
+        for_each = local.merged_env_vars
         content {
           name  = env.key
-          value = env.key == "DATABASE_URL" ? local.database_endpoint : env.value
+          value = env.value
         }
       }
     }

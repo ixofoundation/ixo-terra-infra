@@ -21,7 +21,7 @@ volume:
   enabled: true
   accessMode: ReadWriteOnce
   size: 40Gi
-  storageClassName: "vultr-block-storage-hdd"
+  storageClassName: ${storage_class}
 
 resources:
   requests:

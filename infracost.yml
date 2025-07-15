@@ -1,0 +1,47 @@
+# IXO Terra Infrastructure Cost Estimation Configuration
+# 
+# This configuration is specific to IXO's environment naming (devnet/testnet/mainnet).
+# For your own deployment, customize the environment names and workspace names below:
+#
+# Example customization:
+# - name: mycompany-infrastructure-dev
+#   terraform_workspace: mycompany_dev
+#
+# - name: mycompany-infrastructure-staging  
+#   terraform_workspace: mycompany_staging
+#
+# - name: mycompany-infrastructure-prod
+#   terraform_workspace: mycompany_prod
+
+version: 0.1
+
+projects:
+  # Development environment
+  - path: .
+    name: ixo-terra-infra-devnet
+    terraform_workspace: devnet
+    terraform_var_files:
+      - terraform.tfvars
+    usage_file: infracost-usage.yml
+    
+  # Test environment  
+  - path: .
+    name: ixo-terra-infra-testnet
+    terraform_workspace: testnet
+    terraform_var_files:
+      - terraform.tfvars
+    usage_file: infracost-usage.yml
+    
+  # Production environment
+  - path: .
+    name: ixo-terra-infra-mainnet
+    terraform_workspace: mainnet
+    terraform_var_files:
+      - terraform.tfvars
+    usage_file: infracost-usage.yml
+
+# Global settings
+settings:
+  currency: USD
+  include_all_paths: true
+  ignore_cli_error: false 

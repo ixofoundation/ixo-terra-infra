@@ -1,0 +1,24 @@
+service:
+  type: ClusterIP
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hostname: ${host}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/proxy-body-size: 500M
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ghost-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+mysql:
+  auth:
+    existingSecret: ghost-mysql-secret
+    database: bitnami_ghost
+    username: bn_ghost
+ghostEmail: 'ixo@ixo.world' # todo, make configurable.

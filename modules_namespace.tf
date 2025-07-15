@@ -87,3 +87,15 @@ resource "kubernetes_namespace_v1" "chromadb" {
     name = "chromadb"
   }
 }
+
+resource "kubernetes_namespace_v1" "ghost" {
+  metadata {
+    name = "ghost"
+  }
+}
+
+resource "kubernetes_namespace_v1" "neo4j" {
+  metadata {
+    name = "neo4j"
+  }
+}

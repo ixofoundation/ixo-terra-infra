@@ -1,6 +1,9 @@
 \c blocksync-core
 GRANT CREATE ON SCHEMA "public" TO "blocksync-core";
 
+\c blocksync-core_alt
+GRANT CREATE ON SCHEMA "public" to "blocksync-core";
+
 \c cellnode
 GRANT CREATE ON SCHEMA "public" TO "cellnode";
 
@@ -45,3 +48,9 @@ GRANT CREATE ON SCHEMA "public" to "subscriptions-oracle-bot";
 
 \c 'observable-framework-builder'
 GRANT CREATE ON SCHEMA "public" to "observable-framework-builder";
+
+\c 'pathgen-oracle'
+GRANT CREATE ON SCHEMA "public" to "pathgen-oracle";
+
+\c 'jokes-oracle'
+GRANT CREATE ON SCHEMA "public" to "jokes-oracle";

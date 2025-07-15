@@ -1,0 +1,81 @@
+version: 0.1
+
+# Google Cloud Storage usage for backups
+google_storage_bucket.postgres_backups:
+  storage_gb: 500                    # 500GB of postgres backups
+  monthly_class_a_operations: 10000  # Create, update operations
+  monthly_class_b_operations: 50000  # Read operations
+  monthly_data_retrieval_gb: 10      # Monthly data retrieval for testing
+  
+google_storage_bucket.matrix_backups:
+  storage_gb: 1000                   # 1TB of matrix media storage
+  monthly_class_a_operations: 5000
+  monthly_class_b_operations: 25000
+  monthly_data_retrieval_gb: 5
+  
+google_storage_bucket.loki_logs_backups:
+  storage_gb: 2000                   # 2TB of logs storage
+  monthly_class_a_operations: 15000
+  monthly_class_b_operations: 75000
+  monthly_data_retrieval_gb: 20
+
+# AWS EKS usage patterns (when using AWS)
+aws_eks_cluster.*:
+  # EKS cluster runs 24/7
+  
+# AWS EKS Node Groups
+aws_eks_node_group.*:
+  # Node utilization patterns
+  operating_system: linux
+  reserved_instance_type: ""         # Using on-demand pricing
+  reserved_instance_term: ""
+  reserved_instance_payment_option: ""
+  monthly_cpu_credit_hrs: 0
+  vcpus: 2                          # Average 2 vCPU per node
+  
+# AWS EBS volumes for node storage
+aws_ebs_volume.*:
+  monthly_disk_operations: 1000000   # 1M IOPS per month
+  
+# Vultr Kubernetes Engine (if using Vultr)
+# Note: Vultr resources may not be fully supported by Infracost
+# These are estimates based on your research
+
+# Network data transfer estimates
+data_transfer:
+  # Monthly data transfer in GB
+  monthly_outbound_gb: 100          # 100GB outbound per month
+  monthly_inbound_gb: 50            # 50GB inbound per month
+  
+# Database usage patterns
+postgresql:
+  # Storage for PostgreSQL databases
+  storage_gb: 200                   # 200GB database storage
+  monthly_queries: 10000000         # 10M queries per month
+  
+# Matrix server usage patterns  
+matrix:
+  # Matrix homeserver usage
+  monthly_active_users: 1000        # 1000 active users
+  monthly_messages: 500000          # 500k messages per month
+  media_storage_gb: 500             # 500GB media storage
+  
+# Monitoring and logging usage
+monitoring:
+  # Prometheus metrics storage
+  metrics_storage_gb: 100           # 100GB metrics storage
+  monthly_metric_ingestion_gb: 50   # 50GB metrics ingested per month
+  
+  # Loki logs storage
+  logs_storage_gb: 300              # 300GB logs storage  
+  monthly_log_ingestion_gb: 100     # 100GB logs ingested per month
+
+# Vault usage
+vault:
+  # Vault secret storage
+  monthly_requests: 100000          # 100k requests per month
+  
+# Certificate manager
+cert_manager:
+  # SSL certificate requests
+  monthly_certificate_requests: 50  # 50 certificate requests per month 

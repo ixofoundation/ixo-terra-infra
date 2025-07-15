@@ -1,0 +1,28 @@
+# This pod is used to debug the postgres-operator instances.
+# One example use-case is to upgrade storage of the primary instance.
+#   To use this first set spec.shutdown = true in the postgres CRD instance yml, 
+#   then run this pod, after expanding the storage terminate this pod and set spec.shutdown = false 
+#   in the postgres CRD instance yml.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: temp-resize-primary-pod
+  namespace: ixo-postgres
+spec:
+  containers:
+  - name: resize-container
+    image: ubuntu:22.04
+    command: ["/bin/bash"]
+    args: ["-c", "apt update && apt install -y e2fsprogs util-linux && sleep 3600"]
+    volumeMounts:
+    - name: pgdata-volume
+      mountPath: /pgdata # df -h /pgdata
+    securityContext:
+      privileged: true
+      capabilities:
+        add: ["SYS_ADMIN"]
+  volumes:
+  - name: pgdata-volume
+    persistentVolumeClaim:
+      claimName: ixo-postgres-ixo-postgresql-0-pg9s-pgdata # Replace this with PVC name of the db instance needing filesystem storage resizing.
+  restartPolicy: Never

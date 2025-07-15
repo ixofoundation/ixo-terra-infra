@@ -99,6 +99,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#ORACLE_ENTITY_DID>"
   - name: "ORACLE_PROTOCOL_CLAIM_DID"
     value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#ORACLE_PROTOCOL_CLAIM_DID>"
+  - name: "PUBLIC_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#PUBLIC_API_KEY>"
 service:
   port: 3000
 resources:

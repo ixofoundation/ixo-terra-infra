@@ -45,8 +45,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#TAVILY_API_KEY>"
   - name: SLACK_BOT_OAUTH_TOKEN
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#SLACK_BOT_OAUTH_TOKEN>"
-  - name: SLACK_APP_LEVEL_TOKEN
-    value: "<path:${vault_mount}/data/ixo-jokes-oracle#SLACK_APP_LEVEL_TOKEN>"
+  - name: SLACK_APP_TOKEN
+    value: "<path:${vault_mount}/data/ixo-jokes-oracle#SLACK_APP_TOKEN>"
   - name: USER_SUBSCRIPTIONS_API_URL
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#USER_SUBSCRIPTIONS_API_URL>"
   - name: RPC_URL
@@ -69,6 +69,21 @@ env:
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#DENOM>"
   - name: CHROMA_URL
     value: "http://chromadb.chromadb.svc.cluster.local:8000"
+  - name: PATHGEN_API_URL
+    value: "<path:${vault_mount}/data/ixo-jokes-oracle#PATHGEN_API_URL>"
+  - name: PATHGEN_API_KEY
+    value: "<path:${vault_mount}/data/ixo-jokes-oracle#PATHGEN_API_KEY>"
+  - name: DATABASE_USE_SSL
+    value: "true"
+  - name: "POSTGRES_USER"
+    value: "${pgUsername}"
+  - name: "POSTGRES_PASSWORD"
+    value: "${pgPassword}"
+  - name: "POSTGRES_DB"
+    value: "${pgUsername}"
+  - name: "POSTGRES_HOST"
+    value: "${pgCluster}-primary.${pgNamespace}.svc.cluster.local"
+  - name: "POSTGRES_PORT"
 service:
   port: 3000
 resources:

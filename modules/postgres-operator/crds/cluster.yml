@@ -4,6 +4,7 @@ metadata:
   name: ${pg_cluster_name}
   namespace: ${pg_namespace}
 spec:
+  shutdown: false
   image: ${pg_image}:${pg_image_tag}
   postgresVersion: ${pg_version}
   service:

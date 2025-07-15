@@ -16,6 +16,19 @@ variable "application" {
   )
 }
 
+variable "oci_repository_credentials" {
+  type = object({
+    username = optional(string)
+    password = optional(string)
+  })
+  default = {
+    username = null
+    password = null
+  }
+  description = "Optional: Credentials for OCI repository access. Required when using private OCI registries."
+  sensitive = true
+}
+
 variable "kv_defaults" {
   default     = {}
   description = "Optional: This is the default vault keys on initial creation of the Secret."

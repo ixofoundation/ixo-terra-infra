@@ -45,8 +45,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-subscriptions-oracle-bot#TAVILY_API_KEY>"
   - name: SLACK_BOT_OAUTH_TOKEN
     value: "<path:${vault_mount}/data/ixo-subscriptions-oracle-bot#SLACK_BOT_OAUTH_TOKEN>"
-  - name: SLACK_APP_LEVEL_TOKEN
-    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle-bot#SLACK_APP_LEVEL_TOKEN>"
+  - name: SLACK_APP_TOKEN
+    value: "<path:${vault_mount}/data/ixo-subscriptions-oracle-bot#SLACK_APP_TOKEN>"
   - name: SUBSCRIPTION_ORACLE_MCP_URL
     value: "<path:${vault_mount}/data/ixo-subscriptions-oracle-bot#SUBSCRIPTION_ORACLE_MCP_URL>"
   - name: CHROMA_URL

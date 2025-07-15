@@ -25,13 +25,20 @@ module "argocd_release" {
       github_client_id     = var.github_client_id
       github_client_secret = var.github_client_secret
       org                  = var.org
+      cert_manager_enabled = var.cert_manager_enabled
     })
   ]
   namespace  = kubernetes_namespace_v1.app-argocd.metadata[0].name
   repository = "https://argoproj.github.io/argo-helm"
 }
 
+resource "time_sleep" "wait_for_argocd" {
+  depends_on = [module.argocd_release]
+  create_duration = "10s"
+}
+
 resource "kubernetes_secret_v1" "repo_server" {
+  depends_on = [time_sleep.wait_for_argocd]
   metadata {
     annotations = {
       "kubernetes.io/service-account.name" = "argocd-repo-server"
@@ -52,7 +59,7 @@ resource "kubernetes_namespace_v1" "app-argocd" {
 }
 
 resource "kubernetes_secret_v1" "repository" {
-  depends_on = [module.argocd_release]
+  depends_on = [time_sleep.wait_for_argocd]
   for_each   = { for repo in var.git_repositories : repo.name => repo }
   metadata {
     name      = each.value["name"]
@@ -87,7 +94,7 @@ resource "kubernetes_namespace_v1" "application_helm" {
 
 # Create Argo Helm Applications
 resource "kubectl_manifest" "application_helm" {
-  depends_on = [kubernetes_namespace_v1.application_helm, module.argocd_release]
+  depends_on = [kubernetes_namespace_v1.application_helm, time_sleep.wait_for_argocd]
   for_each   = { for app in var.applications_helm : app.name => app }
   yaml_body = templatefile(each.value.isHelm == false ? "${path.module}/crds/argo-application.yml" : "${path.module}/crds/argo-application-helm.yml",
     {

@@ -1,0 +1,84 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-pathgen-oracle-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: DATABASE_USE_SSL
+    value: "true"
+  - name: PORT
+    value: "3000"
+  - name: CHROMA_URL
+    value: "http://chromadb.chromadb.svc.cluster.local:8000"
+  - name: "POSTGRES_USER"
+    value: "${pgUsername}"
+  - name: "POSTGRES_PASSWORD"
+    value: "${pgPassword}"
+  - name: "POSTGRES_DB"
+    value: "${pgUsername}"
+  - name: "POSTGRES_HOST"
+    value: "${pgCluster}-primary.${pgNamespace}.svc.cluster.local"
+  - name: "POSTGRES_PORT"
+    value: "5432"
+  - name: "ORACLE_NAME"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#ORACLE_NAME>"
+  - name: MATRIX_ORACLE_ADMIN_PASSWORD
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#MATRIX_ORACLE_ADMIN_PASSWORD>"
+  - name: MATRIX_BASE_URL
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#MATRIX_BASE_URL>"
+  - name: "MATRIX_ORACLE_ADMIN_ACCESS_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#MATRIX_ORACLE_ADMIN_ACCESS_TOKEN>"
+  - name: "MATRIX_ORACLE_ADMIN_USER_ID"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#MATRIX_ORACLE_ADMIN_USER_ID>"
+  - name: "MATRIX_RECOVERY_PHRASE"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#MATRIX_RECOVERY_PHRASE>"
+  - name: "OPENAI_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#OPENAI_API_KEY>"
+  - name: "LANGFUSE_PUBLIC_KEY"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#LANGFUSE_PUBLIC_KEY>"
+  - name: "LANGFUSE_SECRET_KEY"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#LANGFUSE_SECRET_KEY>"
+  - name: "LANGFUSE_HOST"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#LANGFUSE_HOST>"
+  - name: "TAVILY_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#TAVILY_API_KEY>"
+  - name: "SLACK_APP_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#SLACK_APP_TOKEN>"
+  - name: "DATABASE_USE_SSL"
+    value: "true"
+  - name: "PATHGEN_API_URL"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#PATHGEN_API_URL>"
+  - name: "PATHGEN_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#PATHGEN_API_KEY>"
+  - name: "SKIP_LOGGING_CHAT_HISTORY_TO_MATRIX"
+    value: "true"
+  - name: "MAP_BOX_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#MAP_BOX_TOKEN>"
+  - name: "CYPHER_ENABLED"
+    value: "true"
+service:
+  port: 3000
+resources:
+  requests:
+    memory: 200Mi
+    cpu: "50m"
+  limits:
+    memory: 500Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

@@ -1,7 +1,7 @@
 replicaCount: 2
 persistence:
   enabled: true
-  storageClass: "vultr-block-storage-hdd"
+  storageClass: ${storage_class}
   size: 200Gi
 resources:
    limits:

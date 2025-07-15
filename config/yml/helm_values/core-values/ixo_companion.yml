@@ -1,0 +1,56 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-companion-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+service:
+  port: 3000
+env:
+  - name: "PORT"
+    value: "3000"
+  - name: CHROMA_URL
+    value: "http://chromadb.chromadb.svc.cluster.local:8000"
+  - name: "ORACLE_NAME"
+    value: "<path:${vault_mount}/data/ixo-companion#ORACLE_NAME>"
+  - name: "MATRIX_BASE_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#MATRIX_BASE_URL>"
+  - name: "MATRIX_ORACLE_ADMIN_PASSWORD"
+    value: "<path:${vault_mount}/data/ixo-companion#MATRIX_ORACLE_ADMIN_PASSWORD>"
+  - name: "MATRIX_ORACLE_ADMIN_ACCESS_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-companion#MATRIX_ORACLE_ADMIN_ACCESS_TOKEN>"
+  - name: "MATRIX_ORACLE_ADMIN_USER_ID"
+    value: "<path:${vault_mount}/data/ixo-companion#MATRIX_ORACLE_ADMIN_USER_ID>"
+  - name: "MATRIX_RECOVERY_PHRASE"
+    value: "<path:${vault_mount}/data/ixo-companion#MATRIX_RECOVERY_PHRASE>"
+  - name: "OPENAI_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-companion#OPENAI_API_KEY>"
+  - name: "LANGFUSE_PUBLIC_KEY"
+    value: "<path:${vault_mount}/data/ixo-companion#LANGFUSE_PUBLIC_KEY>"
+  - name: "LANGFUSE_SECRET_KEY"
+    value: "<path:${vault_mount}/data/ixo-companion#LANGFUSE_SECRET_KEY>"
+  - name: "LANGFUSE_HOST"
+    value: "<path:${vault_mount}/data/ixo-companion#LANGFUSE_HOST>"
+  - name: "NODE_ENV"
+    value: "production"
+resources:
+  requests:
+    memory: 100Mi
+    cpu: "40m"
+  limits:
+    memory: 350Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"
