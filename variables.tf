@@ -13,15 +13,50 @@ variable "additional_manual_synthetic_monitoring_endpoints" {
   type        = map(list(string))
 }
 
+# variables.tf
+variable "storage_classes" {
+  description = "Storage class mappings for different performance tiers"
+  type = map(string)
+  
+  validation {
+    condition = alltrue([
+      contains(keys(var.storage_classes), "standard"),
+      contains(keys(var.storage_classes), "fast"),
+      contains(keys(var.storage_classes), "bulk"),
+      contains(keys(var.storage_classes), "shared")
+    ])
+    error_message = "storage_classes must contain all required keys: standard, fast, bulk, shared"
+  }
+  
+  validation {
+    condition = length(setsubtract(keys(var.storage_classes), ["standard", "fast", "bulk", "shared"])) == 0
+    error_message = "storage_classes can only contain these keys: standard, fast, bulk, shared"
+  }
+}
+
 # IXO Infra Defaults
 variable "environments" {
   description = "Environment specific configurations"
   type = map(object({
     cluster_firewall = bool
+    is_development = optional(bool) # If true, this environment is treated as a development environment.
     aws_region      = string
     aws_iam_users   = list(string)
     rpc_url         = optional(string)
     ipfs_service_mapping = optional(string)
+    aws_vpc_config = object({
+      nat_gateway_enabled = bool
+      flow_logs_enabled = bool
+      retention_days = number
+      az_count = number
+    })
+    aws_eks_config = optional(object({
+      node_instance_types = list(string)
+      desired_capacity = number
+      min_capacity = number
+      max_capacity = number
+      disk_size = number
+    }))
     hyperlane = object({
       chain_names     = list(string)
       metadata_chains = list(string)
@@ -31,8 +66,53 @@ variable "environments" {
       domain  = optional(string)
       dns_endpoint = optional(string)
       dns_prefix = optional(string)
+      storage_class = optional(string)
+      storage_size = optional(string)
     }))
   }))
+
+  validation { # Validation should be updated when new services are added that require storage
+    condition = alltrue([
+      for env_name, env_config in var.environments : alltrue([
+        for app_name, app_config in env_config.application_configs : 
+          contains([
+            "ixo-matrix-appservice-rooms",
+            "ixo-matrix-state-bot", 
+            "ixo-matrix-bids-bot",
+            "ixo-matrix-claims-bot",
+            "observable-framework-builder"
+          ], app_name) && app_config.enabled ? (
+            app_config.storage_class != null && app_config.storage_class != "" &&
+            app_config.storage_size != null && app_config.storage_size != ""
+          ) : true
+      ])
+    ])
+    error_message = <<-EOF
+  The following applications require both storage_class and storage_size when enabled:
+  - ixo-matrix-appservice-rooms
+  - ixo-matrix-state-bot
+  - ixo-matrix-bids-bot
+  - ixo-matrix-claims-bot
+  - observable-framework-builder
+  EOF
+  }
+
+  validation {
+    condition = alltrue([
+      for env_name, env_config in var.environments : alltrue([
+        for app_name, app_config in env_config.application_configs : 
+          contains([
+            "ixo-matrix-appservice-rooms",
+            "ixo-matrix-state-bot", 
+            "ixo-matrix-bids-bot",
+            "ixo-matrix-claims-bot",
+            "observable-framework-builder"
+          ], app_name) && app_config.enabled && app_config.storage_class != null && app_config.storage_class != "" ? 
+            contains(["standard", "fast", "bulk", "shared"], app_config.storage_class) : true
+      ])
+    ])
+    error_message = "storage_class values for matrix and observable applications must be one of: standard, fast, bulk, shared"
+  }
 }
 
 variable "versions" {
@@ -53,6 +133,20 @@ variable "gcp_project_ids" {
 variable "org" {
   type    = string
   default = "ixofoundation"
+  validation {
+    condition = length(var.org) > 0
+    error_message = "Organization name must be provided."
+  }
+}
+
+variable "cloud_provider" {
+  type = string
+  description = "Cloud provider to use for the kubernetes cluster and configurations involved"
+  default = "vultr"
+  validation {
+    condition = contains(["vultr", "aws"], var.cloud_provider)
+    error_message = "Invalid cloud provider. Must be one of: vultr, aws"
+  }
 }
 
 variable "oidc_argo" {
@@ -72,11 +166,12 @@ variable "oidc_vault" {
 }
 
 variable "oidc_tailscale" {
-  type = map(string)
-  default = {
+  type        = map(string)
+  default     = {
     clientId     = ""
     clientSecret = ""
   }
+  description = "OIDC configuration for Tailscale. Required when Tailscale is enabled in any environment."
 }
 
 variable "pg_matrix" {
@@ -189,14 +284,17 @@ variable "domains" {
 variable "ixo_helm_chart_repository" {
   description = "Git repository URL for IXO Helm charts"
   type        = string
+  default     = "https://github.com/ixofoundation/ixo-helm-charts"
 }
 
 variable "ixo_terra_infra_repository" {
   description = "Git repository URL for IXO Terraform infrastructure"
   type        = string
+  default     = "https://github.com/ixofoundation/ixo-terra-infra"
 }
 
 variable "vault_core_mount" {
   description = "Vault mount path for core IXO services"
   type        = string
+  default     = "ixo_core"
 }

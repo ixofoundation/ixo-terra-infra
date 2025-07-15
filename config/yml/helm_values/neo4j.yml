@@ -1,0 +1,17 @@
+neo4j:
+  name: '${org}-neo4j'
+  password: "${password}"
+  acceptLicenseAgreement: "yes"
+  resources:
+    cpu: 500m
+    memory: 2Gi
+
+volumes:
+  data:
+    mode: 'dynamic'
+    dynamic:
+      storageClassName: '${storage_class}'
+      accessModes:
+        - ReadWriteOnce
+      requests:
+        storage: ${storage_size}

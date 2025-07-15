@@ -185,7 +185,7 @@ grafana:
   persistence:
     enabled: true
     type: pvc
-    storageClassName: "vultr-block-storage-hdd"
+    storageClassName: ${storage_class}
     accessModes:
       - ReadWriteOnce
     size: 40Gi

@@ -30,10 +30,10 @@ output "private_subnet_cidrs" {
 
 output "nat_gateway_public_ip" {
   description = "Public IP of the NAT Gateway"
-  value       = local.env_config.nat_gateway_enabled ? aws_eip.nat[0].public_ip : null
+  value       = var.env_config.nat_gateway_enabled ? aws_eip.nat[0].public_ip : null
 }
 
 output "vpc_flow_logs_group_name" {
   description = "Name of the CloudWatch Log Group for VPC Flow Logs"
-  value       = local.env_config.flow_logs_enabled ? aws_cloudwatch_log_group.vpc_flow_logs[0].name : null
+  value       = var.env_config.flow_logs_enabled ? aws_cloudwatch_log_group.vpc_flow_logs[0].name : null
 } 

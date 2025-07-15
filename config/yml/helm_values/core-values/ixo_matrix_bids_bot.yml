@@ -14,6 +14,9 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}
 service:
   port: 8083
 env:

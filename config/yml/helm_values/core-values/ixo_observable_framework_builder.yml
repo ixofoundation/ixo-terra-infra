@@ -14,6 +14,9 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}
 service:
   port: 3000
 env:
@@ -27,6 +30,10 @@ env:
     value: "1"
   - name: "MIGRATE_DB_PROGRAMATICALLY"
     value: "1"
+  - name: "TRUST_PROXY"
+    value: "1"
+  - name: "CORS_ORIGIN"
+    value: "*"
   - name: "NODE_ENV"
     value: "production"
 resources:
@@ -34,7 +41,7 @@ resources:
     memory: 100Mi
     cpu: "40m"
   limits:
-    memory: 200Mi
+    memory: 1024Mi
 autoscaling:
   enabled: true
   minReplicas: 1

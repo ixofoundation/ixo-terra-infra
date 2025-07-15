@@ -44,8 +44,11 @@ locals {
     "metrics_server",
     "hyperlane_validator",
     "aws_vpc",
-    "chromadb"
+    "chromadb",
+    "matrix_admin"
   ]
+
+  vault_mount_path = var.vault_core_mount
   
   # IXO DNS Entries - extract from application configs
   dns_for_environment = {
@@ -62,6 +65,18 @@ locals {
   get_domain = {
     for env, env_config in var.environments : env => {
       for service, config in env_config.application_configs : service => config.enabled && config.domain != null ? var.domains[config.domain] : null
+    }
+  }
+
+  storage_class_for_environment = {
+    for env, env_config in var.environments : env => {
+      for service, config in env_config.application_configs : service => config.enabled && config.storage_class != null ? config.storage_class : null
+    }
+  }
+
+  storage_size_for_environment = {
+    for env, env_config in var.environments : env => {
+      for service, config in env_config.application_configs : service => config.enabled && config.storage_size != null ? config.storage_size : null
     }
   }
 

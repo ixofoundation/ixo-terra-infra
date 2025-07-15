@@ -57,10 +57,49 @@ resource "aws_iam_group_policy_attachment" "attach_password_reset_policy" {
   policy_arn = aws_iam_policy.developer_password_reset.arn
 }
 
+resource "aws_iam_policy" "s3_youtrack_access" {
+  name        = "S3YoutrackArchiveAccess"
+  description = "Allows read/write access to jetbrains-youtrack-archive bucket and S3 list access"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:ListAllMyBuckets"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:ListBucket"
+        ],
+        Resource = "arn:aws:s3:::jetbrains-youtrack-archive"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ],
+        Resource = "arn:aws:s3:::jetbrains-youtrack-archive/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_group_policy_attachment" "attach_s3_youtrack_policy" {
+  group      = aws_iam_group.developer.name
+  policy_arn = aws_iam_policy.s3_youtrack_access.arn
+}
+
 resource "aws_iam_group_membership" "developer_group_members" {
   name  = "developer-group-membership"
   group = aws_iam_group.developer.name
-  users = var.users
+  users = [for user in aws_iam_user.user : user.name]
 }
 
 resource "aws_iam_user" "user" {

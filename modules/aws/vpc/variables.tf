@@ -4,12 +4,23 @@ variable "project_name" {
 }
 
 variable "environment" {
-  description = "Environment name (e.g., devnet, testnet, mainnet)"
+  description = "Environment name"
   type        = string
-  validation {
-    condition     = contains(["devnet", "testnet", "mainnet"], var.environment)
-    error_message = "Environment must be one of: devnet, testnet, mainnet"
-  }
+}
+
+variable "env_config" {
+  description = "Environment configuration"
+  type = object({
+    nat_gateway_enabled = bool
+    flow_logs_enabled = bool
+    retention_days = number
+    az_count = number
+  })
+}
+
+variable "is_development" {
+  type = bool
+  default = null
 }
 
 variable "vpc_cidr" {

@@ -5,3 +5,10 @@
 /.terraform.lock.hcl
 /terraform.tfstate.d/
 credentials.json
+
+# Cost estimation outputs
+cost-estimates/
+cost-reports/
+*-costs.json
+*-costs.txt
+infracost-*.json

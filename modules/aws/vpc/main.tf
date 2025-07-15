@@ -7,31 +7,6 @@ terraform {
   }
 }
 
-locals {
-  env_config = {
-    devnet = {
-      nat_gateway_enabled = false
-      flow_logs_enabled   = false
-      retention_days      = 7
-      az_count           = 2
-    }
-    testnet = {
-      nat_gateway_enabled = true
-      flow_logs_enabled   = true
-      retention_days      = 14
-      az_count           = 2
-    }
-    mainnet = {
-      nat_gateway_enabled = true
-      flow_logs_enabled   = true
-      retention_days      = 30
-      az_count           = 3
-    }
-  }[var.environment]
-  
-  azs = slice(var.availability_zones, 0, local.env_config.az_count)
-}
-
 # VPC
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
@@ -88,9 +63,9 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# NAT Instance (for devnet)
+# NAT Instance (for dev)
 resource "aws_instance" "nat" {
-  count = var.environment == "devnet" ? 1 : 0
+  count = var.is_development == true || var.environment == "devnet" ? 1 : 0
   ami           = data.aws_ami.nat_instance.id
   instance_type = "t3.nano"
   subnet_id     = aws_subnet.public[0].id
@@ -108,7 +83,7 @@ resource "aws_instance" "nat" {
 
 # Security Group for NAT Instance
 resource "aws_security_group" "nat_instance" {
-  count = var.environment == "devnet" ? 1 : 0
+  count = var.is_development == true || var.environment == "devnet" ? 1 : 0
   name  = "${var.project_name}-${var.environment}-nat-instance-sg"
   vpc_id = aws_vpc.main.id
 
@@ -135,7 +110,7 @@ resource "aws_security_group" "nat_instance" {
 
 # Elastic IP for NAT Gateway
 resource "aws_eip" "nat" {
-  count = local.env_config.nat_gateway_enabled ? 1 : 0
+  count = var.env_config.nat_gateway_enabled ? 1 : 0
   domain = "vpc"
 
   tags = {
@@ -147,7 +122,7 @@ resource "aws_eip" "nat" {
 
 # NAT Gateway
 resource "aws_nat_gateway" "main" {
-  count         = local.env_config.nat_gateway_enabled ? 1 : 0
+  count         = var.env_config.nat_gateway_enabled ? 1 : 0
   allocation_id = aws_eip.nat[0].id
   subnet_id     = aws_subnet.public[0].id
 
@@ -179,7 +154,7 @@ resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
   dynamic "route" {
-    for_each = local.env_config.nat_gateway_enabled ? [1] : []
+    for_each = var.env_config.nat_gateway_enabled ? [1] : []
     content {
       cidr_block     = "0.0.0.0/0"
       nat_gateway_id = aws_nat_gateway.main[0].id
@@ -187,7 +162,7 @@ resource "aws_route_table" "private" {
   }
 
   dynamic "route" {
-    for_each = var.environment == "devnet" ? [1] : []
+    for_each = var.is_development == true || var.environment == "devnet" ? [1] : []
     content {
       cidr_block           = "0.0.0.0/0"
       network_interface_id = aws_instance.nat[0].primary_network_interface_id
@@ -217,7 +192,7 @@ resource "aws_route_table_association" "private" {
 
 # VPC Flow Logs
 resource "aws_flow_log" "main" {
-  count                = local.env_config.flow_logs_enabled ? 1 : 0
+  count                = var.env_config.flow_logs_enabled ? 1 : 0
   iam_role_arn         = aws_iam_role.vpc_flow_logs[0].arn
   log_destination      = aws_cloudwatch_log_group.vpc_flow_logs[0].arn
   traffic_type         = "ALL"
@@ -233,9 +208,9 @@ resource "aws_flow_log" "main" {
 
 # CloudWatch Log Group for VPC Flow Logs
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  count             = local.env_config.flow_logs_enabled ? 1 : 0
+  count             = var.env_config.flow_logs_enabled ? 1 : 0
   name              = "/vpc/${var.project_name}-${var.environment}/flow-logs"
-  retention_in_days = local.env_config.retention_days
+  retention_in_days = var.env_config.retention_days
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-flow-logs"
@@ -246,7 +221,7 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
 
 # IAM Role for VPC Flow Logs
 resource "aws_iam_role" "vpc_flow_logs" {
-  count = local.env_config.flow_logs_enabled ? 1 : 0
+  count = var.env_config.flow_logs_enabled ? 1 : 0
   name  = "${var.project_name}-${var.environment}-vpc-flow-logs-role"
 
   assume_role_policy = jsonencode({
@@ -271,7 +246,7 @@ resource "aws_iam_role" "vpc_flow_logs" {
 
 # IAM Policy for VPC Flow Logs
 resource "aws_iam_role_policy" "vpc_flow_logs" {
-  count = local.env_config.flow_logs_enabled ? 1 : 0
+  count = var.env_config.flow_logs_enabled ? 1 : 0
   name  = "${var.project_name}-${var.environment}-vpc-flow-logs-policy"
   role  = aws_iam_role.vpc_flow_logs[0].id
 

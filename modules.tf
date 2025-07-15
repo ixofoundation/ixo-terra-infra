@@ -1,11 +1,29 @@
+# AWS VPC module (only created when using AWS)
+module "aws_vpc" {
+  count  = var.cloud_provider == "aws" ? 1 : 0
+  source = "./modules/aws/vpc"
+  
+  env_config = var.environments[terraform.workspace].aws_vpc_config
+  project_name    = var.org
+  environment     = terraform.workspace
+  is_development  = coalesce(var.environments[terraform.workspace].is_development, false)
+  vpc_cidr        = "10.0.0.0/16"
+  availability_zones = [
+    "${var.environments[terraform.workspace].aws_region}a",
+    "${var.environments[terraform.workspace].aws_region}b",
+    "${var.environments[terraform.workspace].aws_region}c"
+  ]
+}
+
 module "kubernetes_cluster" {
   source         = "./modules/kubernetes_cluster"
-  cloud_provider = "vultr"
-  
+  cloud_provider = var.cloud_provider
+  depends_on     = [module.aws_vpc]
+  # TODO instance types by cloud provider can be moved into variables.tf per environment
   vultr = {
     cluster_firewall            = lookup(var.environments[terraform.workspace], "cluster_firewall", false)
     cluster_label               = "ixo-cluster-${terraform.workspace}"
-    initial_node_pool_label     = "ixo-${terraform.workspace}"
+    initial_node_pool_label     = terraform.workspace == "mainnet" ? "ixo-main" : "ixo-${terraform.workspace}"
     initial_node_pool_plan      = "vhf-3c-8gb"
     k8_version                  = var.versions["kubernetes_cluster"]
     cluster_region              = local.region_ids["Amsterdam"]
@@ -14,6 +32,26 @@ module "kubernetes_cluster" {
     initial_node_pool_scaler    = true
     initial_node_pool_min_nodes = 2
     initial_node_pool_max_nodes = 4
+  }
+  
+  aws = {
+    cluster_name            = "ixo-cluster-${terraform.workspace}"
+    cluster_version         = var.versions["kubernetes_cluster"]
+    region                  = var.environments[terraform.workspace].aws_region
+    environment             = terraform.workspace
+    project_name            = var.org
+    endpoint_public_access  = coalesce(var.environments[terraform.workspace].is_development, false) ? true : false
+    public_access_cidrs     = coalesce(var.environments[terraform.workspace].is_development, false) ? ["0.0.0.0/0"] : ["10.0.0.0/16"]
+    cluster_log_types       = var.environments[terraform.workspace].is_development != true ? ["api", "audit"] : ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+    node_instance_types     = ["t3.medium"]
+    node_ami_type           = "AL2023_x86_64_STANDARD"
+    node_capacity_type      = "ON_DEMAND"
+    node_disk_size          = var.environments[terraform.workspace].is_development != true ? 800 : 600
+    node_desired_capacity   = var.environments[terraform.workspace].is_development != true ? 3 : 3
+    node_max_capacity       = var.environments[terraform.workspace].is_development != true ? 10 : 4
+    node_min_capacity       = var.environments[terraform.workspace].is_development != true ? 3 : 1
+    node_key_name           = null
+    node_security_group_ids = null
   }
 }
 
@@ -27,6 +65,7 @@ module "argocd" {
   github_client_secret = var.oidc_argo.clientSecret
   argo_version         = var.versions["argocd"]
   org                  = var.org
+  cert_manager_enabled = var.environments[terraform.workspace].application_configs["cert_manager"].enabled
   git_repositories = [
     {
       name       = "ixofoundation"
@@ -50,10 +89,12 @@ module "chromadb" {
       revision          = var.versions["chromadb"]
     }
     repository      = "https://amikos-tech.github.io/chromadb-chart/"
-    values_override = templatefile("${local.helm_values_config_path}/chromadb-values.yml", {})
+    values_override = templatefile("${local.helm_values_config_path}/chromadb-values.yml", {
+      storage_class = var.storage_classes["bulk"]
+    })
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "cert_manager" {
@@ -73,7 +114,7 @@ module "cert_manager" {
     values_override = templatefile("${local.helm_values_config_path}/cert-manager-values.yml", {})
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "ingress_nginx" {
@@ -97,7 +138,7 @@ module "ingress_nginx" {
     )
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "postgres_operator_crunchydata" {
@@ -112,7 +153,7 @@ module "postgres_operator_crunchydata" {
     values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "prometheus_stack" {
@@ -137,10 +178,11 @@ module "prometheus_stack" {
       org                 = var.org
       environment         = terraform.workspace
       additional_scrape_metrics = var.additional_prometheus_scrape_metrics[terraform.workspace]
+      storage_class = var.storage_classes["bulk"]
     })
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 # module "external_dns" {
@@ -161,7 +203,7 @@ module "prometheus_stack" {
 #     })
 #   }
 #   argo_namespace   = module.argocd.argo_namespace
-#   vault_mount_path = vault_mount.ixo.path
+#   vault_mount_path = local.vault_mount_path
 # }
 
 module "dex" {
@@ -191,7 +233,7 @@ module "dex" {
     )
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "vault" {
@@ -220,7 +262,7 @@ module "vault" {
     )
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "loki" {
@@ -239,13 +281,14 @@ module "loki" {
     repository      = "https://grafana.github.io/helm-charts"
     values_override = templatefile("${local.helm_values_config_path}/loki-values.yml",
       {
-        gcs_bucket = google_storage_bucket.loki_logs_backups.name
+        gcs_bucket = google_storage_bucket.loki_logs_backups[0].name
         service_account = indent(8, module.gcp_kms_loki.gcp_key_secret_data["key.json"])
+        storage_class = var.storage_classes["bulk"]
       }
     )
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "prometheus_blackbox_exporter" {
@@ -264,7 +307,7 @@ module "prometheus_blackbox_exporter" {
     values_override = templatefile("${local.helm_values_config_path}/prometheus-blackbox.yml", {})
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "tailscale" {
@@ -289,7 +332,7 @@ module "tailscale" {
     )
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "matrix" {
@@ -313,14 +356,16 @@ module "matrix" {
         host            = local.dns_for_environment[terraform.workspace]["matrix"]
         kv_mount        = var.vault_core_mount
         app_name        = "matrix"
-        gcs_bucket_url  = google_storage_bucket.matrix_backups.url
+        gcs_bucket_url  = google_storage_bucket.matrix_backups[0].url
+        storage_class   = var.storage_classes["bulk"]
       }
     )
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
+# TODO Remove NFS module, use storage class storage.
 module "nfs_provisioner" {
   depends_on = [module.argocd]
   count      = var.environments[terraform.workspace].application_configs["nfs_provisioner"].enabled ? 1 : 0
@@ -335,10 +380,12 @@ module "nfs_provisioner" {
       ignoreDifferences = local.nfs_provisioner_ignore_differences
     }
     repository      = "https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner"
-    values_override = templatefile("${local.helm_values_config_path}/nfs-values.yml", {})
+    values_override = templatefile("${local.helm_values_config_path}/nfs-values.yml", {
+      storage_class = var.storage_classes["bulk"]
+    })
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "metrics_server" {
@@ -356,7 +403,7 @@ module "metrics_server" {
     }
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "uptime_kuma" {
@@ -374,15 +421,17 @@ module "uptime_kuma" {
     }
     values_override = templatefile("${local.helm_values_config_path}/uptime-kuma-values.yml", {
         host = local.dns_for_environment[terraform.workspace]["uptime_kuma"]
+        storage_class = var.storage_classes["bulk"]
       })
     argo_namespace   = module.argocd.argo_namespace
-    vault_mount_path = vault_mount.ixo.path
+    vault_mount_path = local.vault_mount_path
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
 module "matrix_admin" {
+  count      = var.environments[terraform.workspace].application_configs["matrix_admin"].enabled ? 1 : 0
   depends_on = [module.argocd, module.matrix]
   source     = "./modules/argocd_application"
   application = {
@@ -398,15 +447,18 @@ module "matrix_admin" {
     )
   }
   argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
 }
 
+# Creates a cert-manager issuer for the cluster.
 module "cert-issuer" {
-  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].application_configs["cert_manager"].enabled ? 1 : 0
+  depends_on = [module.argocd, module.cert_manager]
   source     = "./modules/cert-manager"
 }
 
 module "postgres-operator" { # Sets up Cluster Instances
+  count      = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enabled ? 1 : 0
   depends_on = [module.argocd, module.postgres_operator_crunchydata]
   source     = "./modules/postgres-operator"
   clusters = [
@@ -441,7 +493,7 @@ module "postgres-operator" { # Sets up Cluster Instances
       pgbackrest_image_tag = var.pg_ixo.pgbackrest_image_tag
       pgbackrest_repos = templatefile("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml",
         {
-          gcs_bucket = google_storage_bucket.postgres_backups.name
+          gcs_bucket = google_storage_bucket.postgres_backups[0].name
         }
       )
       pgmonitoring_image     = var.pg_ixo.pgmonitoring_image
@@ -465,6 +517,7 @@ module "hyperlane_validator" {
 }
 
 module "ixo_loki_logs" {
+  count      = var.environments[terraform.workspace].application_configs["loki"].enabled ? 1 : 0
   depends_on = [module.argocd]
   source     = "./modules/loki_logs"
 
@@ -505,7 +558,7 @@ module "gcp_kms_core" {
 }
 
 module "vault_init" {
-  depends_on = [module.argocd]
+  depends_on = [module.argocd, module.vault]
   source     = "./modules/vault"
 
   init_params = {
@@ -531,7 +584,52 @@ module "matrix_init" {
 
   kube_config_path = module.kubernetes_cluster.kubeconfig_path
   namespace        = kubernetes_namespace_v1.matrix.metadata[0].name
-  vault_mount_path = vault_mount.ixo.path
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ghost" {
+  source = "./modules/argocd_application"
+  count      = var.environments[terraform.workspace].application_configs["ghost"].enabled ? 1 : 0
+  depends_on = [module.argocd, kubernetes_secret_v1.ghost_mysql_secret]
+  application = {
+    name       = "ghost"
+    namespace  = kubernetes_namespace_v1.ghost.metadata[0].name
+    repository = "registry-1.docker.io/bitnamicharts"
+    helm = {
+      isOci    = true
+      chart    = "ghost"
+      revision = var.versions["ghost"]
+    }
+    values_override = templatefile("${local.helm_values_config_path}/ghost-values.yml", {
+      host = local.dns_for_environment[terraform.workspace]["ghost"]
+    })
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  create_kv        = false
+}
+
+module "neo4j" {
+  count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "neo4j"
+    namespace  = kubernetes_namespace_v1.neo4j.metadata[0].name
+    repository = "https://neo4j.github.io/helm-charts"
+    helm = {
+      isOci    = false
+      chart    = "neo4j"
+      revision = var.versions["neo4j"]
+    }
+    values_override = templatefile("${local.helm_values_config_path}/neo4j.yml", {
+      storage_class = var.storage_classes["bulk"]
+      storage_size = "100Gi"
+      org = var.org
+      password = random_password.neo4j_password.result
+    })
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
 }
 
 module "external_dns_cloudflare" {

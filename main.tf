@@ -55,7 +55,8 @@ provider "vault" {
   auth_login_userpass {
     username = "terraform"
   }
-  address = "https://${local.dns_for_environment[terraform.workspace]["vault"]}/"
+  address         = "https://${local.dns_for_environment[terraform.workspace]["vault"]}/"
+  skip_tls_verify = true
 }
 
 provider "google" {
@@ -87,7 +88,7 @@ resource "kubernetes_namespace_v1" "ixo-postgres" {
 # TODO Migrate Vault to OIDC issuer for root token to have Terraform create Mounts securely when moving to CI/CD.
 resource "vault_mount" "ixo" {
   depends_on = [module.gcp_kms_vault, module.vault_init, module.argocd]
-  path       = var.vault_core_mount
+  path       = local.vault_mount_path
   type       = "kv-v2"
   options = {
     version = "2"
@@ -150,6 +151,7 @@ resource "aws_iam_openid_connect_provider" "github_oidc" {
 }
 
 resource "google_storage_bucket" "postgres_backups" {
+  count = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enabled ? 1 : 0
   location = "US"
   name     = "${var.org}-${terraform.workspace}-core-postgres"
   versioning {
@@ -177,6 +179,7 @@ resource "google_storage_bucket" "postgres_backups" {
 }
 
 resource "google_storage_bucket" "matrix_backups" {
+  count = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
   location = "US"
   name     = "${var.org}-${terraform.workspace}-matrix"
   versioning {
@@ -204,6 +207,7 @@ resource "google_storage_bucket" "matrix_backups" {
 }
 
 resource "google_storage_bucket" "loki_logs_backups" {
+  count = var.environments[terraform.workspace].application_configs["loki"].enabled ? 1 : 0
   location = "US"
   name     = "${var.org}-${terraform.workspace}-loki-logs"
   versioning {
@@ -227,5 +231,31 @@ resource "google_storage_bucket" "loki_logs_backups" {
     condition {
       age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
     }
+  }
+}
+
+resource "random_password" "ghost_db_root_password" {
+  length  = 16
+  special = false
+}
+
+resource "random_password" "ghost_db_user_password" {
+  length  = 16
+  special = false
+}
+
+resource "random_password" "neo4j_password" {
+  length  = 16
+  special = false
+}
+
+resource "kubernetes_secret_v1" "ghost_mysql_secret" {
+  metadata {
+    name = "ghost-mysql-secret"
+    namespace = kubernetes_namespace_v1.ghost.metadata[0].name
+  }
+  data = {
+    mysql-root-password = random_password.ghost_db_root_password.result
+    mysql-password = random_password.ghost_db_user_password.result
   }
 }

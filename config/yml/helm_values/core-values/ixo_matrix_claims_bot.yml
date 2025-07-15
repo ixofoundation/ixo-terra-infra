@@ -14,6 +14,9 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}
 service:
   port: 8083
 env:
@@ -24,7 +27,7 @@ resources:
     memory: 100Mi
     cpu: "40m"
   limits:
-    memory: 256Mi
+    memory: 300Mi
 autoscaling:
   enabled: true
   minReplicas: 1

@@ -10,6 +10,15 @@ domains = {
 
 # Organization name - used for resource naming and identification
 org = "ixofoundation"
+cloud_provider = "vultr"
+
+# Storage classes
+storage_classes = {
+  "standard" = "vultr-block-storage" # Standard storage (SSD)
+  "fast" = "vultr-block-storage" # Fast storage (SSD)
+  "bulk" = "vultr-block-storage-hdd" # Slower, Cheaper, Bulk storage (HDD)
+  "shared" = null # Currently not used
+}
 
 # Repository configuration
 ixo_helm_chart_repository = "https://github.com/ixofoundation/ixo-helm-charts"
@@ -37,6 +46,8 @@ versions = {
   hummingbot                   = "0.2.0"
   uptime-kuma                  = "2.21.2" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
   chromadb                     = "0.1.23" # https://github.com/amikos-tech/chromadb-chart
+  ghost                        = "23.0.19" # https://artifacthub.io/packages/helm/bitnami/ghost
+  neo4j                        = "2025.6.0" # https://artifacthub.io/packages/helm/neo4j-helm-charts/neo4j
 }
 
 # Environment base configurations (static values only)
@@ -51,10 +62,16 @@ environments = {
       chain_names     = [""]
       metadata_chains = [""]
     }
+    aws_vpc_config = {
+      nat_gateway_enabled = false
+      flow_logs_enabled = false
+      retention_days = 7
+      az_count = 2
+    }
     application_configs = {
       # Core Infrastructure Services
       cert_manager = {
-        enabled = true
+        enabled = true # For initial setups, cert-manager must be disabled.
         domain = "ixoearth"
       }
       ingress_nginx = {
@@ -101,6 +118,11 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "devmx.ixo.earth"
       }
+      matrix_admin = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "admin.devmx.ixo.earth"
+      }
       nfs_provisioner = {
         enabled = true
         domain = "ixoearth"
@@ -130,7 +152,14 @@ environments = {
         enabled = true
         domain = "ixoearth"
       }
-      
+      ghost = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      neo4j = {
+        enabled = true
+        domain = "ixoearth"
+      }
       # IXO Services
       ixo_cellnode = {
         enabled = true
@@ -166,11 +195,15 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "state.bot.devmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.devmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       claims_credentials_ecs = {
         enabled = true
@@ -290,11 +323,15 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "bid.bot.devmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_matrix_claims_bot = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "claim.bot.devmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_subscriptions_oracle = {
         enabled = true
@@ -306,6 +343,11 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "subscriptions.bot.devnet.ixo.earth"
       }
+      ixo_pathgen_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "pathgen.oracle"
+      }
       ixo_jokes_oracle = {
         enabled = true
         domain = "ixoearth"
@@ -314,6 +356,18 @@ environments = {
       ixo_observable_framework_builder = {
         enabled = false
         domain = "ixoearth"
+        storage_class = "fast"
+        storage_size = "40Gi"
+      }
+      ixo_memory_engine = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "memory-engine"
+      }
+      ixo_companion = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "companion"
       }
     }
   }
@@ -326,6 +380,12 @@ environments = {
     hyperlane = {
       chain_names     = ["relayer", "pandora8", "basesepolia"]
       metadata_chains = ["relayer", "pandora8", "basesepolia"]
+    }
+    aws_vpc_config = {
+      nat_gateway_enabled = true
+      flow_logs_enabled = true
+      retention_days = 14
+      az_count = 2
     }
     application_configs = {
       # Core Infrastructure Services
@@ -377,6 +437,11 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "testmx.ixo.earth"
       }
+      matrix_admin = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "admin.testmx.ixo.earth"
+      }
       nfs_provisioner = {
         enabled = true
         domain = "ixoearth"
@@ -405,7 +470,14 @@ environments = {
         enabled = false
         domain = "ixoearth"
       }
-      
+      ghost = {
+        enabled = false
+        domain = "ixoearth"
+      }
+      neo4j = {
+        enabled = false
+        domain = "ixoearth"
+      }
       # IXO Services
       ixo_cellnode = {
         enabled = true
@@ -441,11 +513,15 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "state.bot.testmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.testmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       claims_credentials_ecs = {
         enabled = true
@@ -566,11 +642,15 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "bid.bot.testmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_matrix_claims_bot = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "claim.bot.testmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_subscriptions_oracle = {
         enabled = false
@@ -582,6 +662,11 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "subscriptions.bot.testnet.ixo.earth"
       }
+      ixo_pathgen_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "pathgen.oracle"
+      }
       ixo_jokes_oracle = {
         enabled = false
         domain = "ixoearth"
@@ -590,18 +675,43 @@ environments = {
       ixo_observable_framework_builder = {
         enabled = false
         domain = "ixoearth"
+        storage_class = "fast"
+        storage_size = "40Gi"
+      }
+      ixo_memory_engine = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "memory-engine"
+      }
+      ixo_companion = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "companion"
       }
     }
   }
   mainnet = {
     cluster_firewall = true
     aws_region      = "eu-north-1"
-    aws_iam_users   = ["peterbulovec"]
+    aws_iam_users   = ["peterbulovec", "alwynvanwyk"]
     rpc_url         = "https://impacthub.ixo.world/rpc/"
     ipfs_service_mapping = "https://ipfs.gateway.ixo.world"
     hyperlane = {
       chain_names     = ["ixo5", "base", "relayer"]
       metadata_chains = ["ixo5", "base", "relayer"]
+    }
+    aws_vpc_config = {
+      nat_gateway_enabled = true
+      flow_logs_enabled = true
+      retention_days = 30
+      az_count = 3
+    }
+    aws_eks_config = {
+      node_instance_types = ["t3.medium"]
+      desired_capacity = 2
+      min_capacity = 1
+      max_capacity = 4
+      disk_size = 50
     }
     application_configs = {
       # Core Infrastructure Services
@@ -629,12 +739,12 @@ environments = {
       dex = {
         enabled = true
         domain = "ixoearth"
-        dns_prefix = "dex"
+        dns_endpoint = "dex.mainnet.ixo.earth"
       }
       vault = {
         enabled = true
         domain = "ixoearth"
-        dns_prefix = "vault"
+        dns_endpoint = "vault.mainnet.ixo.earth"
       }
       loki = {
         enabled = true
@@ -652,6 +762,11 @@ environments = {
         enabled = true
         domain = "ixoworld"
         dns_endpoint = "mx.ixo.earth"
+      }
+      matrix_admin = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "admin.mx.ixo.earth"
       }
       nfs_provisioner = {
         enabled = true
@@ -683,7 +798,15 @@ environments = {
         enabled = false
         domain = "ixoworld"
       }
-      
+      ghost = {
+        enabled = true
+        domain = "ixoworld"
+        dns_prefix = "ghost"
+      }
+      neo4j = {
+        enabled = false
+        domain = "ixoearth"
+      }
       # IXO Services
       ixo_cellnode = {
         enabled = true
@@ -719,11 +842,15 @@ environments = {
         enabled = true
         domain = "ixoworld"
         dns_endpoint = "state.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
         domain = "ixoworld"
         dns_endpoint = "rooms.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       claims_credentials_ecs = {
         enabled = true
@@ -785,7 +912,7 @@ environments = {
         domain = "ixoearth"
       }
       ixo_whizz = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_endpoint = "whizz.assistant.ixo.earth"
       }
@@ -855,11 +982,15 @@ environments = {
         enabled = true
         domain = "ixoworld"
         dns_endpoint = "bid.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_matrix_claims_bot = {
         enabled = true
         domain = "ixoworld"
         dns_endpoint = "claim.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_subscriptions_oracle = {
         enabled = false
@@ -871,6 +1002,11 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "subscriptions.bot.ixo.earth"
       }
+      ixo_pathgen_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "pathgen.oracle"
+      }
       ixo_jokes_oracle = {
         enabled = false
         domain = "ixoearth"
@@ -880,6 +1016,18 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_prefix = "builder.observable"
+        storage_class = "fast"
+        storage_size = "40Gi"
+      }
+      ixo_memory_engine = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "memory-engine"
+      }
+      ixo_companion = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "companion"
       }
     }
   }
@@ -891,7 +1039,8 @@ additional_manual_synthetic_monitoring_endpoints = {
     "https://signx.devnet.ixo.earth",
     "https://devnet.ixo.earth/rpc/",
     "https://dev.api.emerging.eco/emerging-platform/v1/hello",
-    "https://devmx.ixo.earth/health"
+    "https://devmx.ixo.earth/health",
+    "https://archive.devnet.ixo.earth/rpc/"
   ]
   testnet = [
     "https://payments.testnet.emerging.eco",
@@ -899,7 +1048,8 @@ additional_manual_synthetic_monitoring_endpoints = {
     "https://signx.testnet.ixo.earth",
     "https://testnet.ixo.earth/rpc/",
     "https://stage.api.emerging.eco/emerging-platform/v1/hello",
-    "https://testmx.ixo.earth/health"
+    "https://testmx.ixo.earth/health",
+    "https://archive.testnet.ixo.earth/rpc/"
   ]
   mainnet = [
     "https://coincache.ixo.earth",
@@ -911,7 +1061,8 @@ additional_manual_synthetic_monitoring_endpoints = {
     "https://impacthub.ixo.world/rpc/",
     "https://api.emerging.eco/emerging-platform/v1/hello",
     "https://mx.ixo.earth/health",
-    "https://ipfs.gateway.ixo.world/health"
+    "https://ipfs.gateway.ixo.world/health",
+    "https://archive.impacthub.ixo.earth/rpc/"
   ]
 }
 
@@ -952,7 +1103,7 @@ pg_ixo = {
     },
     { // 2
       username  = "blocksync-core"
-      databases = ["blocksync-core"]
+      databases = ["blocksync-core", "blocksync-core_alt"]
     },
     { // 3
       username  = "blocksync"
@@ -1005,6 +1156,14 @@ pg_ixo = {
     { // 15
       username = "observable-framework-builder"
       databases = ["observable-framework-builder"]
+    },
+    { // 16
+      username = "pathgen-oracle"
+      databases = ["pathgen-oracle"]
+    },
+    { // 17
+      username = "jokes-oracle"
+      databases = ["jokes-oracle"]
     }
   ]
   pg_version             = 15

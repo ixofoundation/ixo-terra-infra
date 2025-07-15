@@ -30,7 +30,7 @@ env:
   - name: "IPFS_SERVICE_MAPPING"
     value: "${ipfs_service_mapping}"
   - name: "DATABASE_URL_CORE"
-    value: "postgresql://${pgUsername_core}:${pgPassword_core}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername_core}"
+    value: "<path:${vault_mount}/data/ixo-blocksync#DATABASE_URL_CORE>"
   - name: "DATABASE_URL"
     value: "<path:${vault_mount}/data/ixo-blocksync#DATABASE_URL>"
   - name: "ENTITY_MODULE_CONTRACT_ADDRESS"

@@ -46,11 +46,11 @@ compactor:
 singleBinary:
   replicas: 1
   persistence:
-    storageClass: vultr-block-storage-hdd
+    storageClass: ${storage_class}
     size: 40Gi
 read:
   persistence:
-    storageClass: vultr-block-storage-hdd
+    storageClass: ${storage_class}
     size: 40Gi
   replicas: 0 #TODO * DISTRIBUTED deployment setup.
   resources:
@@ -61,7 +61,7 @@ read:
       memory: 256Mi
 backend:
   persistence:
-    storageClass: vultr-block-storage-hdd
+    storageClass: ${storage_class}
     size: 40Gi
   replicas: 0
   resources:
@@ -72,7 +72,7 @@ backend:
       memory: 512Mi
 write:
   persistence:
-    storageClass: vultr-block-storage-hdd
+    storageClass: ${storage_class}
     size: 40Gi
   replicas: 0
   resources:

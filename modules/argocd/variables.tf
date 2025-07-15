@@ -64,3 +64,7 @@ variable "github_client_secret" {
 variable "org" {
   type = string
 }
+
+variable "cert_manager_enabled" {
+  type = bool
+}
