@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "matrix-livekit.fullname" . }}
+  labels:
+    {{- include "matrix-livekit.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "matrix-livekit.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if .Values.secrets.create }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "matrix-livekit.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "matrix-livekit.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          env:
+            - name: LIVEKIT_URL
+              value: {{ .Values.livekit.url | quote }}
+            - name: LIVEKIT_JWT_PORT
+              value: {{ .Values.livekit.port | quote }}
+            {{- if .Values.livekit.insecureSkipVerifyTLS }}
+            - name: LIVEKIT_INSECURE_SKIP_VERIFY_TLS
+              value: "YES_I_KNOW_WHAT_I_AM_DOING"
+            {{- end }}
+            {{- if .Values.livekit.key }}
+            - name: LIVEKIT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "matrix-livekit.secretName" . }}
+                  key: livekit-key
+            {{- end }}
+            {{- if .Values.livekit.secret }}
+            - name: LIVEKIT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "matrix-livekit.secretName" . }}
+                  key: livekit-secret
+            {{- end }}
+            {{- if .Values.livekit.keyFromFile }}
+            - name: LIVEKIT_KEY_FROM_FILE
+              value: {{ .Values.livekit.keyFromFile | quote }}
+            {{- end }}
+            {{- if .Values.livekit.secretFromFile }}
+            - name: LIVEKIT_SECRET_FROM_FILE
+              value: {{ .Values.livekit.secretFromFile | quote }}
+            {{- end }}
+            {{- if .Values.livekit.keyFile }}
+            - name: LIVEKIT_KEY_FILE
+              value: {{ .Values.livekit.keyFile | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }} 

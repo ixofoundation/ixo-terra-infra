@@ -1,0 +1,57 @@
+1. Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "matrix-livekit.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "matrix-livekit.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "matrix-livekit.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+{{- else if contains "ClusterIP" .Values.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "{{ include "matrix-livekit.selectorLabels" . }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+2. Check the health of the service:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  curl http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}/healthz
+{{- end }}
+{{- else }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "matrix-livekit.fullname" . }} 8080:{{ .Values.service.port }}
+  curl http://localhost:8080/healthz
+{{- end }}
+
+3. Configuration:
+   - LiveKit URL: {{ .Values.livekit.url | default "NOT SET (REQUIRED)" }}
+   - Service Port: {{ .Values.livekit.port }}
+   - Secret Name: {{ include "matrix-livekit.secretName" . }}
+   
+   {{- if not .Values.livekit.url }}
+   WARNING: LIVEKIT_URL is not configured! The service will not work properly.
+   {{- end }}
+   
+   {{- if not (or .Values.livekit.key .Values.livekit.keyFromFile .Values.livekit.keyFile .Values.secrets.create) }}
+   WARNING: LiveKit API key is not configured! The service will not work properly.
+   {{- end }}
+
+4. API Endpoints:
+   - POST /sfu/get - Exchange Matrix OpenID token for LiveKit JWT
+   - GET /healthz - Health check endpoint
+
+5. Matrix Well-Known Configuration:
+   Add this to your Matrix homeserver's /.well-known/matrix/client response:
+   
+   "org.matrix.msc4143.rtc_foci": [{
+     "type": "livekit",
+     "livekit_service_url": "https://{{ if .Values.ingress.enabled }}{{ (index .Values.ingress.hosts 0).host }}{{ else }}your-domain.com{{ end }}"
+   }] 
