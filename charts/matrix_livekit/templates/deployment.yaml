@@ -59,7 +59,7 @@ spec:
             {{- end }}
             {{- if .Values.livekit.key }}
             - name: LIVEKIT_KEY
-              valueFrom:
+              value::
                 secretKeyRef:
                   name: {{ include "matrix-livekit.secretName" . }}
                   key: livekit-key
@@ -72,11 +72,11 @@ spec:
                   key: livekit-secret
             {{- end }}
             {{- if .Values.livekit.keyFromFile }}
-            - name: LIVEKIT_KEY_FROM_FILE
+            - name: LIVEKIT_KEY
               value: {{ .Values.livekit.keyFromFile | quote }}
             {{- end }}
             {{- if .Values.livekit.secretFromFile }}
-            - name: LIVEKIT_SECRET_FROM_FILE
+            - name: LIVEKIT_SECRET
               value: {{ .Values.livekit.secretFromFile | quote }}
             {{- end }}
             {{- if .Values.livekit.keyFile }}
