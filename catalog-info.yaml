@@ -6,8 +6,8 @@ metadata:
   name: ghost-cms
   description: IXO Blog and Content Management System
   annotations:
-    backstage.io/kubernetes-id: ghost
-    backstage.io/kubernetes-namespace: default
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=ghost'
+    backstage.io/kubernetes-namespace: ghost
     argocd/app-name: ghost
 spec:
   type: service
@@ -22,8 +22,8 @@ metadata:
   name: matrix-server
   description: Matrix homeserver for secure communications
   annotations:
-    backstage.io/kubernetes-id: matrix
-    backstage.io/kubernetes-namespace: matrix
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=synapse'
+    backstage.io/kubernetes-namespace: matrix-synapse
     argocd/app-name: matrix
 spec:
   type: service
@@ -38,8 +38,8 @@ metadata:
   name: matrix-livekit
   description: Real-time video/audio service for Matrix
   annotations:
-    backstage.io/kubernetes-id: livekit
-    backstage.io/kubernetes-namespace: matrix
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=livekit'
+    backstage.io/kubernetes-namespace: matrix-livekit
     argocd/app-name: matrix-livekit
 spec:
   type: service
@@ -54,8 +54,8 @@ metadata:
   name: matrix-slack-bridge
   description: Bridge between Matrix and Slack
   annotations:
-    backstage.io/kubernetes-id: matrix-slack
-    backstage.io/kubernetes-namespace: matrix
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=matrix-slack'
+    backstage.io/kubernetes-namespace: matrix-synapse
     argocd/app-name: matrix-slack
 spec:
   type: service
@@ -70,8 +70,8 @@ metadata:
   name: matrix-admin
   description: Administrative interface for Matrix server
   annotations:
-    backstage.io/kubernetes-id: matrix-admin
-    backstage.io/kubernetes-namespace: matrix
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=matrix-admin'
+    backstage.io/kubernetes-namespace: matrix-synapse
     argocd/app-name: matrix-admin
 spec:
   type: service
@@ -86,7 +86,7 @@ metadata:
   name: backstage
   description: Developer portal and service catalog
   annotations:
-    backstage.io/kubernetes-id: backstage
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=backstage'
     backstage.io/kubernetes-namespace: backstage
     argocd/app-name: backstage
 spec:
@@ -102,7 +102,7 @@ metadata:
   name: vault
   description: HashiCorp Vault for secrets management
   annotations:
-    backstage.io/kubernetes-id: vault
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=vault'
     backstage.io/kubernetes-namespace: vault
     argocd/app-name: vault
 spec:
@@ -118,8 +118,8 @@ metadata:
   name: prometheus
   description: Metrics collection and monitoring
   annotations:
-    backstage.io/kubernetes-id: prometheus
-    backstage.io/kubernetes-namespace: monitoring
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=prometheus'
+    backstage.io/kubernetes-namespace: prometheus
     argocd/app-name: prometheus
 spec:
   type: service
@@ -134,8 +134,8 @@ metadata:
   name: loki
   description: Log aggregation and storage
   annotations:
-    backstage.io/kubernetes-id: loki
-    backstage.io/kubernetes-namespace: monitoring
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=loki'
+    backstage.io/kubernetes-namespace: ixo-loki
     argocd/app-name: loki
 spec:
   type: service
@@ -150,8 +150,8 @@ metadata:
   name: uptime-kuma
   description: Uptime monitoring and status page
   annotations:
-    backstage.io/kubernetes-id: uptime-kuma
-    backstage.io/kubernetes-namespace: monitoring
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=uptime-kuma'
+    backstage.io/kubernetes-namespace: uptime-kuma
     argocd/app-name: uptime-kuma
 spec:
   type: service
@@ -166,7 +166,7 @@ metadata:
   name: postgres-operator
   description: PostgreSQL database operator and clusters
   annotations:
-    backstage.io/kubernetes-id: postgres-operator
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=postgres-operator'
     backstage.io/kubernetes-namespace: postgres-operator
     argocd/app-name: postgres-operator
 spec:
@@ -182,8 +182,8 @@ metadata:
   name: neo4j
   description: Graph database for relationship data
   annotations:
-    backstage.io/kubernetes-id: neo4j
-    backstage.io/kubernetes-namespace: default
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=neo4j'
+    backstage.io/kubernetes-namespace: neo4j
     argocd/app-name: neo4j
 spec:
   type: service
@@ -198,8 +198,8 @@ metadata:
   name: chromadb
   description: Vector database for AI/ML workloads
   annotations:
-    backstage.io/kubernetes-id: chromadb
-    backstage.io/kubernetes-namespace: default
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=chromadb'
+    backstage.io/kubernetes-namespace: chromadb
     argocd/app-name: chromadb
 spec:
   type: service
@@ -214,7 +214,7 @@ metadata:
   name: nginx-ingress
   description: NGINX Ingress Controller for traffic routing
   annotations:
-    backstage.io/kubernetes-id: nginx-ingress
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=ingress-nginx'
     backstage.io/kubernetes-namespace: ingress-nginx
     argocd/app-name: nginx-ingress
 spec:
@@ -230,7 +230,7 @@ metadata:
   name: cert-manager
   description: Automatic TLS certificate management
   annotations:
-    backstage.io/kubernetes-id: cert-manager
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=cert-manager'
     backstage.io/kubernetes-namespace: cert-manager
     argocd/app-name: cert-manager
 spec:
@@ -246,7 +246,7 @@ metadata:
   name: external-dns
   description: Automatic DNS record management
   annotations:
-    backstage.io/kubernetes-id: external-dns
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=external-dns'
     backstage.io/kubernetes-namespace: external-dns
     argocd/app-name: external-dns
 spec:
@@ -262,8 +262,8 @@ metadata:
   name: dex
   description: OpenID Connect identity provider
   annotations:
-    backstage.io/kubernetes-id: dex
-    backstage.io/kubernetes-namespace: auth
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=dex'
+    backstage.io/kubernetes-namespace: dex
     argocd/app-name: dex
 spec:
   type: service
