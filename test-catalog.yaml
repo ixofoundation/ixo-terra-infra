@@ -1,0 +1,13 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backstage-test
+  description: Test component for Backstage catalog
+  annotations:
+    backstage.io/kubernetes-id: backstage
+    backstage.io/kubernetes-namespace: backstage
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team 
