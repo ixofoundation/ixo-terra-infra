@@ -1,37 +1,4 @@
 ---
-# Main Infrastructure System
-apiVersion: backstage.io/v1alpha1
-kind: System
-metadata:
-  name: ixo-infrastructure
-  description: IXO Terra Infrastructure - Complete cloud-native platform
-  annotations:
-    github.com/project-slug: ixoworld/ixo-terra-infra
-    backstage.io/source-location: url:https://github.com/ixoworld/ixo-terra-infra
-spec:
-  owner: infrastructure-team
-
----
-# Communication System
-apiVersion: backstage.io/v1alpha1
-kind: System
-metadata:
-  name: communication-platform
-  description: Matrix-based communication and collaboration platform
-spec:
-  owner: platform-team
-
----
-# Monitoring System
-apiVersion: backstage.io/v1alpha1
-kind: System
-metadata:
-  name: observability-platform
-  description: Monitoring, logging, and observability infrastructure
-spec:
-  owner: infrastructure-team
-
----
 # Ghost Blog/CMS Component
 apiVersion: backstage.io/v1alpha1
 kind: Component
@@ -46,9 +13,6 @@ spec:
   type: service
   lifecycle: production
   owner: content-team
-  system: ixo-infrastructure
-  dependsOn:
-    - resource:mysql-ghost
 
 ---
 # Matrix Server Component
@@ -65,10 +29,6 @@ spec:
   type: service
   lifecycle: production
   owner: platform-team
-  system: communication-platform
-  dependsOn:
-    - component:postgres-operator
-    - component:matrix-livekit
 
 ---
 # Matrix Livekit Component
@@ -85,7 +45,6 @@ spec:
   type: service
   lifecycle: production
   owner: platform-team
-  system: communication-platform
 
 ---
 # Matrix Slack Bridge
@@ -102,9 +61,6 @@ spec:
   type: service
   lifecycle: production
   owner: platform-team
-  system: communication-platform
-  dependsOn:
-    - component:matrix-server
 
 ---
 # Matrix Admin Interface
@@ -121,9 +77,6 @@ spec:
   type: service
   lifecycle: production
   owner: platform-team
-  system: communication-platform
-  dependsOn:
-    - component:matrix-server
 
 ---
 # Backstage Developer Portal
@@ -140,9 +93,6 @@ spec:
   type: service
   lifecycle: production
   owner: platform-team
-  system: ixo-infrastructure
-  dependsOn:
-    - component:postgres-operator
 
 ---
 # Vault Secrets Management
@@ -159,7 +109,6 @@ spec:
   type: service
   lifecycle: production
   owner: security-team
-  system: ixo-infrastructure
 
 ---
 # Prometheus Monitoring
@@ -176,7 +125,6 @@ spec:
   type: service
   lifecycle: production
   owner: infrastructure-team
-  system: observability-platform
 
 ---
 # Loki Logging
@@ -193,7 +141,6 @@ spec:
   type: service
   lifecycle: production
   owner: infrastructure-team
-  system: observability-platform
 
 ---
 # Uptime Kuma Monitoring
@@ -210,7 +157,6 @@ spec:
   type: service
   lifecycle: production
   owner: infrastructure-team
-  system: observability-platform
 
 ---
 # PostgreSQL Operator
@@ -227,7 +173,6 @@ spec:
   type: service
   lifecycle: production
   owner: data-team
-  system: ixo-infrastructure
 
 ---
 # Neo4j Graph Database
@@ -244,7 +189,6 @@ spec:
   type: service
   lifecycle: production
   owner: data-team
-  system: ixo-infrastructure
 
 ---
 # ChromaDB Vector Database
@@ -261,7 +205,6 @@ spec:
   type: service
   lifecycle: production
   owner: ai-team
-  system: ixo-infrastructure
 
 ---
 # NGINX Ingress Controller
@@ -278,7 +221,6 @@ spec:
   type: service
   lifecycle: production
   owner: infrastructure-team
-  system: ixo-infrastructure
 
 ---
 # Cert Manager
@@ -295,7 +237,6 @@ spec:
   type: service
   lifecycle: production
   owner: security-team
-  system: ixo-infrastructure
 
 ---
 # External DNS
@@ -312,7 +253,6 @@ spec:
   type: service
   lifecycle: production
   owner: infrastructure-team
-  system: ixo-infrastructure
 
 ---
 # Dex Identity Provider
@@ -328,35 +268,4 @@ metadata:
 spec:
   type: service
   lifecycle: production
-  owner: security-team
-  system: ixo-infrastructure
-
----
-# MySQL Database Resource
-apiVersion: backstage.io/v1alpha1
-kind: Resource
-metadata:
-  name: mysql-ghost
-  description: MySQL database for Ghost CMS
-  annotations:
-    backstage.io/kubernetes-id: mysql
-    backstage.io/kubernetes-namespace: default
-spec:
-  type: database
-  owner: data-team
-  system: ixo-infrastructure
-
----
-# ArgoCD Resource
-apiVersion: backstage.io/v1alpha1
-kind: Resource
-metadata:
-  name: argocd
-  description: GitOps continuous deployment platform
-  annotations:
-    backstage.io/kubernetes-id: argocd-server
-    backstage.io/kubernetes-namespace: argocd
-spec:
-  type: deployment-platform
-  owner: infrastructure-team
-  system: ixo-infrastructure 
+  owner: security-team 
