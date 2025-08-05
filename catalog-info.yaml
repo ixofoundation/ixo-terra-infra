@@ -1,0 +1,362 @@
+---
+# Main Infrastructure System
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: ixo-infrastructure
+  description: IXO Terra Infrastructure - Complete cloud-native platform
+  annotations:
+    github.com/project-slug: ixoworld/ixo-terra-infra
+    backstage.io/source-location: url:https://github.com/ixoworld/ixo-terra-infra
+spec:
+  owner: infrastructure-team
+
+---
+# Communication System
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: communication-platform
+  description: Matrix-based communication and collaboration platform
+spec:
+  owner: platform-team
+
+---
+# Monitoring System
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: observability-platform
+  description: Monitoring, logging, and observability infrastructure
+spec:
+  owner: infrastructure-team
+
+---
+# Ghost Blog/CMS Component
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ghost-cms
+  description: IXO Blog and Content Management System
+  annotations:
+    backstage.io/kubernetes-id: ghost
+    backstage.io/kubernetes-namespace: default
+    argocd/app-name: ghost
+spec:
+  type: service
+  lifecycle: production
+  owner: content-team
+  system: ixo-infrastructure
+  dependsOn:
+    - resource:mysql-ghost
+
+---
+# Matrix Server Component
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: matrix-server
+  description: Matrix homeserver for secure communications
+  annotations:
+    backstage.io/kubernetes-id: matrix
+    backstage.io/kubernetes-namespace: matrix
+    argocd/app-name: matrix
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: communication-platform
+  dependsOn:
+    - component:postgres-operator
+    - component:matrix-livekit
+
+---
+# Matrix Livekit Component
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: matrix-livekit
+  description: Real-time video/audio service for Matrix
+  annotations:
+    backstage.io/kubernetes-id: livekit
+    backstage.io/kubernetes-namespace: matrix
+    argocd/app-name: matrix-livekit
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: communication-platform
+
+---
+# Matrix Slack Bridge
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: matrix-slack-bridge
+  description: Bridge between Matrix and Slack
+  annotations:
+    backstage.io/kubernetes-id: matrix-slack
+    backstage.io/kubernetes-namespace: matrix
+    argocd/app-name: matrix-slack
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: communication-platform
+  dependsOn:
+    - component:matrix-server
+
+---
+# Matrix Admin Interface
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: matrix-admin
+  description: Administrative interface for Matrix server
+  annotations:
+    backstage.io/kubernetes-id: matrix-admin
+    backstage.io/kubernetes-namespace: matrix
+    argocd/app-name: matrix-admin
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: communication-platform
+  dependsOn:
+    - component:matrix-server
+
+---
+# Backstage Developer Portal
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backstage
+  description: Developer portal and service catalog
+  annotations:
+    backstage.io/kubernetes-id: backstage
+    backstage.io/kubernetes-namespace: backstage
+    argocd/app-name: backstage
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: ixo-infrastructure
+  dependsOn:
+    - component:postgres-operator
+
+---
+# Vault Secrets Management
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: vault
+  description: HashiCorp Vault for secrets management
+  annotations:
+    backstage.io/kubernetes-id: vault
+    backstage.io/kubernetes-namespace: vault
+    argocd/app-name: vault
+spec:
+  type: service
+  lifecycle: production
+  owner: security-team
+  system: ixo-infrastructure
+
+---
+# Prometheus Monitoring
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: prometheus
+  description: Metrics collection and monitoring
+  annotations:
+    backstage.io/kubernetes-id: prometheus
+    backstage.io/kubernetes-namespace: monitoring
+    argocd/app-name: prometheus
+spec:
+  type: service
+  lifecycle: production
+  owner: infrastructure-team
+  system: observability-platform
+
+---
+# Loki Logging
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: loki
+  description: Log aggregation and storage
+  annotations:
+    backstage.io/kubernetes-id: loki
+    backstage.io/kubernetes-namespace: monitoring
+    argocd/app-name: loki
+spec:
+  type: service
+  lifecycle: production
+  owner: infrastructure-team
+  system: observability-platform
+
+---
+# Uptime Kuma Monitoring
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: uptime-kuma
+  description: Uptime monitoring and status page
+  annotations:
+    backstage.io/kubernetes-id: uptime-kuma
+    backstage.io/kubernetes-namespace: monitoring
+    argocd/app-name: uptime-kuma
+spec:
+  type: service
+  lifecycle: production
+  owner: infrastructure-team
+  system: observability-platform
+
+---
+# PostgreSQL Operator
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: postgres-operator
+  description: PostgreSQL database operator and clusters
+  annotations:
+    backstage.io/kubernetes-id: postgres-operator
+    backstage.io/kubernetes-namespace: postgres-operator
+    argocd/app-name: postgres-operator
+spec:
+  type: service
+  lifecycle: production
+  owner: data-team
+  system: ixo-infrastructure
+
+---
+# Neo4j Graph Database
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: neo4j
+  description: Graph database for relationship data
+  annotations:
+    backstage.io/kubernetes-id: neo4j
+    backstage.io/kubernetes-namespace: default
+    argocd/app-name: neo4j
+spec:
+  type: service
+  lifecycle: production
+  owner: data-team
+  system: ixo-infrastructure
+
+---
+# ChromaDB Vector Database
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: chromadb
+  description: Vector database for AI/ML workloads
+  annotations:
+    backstage.io/kubernetes-id: chromadb
+    backstage.io/kubernetes-namespace: default
+    argocd/app-name: chromadb
+spec:
+  type: service
+  lifecycle: production
+  owner: ai-team
+  system: ixo-infrastructure
+
+---
+# NGINX Ingress Controller
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: nginx-ingress
+  description: NGINX Ingress Controller for traffic routing
+  annotations:
+    backstage.io/kubernetes-id: nginx-ingress
+    backstage.io/kubernetes-namespace: ingress-nginx
+    argocd/app-name: nginx-ingress
+spec:
+  type: service
+  lifecycle: production
+  owner: infrastructure-team
+  system: ixo-infrastructure
+
+---
+# Cert Manager
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: cert-manager
+  description: Automatic TLS certificate management
+  annotations:
+    backstage.io/kubernetes-id: cert-manager
+    backstage.io/kubernetes-namespace: cert-manager
+    argocd/app-name: cert-manager
+spec:
+  type: service
+  lifecycle: production
+  owner: security-team
+  system: ixo-infrastructure
+
+---
+# External DNS
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: external-dns
+  description: Automatic DNS record management
+  annotations:
+    backstage.io/kubernetes-id: external-dns
+    backstage.io/kubernetes-namespace: external-dns
+    argocd/app-name: external-dns
+spec:
+  type: service
+  lifecycle: production
+  owner: infrastructure-team
+  system: ixo-infrastructure
+
+---
+# Dex Identity Provider
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: dex
+  description: OpenID Connect identity provider
+  annotations:
+    backstage.io/kubernetes-id: dex
+    backstage.io/kubernetes-namespace: auth
+    argocd/app-name: dex
+spec:
+  type: service
+  lifecycle: production
+  owner: security-team
+  system: ixo-infrastructure
+
+---
+# MySQL Database Resource
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: mysql-ghost
+  description: MySQL database for Ghost CMS
+  annotations:
+    backstage.io/kubernetes-id: mysql
+    backstage.io/kubernetes-namespace: default
+spec:
+  type: database
+  owner: data-team
+  system: ixo-infrastructure
+
+---
+# ArgoCD Resource
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: argocd
+  description: GitOps continuous deployment platform
+  annotations:
+    backstage.io/kubernetes-id: argocd-server
+    backstage.io/kubernetes-namespace: argocd
+spec:
+  type: deployment-platform
+  owner: infrastructure-team
+  system: ixo-infrastructure 
