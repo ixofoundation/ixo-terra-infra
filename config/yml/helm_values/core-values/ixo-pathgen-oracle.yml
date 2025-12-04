@@ -53,6 +53,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#LANGFUSE_SECRET_KEY>"
   - name: "LANGFUSE_HOST"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#LANGFUSE_HOST>"
+  - name: "OPEN_ROUTER_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#OPEN_ROUTER_API_KEY>"
   - name: "TAVILY_API_KEY"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#TAVILY_API_KEY>"
   - name: "SLACK_APP_TOKEN"
@@ -69,14 +71,16 @@ env:
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#MAP_BOX_TOKEN>"
   - name: "CYPHER_ENABLED"
     value: "true"
+  - name: "ORACLE_ENTITY_DID"
+    value: "<path:${vault_mount}/data/ixo-pathgen-oracle#ORACLE_ENTITY_DID>"
 service:
   port: 3000
 resources:
   requests:
-    memory: 200Mi
+    memory: 300Mi
     cpu: "50m"
   limits:
-    memory: 500Mi
+    memory: 1000Mi
 autoscaling:
   enabled: true
   minReplicas: 1

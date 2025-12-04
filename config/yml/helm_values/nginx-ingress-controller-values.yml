@@ -1,7 +1,59 @@
 controller:
   config:
+    # ========================================
+    # NGINX Ingress Controller Configuration
+    # ========================================
+    # SSE/Streaming Support: Timeouts are set to 1 hour for long-lived connections.
+    # Buffering is ON by default (good for performance and request body logging).
+    #
+    # For services with streaming endpoints (e.g., /messages/{id}), add these to Ingress:
+    #   nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    #   nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+    #   nginx.ingress.kubernetes.io/configuration-snippet: |
+    #     proxy_set_header Connection "";
+    #     chunked_transfer_encoding on;
+    #     gzip off;
+    #
+    # The app must also set the header: X-Accel-Buffering: no
+    # 
+    # Streaming endpoints: /messages/* pattern used by oracles for SSE streaming
+    # ========================================
+    
     keep-alive: "4"
     proxy-body-size: "50m"
+    strict-validate-path-type: "false"
+    # Enable request ID generation for better tracing
+    generate-request-id: "true"
+    # Enable upstream response time logging
+    upstream-keepalive-connections: "32"
+    upstream-keepalive-timeout: "60"
+    proxy-read-timeout: "3600"  # 1 hour timeout for long-lived connections
+    proxy-send-timeout: "3600"  # 1 hour send timeout
+    # Standard nginx access log format (keep default)
+    access-log-path: "/var/log/nginx/access.log"
+    error-log-path: "/var/log/nginx/error.log"
+    
+    # Custom log format for enhanced ixo logging
+    log-format-upstream: '{"timestamp":"$time_iso8601","remote_addr":"$remote_addr","remote_user":"$remote_user","request":"$request","status":$status,"body_bytes_sent":$body_bytes_sent,"http_referer":"$http_referer","http_user_agent":"$http_user_agent","http_x_forwarded_for":"$http_x_forwarded_for","request_time":$request_time,"upstream_response_time":"$upstream_response_time","upstream_connect_time":"$upstream_connect_time","upstream_header_time":"$upstream_header_time","host":"$host","upstream_addr":"$upstream_addr","namespace":"$namespace","service":"$service_name","content_type":"$content_type","content_length":"$content_length","request_body_preview":"$request_body_preview","response_body_size":"$upstream_response_length","cache_status":"$upstream_cache_status","ssl_protocol":"$ssl_protocol","ssl_cipher":"$ssl_cipher","request_id":"$request_id"}'
+    log-format-escape-json: 'true'
+    # Skip logging health check URLs to reduce log spam (includes GET / for root health checks)
+    skip-access-log-urls: '^/health,^/healthcheck,^/health/,^/healthcheck/,^/ready,^/live,^/ping,^/metrics,^/status,^/$'
+    # Enable request body reading for logging (limited size for performance and storage)
+    client-body-buffer-size: '4k'  # Reduced from 8k to save storage
+    # Disable access logs for default backend to reduce noise
+    enable-access-log-for-default-backend: 'false'
+    http-snippet: |
+      # Map to capture request body preview for core namespace only (empty for others to save storage)
+      map $namespace $request_body_preview {
+        default "";
+        "core" "$request_body";
+      }
+      
+      # Map to conditionally log only important status codes
+      # map $status $loggable {
+      #   ~^[45]  1;  # Log 4xx and 5xx errors
+      #   default 0;  # Skip 2xx and 3xx to save storage
+      # }
     server-snippet: |
       keepalive_timeout 4s 4s;
       
@@ -9,6 +61,8 @@ controller:
         # Allow .well-known paths to bypass redirection
         break;
       }
+
+      # IXO Redirects
       if ($host = "blockscantest.devnet.ixo.earth") {
           rewrite ^/$ https://explorer.ixo.earth/devnet-ixo redirect;
           rewrite ^/ixo$ https://explorer.ixo.earth/devnet-ixo redirect;
@@ -53,6 +107,10 @@ controller:
           rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/ixo/gov/$1 redirect;
           rewrite ^/ixo/accounts/(.*)$ https://staking-explorer.com/account.php?chain=impacthub&addr=$1 redirect;
           rewrite ^/(.*)$ https://staking-explorer.com/explorer/impacthub redirect;
+      }
+      if ($host = "chronicle.impacts.network") {
+          rewrite ^/$ https://impacts.ixo.world redirect;
+          rewrite ^/(.*)$ https://impacts.ixo.world redirect;
       }
   addHeaders:
     Host: "$host"

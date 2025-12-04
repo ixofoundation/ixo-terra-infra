@@ -24,10 +24,10 @@ env:
     value: "8083"
 resources:
   requests:
-    memory: 100Mi
+    memory: 400Mi
     cpu: "40m"
   limits:
-    memory: 300Mi
+    memory: 600Mi
 autoscaling:
   enabled: true
   minReplicas: 1

@@ -1,0 +1,80 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-website-bot-oracle-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: ORACLE_NAME
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#ORACLE_NAME>"
+  - name: MATRIX_BASE_URL
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_BASE_URL>"
+  - name: MATRIX_ORACLE_ADMIN_ACCESS_TOKEN
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_ORACLE_ADMIN_ACCESS_TOKEN>"
+  - name: MATRIX_ORACLE_ADMIN_PASSWORD
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_ORACLE_ADMIN_PASSWORD>"
+  - name: MATRIX_ORACLE_ADMIN_USER_ID
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_ORACLE_ADMIN_USER_ID>"
+  - name: MATRIX_RECOVERY_PHRASE
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_RECOVERY_PHRASE>"
+  - name: LANGFUSE_PUBLIC_KEY
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGFUSE_PUBLIC_KEY>"
+  - name: LANGFUSE_SECRET_KEY
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGFUSE_SECRET_KEY>"
+  - name: LANGFUSE_HOST
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGFUSE_HOST>"
+  - name: OPEN_ROUTER_API_KEY
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#OPEN_ROUTER_API_KEY>"
+  - name: DATABASE_USE_SSL
+    value: "true"
+  - name: NETWORK
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#NETWORK>"
+  - name: MATRIX_USER_DID
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_USER_DID>"
+  - name: MATRIX_USER_ACCESS_TOKEN
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_USER_ACCESS_TOKEN>"
+  - name: ORACLE_DID
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#ORACLE_DID>"
+  - name: ORACLE_ROOM_ID
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#ORACLE_ROOM_ID>"
+  - name: AIRTABLE_API_KEY
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#AIRTABLE_API_KEY>"
+  - name: AIRTABLE_BASE_ID
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#AIRTABLE_BASE_ID>"
+  - name: "ORACLE_ENTITY_DID"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#ORACLE_ENTITY_DID>"
+  - name: "MEMORY_MCP_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MEMORY_MCP_URL>"
+  - name: "MEMORY_ENGINE_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MEMORY_ENGINE_URL>"
+  - name: "MEMORY_SERVICE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MEMORY_SERVICE_API_KEY>"
+  - name: "AI_MODEL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#AI_MODEL>"
+  - name: PORT
+    value: "3000"
+service:
+  port: 3000
+resources:
+  requests:
+    memory: 300Mi
+    cpu: "50m"
+  limits:
+    memory: 500Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

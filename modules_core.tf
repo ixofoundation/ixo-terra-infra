@@ -43,7 +43,6 @@ module "ixo_cellnode" {
 
 module "ixo_matrix_state_bot" {
   count      = var.environments[terraform.workspace].application_configs["ixo_matrix_state_bot"].enabled ? 1 : 0
-  depends_on = [kubernetes_persistent_volume_claim_v1.common]
   source     = "./modules/argocd_application"
   application = {
     name       = "ixo-matrix-state-bot"
@@ -114,6 +113,31 @@ module "ixo_memory_engine" {
   vault_mount_path = local.vault_mount_path
 }
 
+module "ixo_memory_engine_graphiti" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-memory-engine-graphiti"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/memory-engine-graphiti"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_memory_engine_graphiti.yml",
+      {
+        environment = terraform.workspace
+        vault_mount = local.vault_mount_path
+        neo4j_uri = "neo4j://neo4j.neo4j.svc.cluster.local"
+        neo4j_port = "7687"
+        neo4j_user = "neo4j"
+        neo4j_password = random_password.neo4j_password.result
+        host = local.dns_for_environment[terraform.workspace]["ixo_memory_engine_graphiti"]
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
 module "ixo_companion" {
   count  = var.environments[terraform.workspace].application_configs["ixo_companion"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -121,12 +145,13 @@ module "ixo_companion" {
     name       = "ixo-companion"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/companion"
+    path       = "charts/${terraform.workspace}/ixoworld/companion-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_companion.yml",
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_companion"]
         vault_mount = local.vault_mount_path
+        firecrawl_mcp_url = terraform.workspace == "devnet" ? "http://ixo-firecrawl-ixo-firecrawler-mcp.core.svc.cluster.local:3001/mcp" : "https://mcp-firecrawl.devnet.ixo.earth/mcp"
       }
     )
   }
@@ -538,6 +563,175 @@ module "ixo_matrix_bids_bot" {
   vault_mount_path = local.vault_mount_path
 }
 
+module "ixo_matrix_supamoto_bot" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-matrix-supamoto-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-supamoto-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_supamoto_bot.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
+        vault_mount = local.vault_mount_path
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
+        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto"
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_matrix_supamoto_onboarding_server" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_onboarding_server"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-matrix-supamoto-onboarding-server"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-supamoto-onboarding-server"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_supamoto_onboarding_server.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_onboarding_server"]
+        vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_supamoto_onboarding_server"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_onboarding_server"]
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_domain_indexer" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_domain_indexer"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-domain-indexer"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/domain-indexer"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_domain_indexer.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_domain_indexer"]
+        vault_mount = local.vault_mount_path
+        firecrawl_api_url = terraform.workspace == "devnet" ? "http://ixo-firecrawl-ixo-firecrawler-api.core.svc.cluster.local:3002" : "https://firecrawl.devnet.ixo.earth"
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    SURREAL_USER       = "admin"
+    SURREAL_PASS       = random_password.surrealdb_password.result
+    OPENAI_API_KEY     = ""
+    MAPS_API_KEY       = ""
+    FIRECRAWL_API_KEY  = ""
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_firecrawl" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_firecrawl"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-firecrawl"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-firecrawl"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_firecrawl.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_firecrawl"]
+        vault_mount = local.vault_mount_path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[20].username
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[20].username])
+        redis_host  = "redis-master.redis.svc.cluster.local"
+        redis_port  = "6379"
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_matrix_supamoto_claims_bot" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_claims_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-matrix-supamoto-claims-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-supamoto-claims-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_supamoto_claims_bot.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
+        vault_mount = local.vault_mount_path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-claims"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "minerva_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_minerva_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-minerva-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/minerva-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_minerva_oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_minerva_oracle"]
+        vault_mount = local.vault_mount_path
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_minerva_livekit" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_minerva_livekit"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-minerva-livekit"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/minerva-livekit"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_minerva_livekit.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_minerva_livekit"]
+        vault_mount = local.vault_mount_path
+      }
+    )
+  }
+  create_kv        = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
 module "ixo_matrix_claims_bot" {
   count  = var.environments[terraform.workspace].application_configs["ixo_matrix_claims_bot"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -931,6 +1125,42 @@ module "ixo_pathgen_oracle" {
     )
   }
   create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_website_bot_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_website_bot_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-website-bot-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/website-bot-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-website-bot-oracle.yml",
+      {
+        environment = terraform.workspace
+        vault_mount = local.vault_mount_path
+        host        = local.dns_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    ORACLE_NAME = "website-bot-oracle"
+    MATRIX_BASE_URL = ""
+    MATRIX_ORACLE_ADMIN_ACCESS_TOKEN = ""
+    MATRIX_ORACLE_ADMIN_PASSWORD = ""
+    MATRIX_ORACLE_ADMIN_USER_ID = ""
+    MATRIX_RECOVERY_PHRASE = ""
+    LANGFUSE_PUBLIC_KEY = ""
+    LANGFUSE_SECRET_KEY = ""
+    LANGFUSE_HOST = ""
+    OPEN_ROUTER_API_KEY = ""
+    ORACLE_ROOM_ID = ""
+    AIRTABLE_API_KEY = ""
+    AIRTABLE_BASE_ID = ""
+  }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1340,24 +1570,53 @@ module "ixo_aws_iam" {
 #  vault_mount_path = local.vault_mount_path
 #}
 
-# module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
-#  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
-#  source     = "./modules/ixo_blocksync_migration"
-#  db_info = {
-#    pgUsername  = var.pg_ixo.pg_users[3].username
-#    pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[3].username])
-#    pgCluster   = var.pg_ixo.pg_cluster_name
-#    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-#    # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
-#    # If current DB in-use is `blocksync` set to true. Else if current DB in-use is`blocksync_alt` set to false.
-#    # true = pod created will run migrations on `blocksync_alt`
-#    # false = pod created will run migrations on `blocksync`
-#    useAlt = false
-#  }
-#  existing_blocksync_pod_label_name = "ixo-blocksync"
-#  migration_pod_name                = "ixo-blocksync-migration"
-#  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
-# }
+module "ixo_ussd_supamoto" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_ussd_supamoto"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-ussd-supamoto"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/emerging-eco/ixo-ussd-supamoto"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_ussd_supamoto.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_ussd_supamoto"]
+        vault_mount = local.vault_mount_path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[21].username
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[21].username])
+      }
+    )
+  }
+  create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
+ depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
+ source     = "./modules/ixo_blocksync_migration"
+ db_info = {
+   pgUsername  = var.pg_ixo.pg_users[3].username
+   pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[3].username])
+   pgCluster   = var.pg_ixo.pg_cluster_name
+   pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+   # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
+   # If current DB in-use is `blocksync` set to true. Else if current DB in-use is`blocksync_alt` set to false.
+   # true = pod created will run migrations on `blocksync_alt`
+   # false = pod created will run migrations on `blocksync`
+   useAlt = true
+ }
+ image = "ghcr.io/ixofoundation/ixo-blocksync:v2.5.0-develop.1"
+ existing_blocksync_pod_label_name = "ixo-blocksync"
+ env_overrides = {
+  RPC = "https://archive.devnet.ixo.earth/rpc/"
+ }
+ migration_pod_name                = "ixo-blocksync-migration"
+ namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
+}
 
 # module "blocksyn_core_migration" { # Note this will be commented in/out only for new releases to blocksync-core that require re-indexing the DB.
 # #  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
@@ -1371,9 +1630,9 @@ module "ixo_aws_iam" {
 #    # If current DB in-use is `blocksync-core` set to true. Else if current DB in-use is`blocksync-core_alt` set to false.
 #    # true = pod created will run migrations on `blocksync-core_alt`
 #    # false = pod created will run migrations on `blocksync-core`
-#    useAlt = true
+#    useAlt = false
 #  }
-#  image = "ghcr.io/ixofoundation/ixo-blocksync-core:v0.1.0-develop.14"
+#  image = "ghcr.io/ixofoundation/ixo-blocksync-core:v0.1.0-develop.16"
 #  existing_blocksync_pod_label_name = "ixo-blocksync-core"
 #  env_overrides = {
 #   RPC = "https://archive.impacthub.ixo.earth/rpc/"

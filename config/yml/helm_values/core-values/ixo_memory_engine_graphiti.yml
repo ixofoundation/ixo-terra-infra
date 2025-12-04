@@ -1,0 +1,121 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-memory-engine-graphiti-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+ingressMcp:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - mcp-${host}
+      secretName: ixo-memory-engine-graphiti-mcp-tls
+  hosts:
+    - host: mcp-${host}
+      paths:
+        - path: /
+          pathType: Prefix
+service:
+  port: 8000
+  portMcp: 9000
+env:
+  - name: "PORT"
+    value: "8000"
+  - name: "OPENAI_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#OPENAI_API_KEY>"
+  - name: "MODEL_NAME"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MODEL_NAME>"
+  - name: "EMBEDDING_MODEL_NAME"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#EMBEDDING_MODEL_NAME>"
+  - name: "NEO4J_URI"
+    value: "${neo4j_uri}"
+  - name: "NEO4J_PORT"
+    value: "${neo4j_port}"
+  - name: "NEO4J_USER"
+    value: "${neo4j_user}"
+  - name: "NEO4J_PASSWORD"
+    value: "${neo4j_password}"
+  - name: "DEFAULT_DATABASE"
+    value: "neo4j"
+  - name: "COMPLETION_OPENAI_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#COMPLETION_OPENAI_API_KEY>"
+  - name: "COMPLETION_OPENAI_BASE_URL"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#COMPLETION_OPENAI_BASE_URL>"
+  - name: "COMPLETION_MODEL_NAME"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#COMPLETION_MODEL_NAME>"
+  - name: "COMPLETION_SMALL_MODEL_NAME"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#COMPLETION_SMALL_MODEL_NAME>"
+  - name: "EMBEDDING_OPENAI_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#EMBEDDING_OPENAI_API_KEY>"
+  - name: "EMBEDDING_OPENAI_BASE_URL"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#EMBEDDING_OPENAI_BASE_URL>"
+  - name: "NODE_ENV"
+    value: "production"
+  - name: "MATRIX_HOMESERVER_URL"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_HOMESERVER_URL>"
+  - name: "MATRIX_BOT_USER_ID"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_BOT_USER_ID>"
+  - name: "MATRIX_BOT_ACCESS_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_BOT_ACCESS_TOKEN>"
+  - name: "MATRIX_TOKEN_CACHE_TTL"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_TOKEN_CACHE_TTL>"
+  - name: "MATRIX_TOKEN_REFRESH_BUFFER"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_TOKEN_REFRESH_BUFFER>"
+  - name: "SENTRY_DSN"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#SENTRY_DSN>"
+  - name: "SENTRY_ENVIRONMENT"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#SENTRY_ENVIRONMENT>"
+  - name: "SENTRY_TRACES_SAMPLE_RATE"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#SENTRY_TRACES_SAMPLE_RATE>"
+  - name: "SERVICE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#SERVICE_API_KEY>"
+  - name: "MCP_PORT"
+    value: "9000"
+  - name: "MATRIX_BOT_STORE_PATH"
+    value: "/storage/matrix_bot_store"
+resources:
+  requests:
+    memory: 100Mi
+    cpu: "40m"
+  limits:
+    memory: 1256Mi
+containers:
+  apiServer:
+    resources:
+      requests:
+        memory: 2560Mi
+        cpu: "20m"
+      limits:
+        memory: 2688Mi
+  worker:
+    resources:
+      requests:
+        memory: 150Mi
+        cpu: "20m"
+      limits:
+        memory: 256Mi
+  mcpServer:
+    resources:
+      requests:
+        memory: 400Mi
+        cpu: "30m"
+      limits:
+        memory: 1024Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

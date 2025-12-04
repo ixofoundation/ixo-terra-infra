@@ -1,0 +1,85 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-domain-indexer-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+service:
+  port: 8080
+env:
+  # Server Configuration
+  - name: "NODE_ENV"
+    value: "production"
+  - name: "PORT"
+    value: "8080"
+  - name: "LOG_LEVEL"
+    value: "info"
+  - name: "CORS_ORIGIN"
+    value: "*"
+  - name: "RATE_LIMIT_MAX"
+    value: "100"
+  - name: "RATE_LIMIT_WINDOW_MS"
+    value: "60000"
+  
+  # Database Configuration (SurrealDB)
+  - name: "DB_URL"
+    value: "ws://surrealdb.surrealdb.svc.cluster.local:8000/rpc"
+  - name: "DB_NAMESPACE"
+    value: "domain-indexer"
+  - name: "DB_NAME"
+    value: "domain-indexer"
+  - name: "SURREAL_USER"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#SURREAL_USER>"
+  - name: "SURREAL_PASS"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#SURREAL_PASS>"
+  
+  # AI Configuration
+  - name: "OPENAI_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#OPENAI_API_KEY>"
+  - name: "AI_MODEL"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#AI_MODEL>"
+  - name: "AI_EMBEDDING_DIMENSION"
+    value: "768"
+  
+  # Google Maps API
+  - name: "MAPS_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#MAPS_API_KEY>"
+  
+  # Firecrawl Configuration
+  - name: "FIRECRAWL_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#FIRECRAWL_API_KEY>"
+  - name: "FIRECRAWL_API_URL"
+    value: ${firecrawl_api_url}
+  - name: "FIRECRAWL_TIMEOUT"
+    value: "30000"
+  
+  # Feature Flags
+  - name: "SKIP_SOCIAL_LINKS"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#SKIP_SOCIAL_LINKS>"
+  - name: "ENABLE_IMAGE_ALT_GENERATION"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#ENABLE_IMAGE_ALT_GENERATION>"
+  
+  # Network
+  - name: "NETWORK"
+    value: "${environment}"
+resources:
+  requests:
+    memory: 300Mi
+    cpu: "40m"
+  limits:
+    memory: 600Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

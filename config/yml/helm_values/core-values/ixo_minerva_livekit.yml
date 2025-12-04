@@ -1,0 +1,58 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-minerva-livekit-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: OPENAI_API_KEY
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#OPENAI_API_KEY>"
+  - name: GOOGLE_API_KEY
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#GOOGLE_API_KEY>"
+  - name: LIVEKIT_URL
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#LIVEKIT_URL>"
+  - name: LIVEKIT_API_KEY
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#LIVEKIT_API_KEY>"
+  - name: LIVEKIT_API_SECRET
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#LIVEKIT_API_SECRET>"
+  - name: MATRIX_ACCESS_TOKEN
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#MATRIX_ACCESS_TOKEN>"
+  - name: NETWORK
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#NETWORK>"
+  - name: MATRIX_USER_ID
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#MATRIX_USER_ID>"
+  - name: MATRIX_SERVER_URL
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#MATRIX_SERVER_URL>"
+  - name: MNEMONICS
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#MNEMONICS>"
+  - name: ORACLE_API_KEY
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#ORACLE_API_KEY>"
+  - name: ORACLE_SERVER_URL
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#ORACLE_SERVER_URL>"
+  - name: MEMORY_MCP_URL
+    value: "<path:${vault_mount}/data/ixo-minerva-livekit#MEMORY_MCP_URL>"
+service:
+  port: 8081
+resources:
+  requests:
+    memory: 360Mi
+    cpu: "50m"
+  limits:
+    memory: 1024Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

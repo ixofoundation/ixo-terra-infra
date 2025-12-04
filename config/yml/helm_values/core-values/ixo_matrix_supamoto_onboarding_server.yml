@@ -8,12 +8,12 @@ ingress:
   tls:
     - hosts:
         - ${host}
-      secretName: ixo-matrix-bids-bot-tls
+      secretName: ixo-matrix-supamoto-onboarding-server-tls
   hosts:
     - host: ${host}
       paths:
         - path: /
-          pathType: Prefix
+          pathType: Prefix  
 persistentVolume:
   storageClass: ${storage_class}
   size: ${storage_size}
@@ -24,10 +24,10 @@ env:
     value: "8083"
 resources:
   requests:
-    memory: 100Mi
+    memory: 200Mi
     cpu: "40m"
   limits:
-    memory: 200Mi
+    memory: 400Mi
 autoscaling:
   enabled: true
   minReplicas: 1
@@ -37,8 +37,6 @@ backup:
   resources:
     requests:
       cpu: 10m
-      memory: 128Mi
+      memory: 50Mi
     limits:
       memory: 256Mi
-  gcs:
-    bucket: ${gcs_bucket}

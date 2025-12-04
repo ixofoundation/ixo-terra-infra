@@ -46,8 +46,13 @@ provider "vultr" {
   retry_limit = 3
 }
 
+# Mock AWS provider to avoid authentication issues during billing suspension
 provider "aws" {
-  region = var.environments[terraform.workspace].aws_region
+  region                      = var.environments[terraform.workspace].aws_region
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_region_validation      = true
+  skip_requesting_account_id  = true
 }
 
 # For Initial Cluster Setup, This userpass needs to be manually created.
@@ -97,31 +102,147 @@ resource "vault_mount" "ixo" {
   description = "IXO Core Services KV Secrets"
 }
 
-data "kubernetes_service_v1" "nfs" {
+resource "kubernetes_persistent_volume_claim_v1" "common" {
   depends_on = [module.argocd]
   metadata {
-    name      = "nfs-server-provisioner"
-    namespace = kubernetes_namespace_v1.nfs_provisioner.metadata[0].name
-  }
-}
-
-resource "kubernetes_persistent_volume_claim_v1" "common" {
-  depends_on = [module.argocd, data.kubernetes_service_v1.nfs]
-  metadata {
-    name      = "${var.org}-common-storage"
+    name      = "${var.org}-core-common-storage"
     namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
     labels = {
-      "app.kubernetes.io/name" = "${var.org}-common-storage"
+      "app.kubernetes.io/name" = "${var.org}-core-common-storage"
     }
   }
   spec {
     access_modes = ["ReadWriteMany"]
     resources {
       requests = {
-        storage = "40Gi"
+        storage = "100Gi"
       }
     }
-    storage_class_name = "nfs"
+    storage_class_name = var.storage_classes["shared"]
+  }
+}
+
+resource "kubernetes_persistent_volume_claim_v1" "common_matrix" {
+  depends_on = [module.argocd]
+  metadata {
+    name      = "${var.org}-core-common-matrix-storage"
+    namespace = kubernetes_namespace_v1.matrix.metadata[0].name
+    labels = {
+      "app.kubernetes.io/name" = "${var.org}-core-common-matrix-storage"
+    }
+  }
+  spec {
+    access_modes = ["ReadWriteMany"]
+    resources {
+      requests = {
+        storage = "100Gi"
+      }
+    }
+    storage_class_name = var.storage_classes["shared"]
+  }
+}
+
+resource "kubernetes_pod_v1" "filebrowser" {
+  depends_on = [kubernetes_persistent_volume_claim_v1.common]
+  metadata {
+    name      = "devops-filebrowser"
+    namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    labels = {
+      app = "devops-filebrowser"
+    }
+  }
+
+  spec {
+    container {
+      name  = "filebrowser"
+      image = "filebrowser/filebrowser:latest"
+
+      args = ["--port", "8080" ]
+      
+      port {
+        container_port = 8080
+        name           = "http"
+      }
+
+      volume_mount {
+        name       = "common-storage"
+        mount_path = "/srv"
+      }
+
+      security_context {
+        run_as_user = 0
+      }
+
+      resources {
+        requests = {
+          cpu    = "50m"
+          memory = "64Mi"
+        }
+        limits = {
+          cpu    = "200m"
+          memory = "256Mi"
+        }
+      }
+    }
+
+    volume {
+      name = "common-storage"
+      persistent_volume_claim {
+        claim_name = kubernetes_persistent_volume_claim_v1.common.metadata[0].name
+      }
+    }
+  }
+}
+
+resource "kubernetes_pod_v1" "filebrowser_matrix" {
+  depends_on = [kubernetes_persistent_volume_claim_v1.common_matrix]
+  metadata {
+    name      = "devops-filebrowser-matrix"
+    namespace = kubernetes_namespace_v1.matrix.metadata[0].name
+    labels = {
+      app = "devops-filebrowser-matrix"
+    }
+  }
+
+  spec {
+    container {
+      name  = "filebrowser-matrix"
+      image = "filebrowser/filebrowser:latest"
+
+      args = ["--port", "8080" ]
+      
+      port {
+        container_port = 8080
+        name           = "http"
+      }
+
+      volume_mount {
+        name       = "common-matrix-storage"
+        mount_path = "/srv"
+      }
+
+      security_context {
+        run_as_user = 0
+      }
+
+      resources {
+        requests = {
+          cpu    = "50m"
+          memory = "64Mi"
+        }
+        limits = {
+          cpu    = "200m"
+          memory = "256Mi"
+        }
+      }
+    }
+
+    volume {
+      name = "common-matrix-storage"
+      persistent_volume_claim {
+        claim_name = kubernetes_persistent_volume_claim_v1.common_matrix.metadata[0].name
+      }
+    }
   }
 }
 
@@ -151,9 +272,13 @@ resource "aws_iam_openid_connect_provider" "github_oidc" {
 }
 
 resource "google_storage_bucket" "postgres_backups" {
+  lifecycle {
+    ignore_changes = [ lifecycle_rule ]
+  }
   count = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enabled ? 1 : 0
   location = "US"
   name     = "${var.org}-${terraform.workspace}-core-postgres"
+  storage_class = "COLDLINE"
   versioning {
     enabled = true
   }
@@ -170,7 +295,7 @@ resource "google_storage_bucket" "postgres_backups" {
   lifecycle_rule {
     action {
       type          = "SetStorageClass"
-      storage_class = "NEARLINE"
+      storage_class = "ARCHIVE"
     }
     condition {
       age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
@@ -182,6 +307,7 @@ resource "google_storage_bucket" "matrix_backups" {
   count = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
   location = "US"
   name     = "${var.org}-${terraform.workspace}-matrix"
+  storage_class = "COLDLINE"
   versioning {
     enabled = true
   }
@@ -198,7 +324,7 @@ resource "google_storage_bucket" "matrix_backups" {
   lifecycle_rule {
     action {
       type          = "SetStorageClass"
-      storage_class = "NEARLINE"
+      storage_class = "ARCHIVE"
     }
     condition {
       age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
@@ -234,6 +360,23 @@ resource "google_storage_bucket" "loki_logs_backups" {
   }
 }
 
+resource "kubernetes_secret_v1" "redis_secret" {
+  depends_on = [module.argocd]
+  count = var.environments[terraform.workspace].application_configs["redis"].enabled ? 1 : 0
+  metadata {
+    name = "redis-secret"
+    namespace = kubernetes_namespace_v1.redis.metadata[0].name
+  }
+  data = {
+    redis-password = random_password.redis_password.result
+  }
+}
+
+resource "random_password" "redis_password" {
+  length  = 12
+  special = false
+}
+
 resource "random_password" "ghost_db_root_password" {
   length  = 16
   special = false
@@ -249,6 +392,16 @@ resource "random_password" "neo4j_password" {
   special = false
 }
 
+resource "random_password" "ghost_password" {
+  length  = 16
+  special = false
+}
+
+resource "random_password" "surrealdb_password" {
+  length  = 16
+  special = false
+}
+
 resource "kubernetes_secret_v1" "ghost_mysql_secret" {
   metadata {
     name = "ghost-mysql-secret"
@@ -257,5 +410,44 @@ resource "kubernetes_secret_v1" "ghost_mysql_secret" {
   data = {
     mysql-root-password = random_password.ghost_db_root_password.result
     mysql-password = random_password.ghost_db_user_password.result
+  }
+}
+
+resource "kubernetes_ingress_v1" "neo4j" {
+  count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled ? 1 : 0
+  depends_on = [module.neo4j]
+  metadata {
+    name = "neo4j"
+    namespace = kubernetes_namespace_v1.neo4j.metadata[0].name
+    annotations = {
+      "cert-manager.io/cluster-issuer" = "letsencrypt-staging"
+      "nginx.ingress.kubernetes.io/proxy-read-timeout" = "3600"
+      "nginx.ingress.kubernetes.io/proxy-send-timeout" = "3600"
+      "nginx.ingress.kubernetes.io/proxy-connect-timeout" = "3600"
+      "nginx.ingress.kubernetes.io/websocket-services" = "neo4j"
+    }
+  }
+  spec {
+    ingress_class_name = "nginx"
+    tls {
+      hosts = ["${local.dns_for_environment[terraform.workspace]["neo4j"]}"]
+      secret_name = "neo4j-tls"
+    }
+    rule {
+      host = local.dns_for_environment[terraform.workspace]["neo4j"]
+      http {
+        path {
+          path = "/"
+          backend {
+            service {
+              name = "neo4j"
+              port {
+                number = 7474
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

@@ -7,17 +7,66 @@
 # fullnameOverride: ""
 image:
   repository: ghcr.io/ixoworld/synapse
-  tag: v1.132.0-ixo.1
+  tag: v1.140.0-ixo.1
 config:
   enableRegistration: true
   macaroonSecretKey: <path:${kv_mount}/data/${app_name}#MACAROON_SECRET_KEY>
 
+wellknown:
+  enabled: true
+  client:
+    m.homeserver:
+      base_url: "https://matrix.${host}/"
+    org.matrix.msc4143.rtc_foci:
+      - type: livekit
+        livekit_service_url: "https://${livekit_host}"
+
 # https://matrix-org.github.io/synapse/latest/usage/configuration/config_documentation.html
 extraConfig:
+  room_list_publication_rules:
+    # Allow all users to publish any room to the public directory
+    - user_id: "*"
+      room_id: "*"
+      action: allow
+
+    # Alternatively, restrict publishing to specific users or rooms:
+    # - user_id: "@admin:yourserver.com"
+    #   room_id: "*"
+    #   action: allow
+    # - user_id: "*"
+    #   room_id: "!some_room_id:yourserver.com"
+    #   action: deny
   enable_authenticated_media: false
+  max_event_delay_duration: 24h
   media_retention:
     local_media_lifetime: null
     remote_media_lifetime: 14d
+  matrix_authentication_service:
+    enabled: false
+  url_preview_enabled: true
+  url_preview_ip_range_blacklist:
+    - 127.0.0.0/8
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    - 100.64.0.0/10
+    - 192.0.0.0/24
+    - 169.254.0.0/16
+    - 192.88.99.0/24
+    - 198.18.0.0/15
+    - 192.0.2.0/24
+    - 198.51.100.0/24
+    - 203.0.113.0/24
+    - 224.0.0.0/4
+    - ::1/128
+    - fe80::/10
+    - fc00::/7
+    - 2001:db8::/32
+    - ff00::/8
+    - fec0::/10
+  url_preview_url_blacklist:
+    - username: '\*' # Don't try to preview URLs with credentials
+  max_spider_size: 10M # Maximum size to download for previews
   rc_message:
     per_second: 3
     burst_count: 40
@@ -78,6 +127,10 @@ extraConfig:
     msc3202_device_masquerading: true
     msc3202_transaction_extensions: true
     msc2409_to_device_messages_enabled: true
+    # MSC3266: Room summary API. Used for knocking over federation
+    msc3266_enabled: true
+    # MSC4222 needed for syncv2 state_after. This allow clients to correctly track the state of the room.
+    msc4222_enabled: true
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##
@@ -182,6 +235,9 @@ ingress:
   ##
   traefikPaths: false
 
+  wkHosts:
+    - matrix.${host}
+
   paths:
     - path: /health
       pathType: Prefix
@@ -222,6 +278,8 @@ ingress:
         - matrix.${host}
       secretName: matrix-tls
 synapse:
+  labels:
+    app.kubernetes.io/part-of: "ixo"
   strategy:
     type: Recreate
   extraEnv:
@@ -251,7 +309,7 @@ synapse:
       memory: 4536Mi
     requests:
       cpu: 50m
-      memory: 150Mi
+      memory: 800Mi
 workers:
   federation_sender:
     enabled: false

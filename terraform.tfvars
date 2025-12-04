@@ -6,6 +6,7 @@ domains = {
   ixoworld = "ixo.world"     # Used for mainnet production services
   ixoearth = "ixo.earth"     # Used for development and community services  
   emerging = "emerging.eco"   # Used for emerging ecosystem services
+  impacts_network = "impacts.network" # Used for impacts network services
 }
 
 # Organization name - used for resource naming and identification
@@ -17,7 +18,7 @@ storage_classes = {
   "standard" = "vultr-block-storage" # Standard storage (SSD)
   "fast" = "vultr-block-storage" # Fast storage (SSD)
   "bulk" = "vultr-block-storage-hdd" # Slower, Cheaper, Bulk storage (HDD)
-  "shared" = null # Currently not used
+  "shared" = "vultr-vfs-storage" # NVME shared storage, slower than block storage, but faster than bulk storage.
 }
 
 # Repository configuration
@@ -27,7 +28,7 @@ vault_core_mount = "ixo_core"
 
 # Versioning for all services.
 versions = {
-  kubernetes_cluster           = "v1.32.2+1"
+  kubernetes_cluster           = "v1.33.0+3"#"v1.32.2+1"#####
   argocd                       = "7.8.23"  # https://artifacthub.io/packages/helm/argo/argo-cd
   cert-manager                 = "1.17.1" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
   nginx-ingress-controller     = "4.12.1" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
@@ -39,15 +40,18 @@ versions = {
   prometheus-blackbox-exporter = "9.4.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
   dex                          = "0.23.0" # https://artifacthub.io/packages/helm/dex/dex
   tailscale                    = "1.82.0" # https://pkgs.tailscale.com/helmcharts/index.yaml
-  matrix                       = "3.11.7" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
+  matrix                       = "3.12.12" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
   openebs                      = "4.2.0" # https://artifacthub.io/packages/helm/openebs/openebs
   metrics-server               = "3.12.2" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
-  nfs                          = "1.8.0"  # https://artifacthub.io/packages/helm/nfs-ganesha-server-and-external-provisioner/nfs-server-provisioner
+  descheduler                  = "0.34.0" # https://artifacthub.io/packages/helm/descheduler/descheduler
   hummingbot                   = "0.2.0"
   uptime-kuma                  = "2.21.2" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
   chromadb                     = "0.1.23" # https://github.com/amikos-tech/chromadb-chart
-  ghost                        = "23.0.19" # https://artifacthub.io/packages/helm/bitnami/ghost
+  ghost                        = "25.0.4" # https://artifacthub.io/packages/helm/bitnami/ghost
   neo4j                        = "2025.6.0" # https://artifacthub.io/packages/helm/neo4j-helm-charts/neo4j
+  falco_security               = "6.2.2" # https://artifacthub.io/packages/helm/falcosecurity/falco
+  redis                        = "23.2.12" # https://artifacthub.io/packages/helm/bitnami/redis
+  surrealdb                    = "0.4.0" # https://artifacthub.io/packages/helm/surrealdb/surrealdb
 }
 
 # Environment base configurations (static values only)
@@ -78,9 +82,16 @@ environments = {
         enabled = true
         domain = "ixoearth"
       }
+      surrealdb = {
+        enabled = true
+        domain = "ixoearth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
       postgres_operator_crunchydata = {
         enabled = true
         domain = "ixoearth"
+        storage_size = "210Gi"
       }
       prometheus_stack = {
         enabled = true
@@ -123,11 +134,16 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "admin.devmx.ixo.earth"
       }
-      nfs_provisioner = {
+      matrix_livekit = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "livekit-jwt.devmx.ixo.earth"
+      }
+      metrics_server = {
         enabled = true
         domain = "ixoearth"
       }
-      metrics_server = {
+      descheduler = {
         enabled = true
         domain = "ixoearth"
       }
@@ -159,6 +175,25 @@ environments = {
       neo4j = {
         enabled = true
         domain = "ixoearth"
+        dns_prefix = "neo4j"
+      }
+      falco_security = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "falco"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      nomic_embedding = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "nomic"
+      }
+      redis = {
+        enabled = true
+        domain = "ixoearth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       # IXO Services
       ixo_cellnode = {
@@ -175,6 +210,11 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.devnetkb.ixo.earth"
+      }
+      ixo_domain_indexer = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "domain-indexer"
       }
       ixo_feegrant_nest = {
         enabled = true
@@ -260,6 +300,11 @@ environments = {
         enabled = false
         domain = "ixoearth"
       }
+      ixo_ussd_supamoto = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "ussd-supamoto"
+      }
       ixo_whizz = {
         enabled = false
         domain = "ixoearth"
@@ -319,10 +364,36 @@ environments = {
         enabled = false
         domain = "ixoearth"
       }
+      ixo_firecrawl = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "firecrawl"
+      }
       ixo_matrix_bids_bot = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "bid.bot.devmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_supamoto_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "supamoto.bot.devmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_supamoto_onboarding_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "supamoto-onboarding.devmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_supamoto_claims_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "supamoto.claims.bot.devmx.ixo.earth"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
@@ -331,15 +402,15 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "claim.bot.devmx.ixo.earth"
         storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_size = "200Gi"
       }
       ixo_subscriptions_oracle = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_endpoint = "subscriptions.oracle.devnet.ixo.earth"
       }
       ixo_subscriptions_oracle_bot = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_endpoint = "subscriptions.bot.devnet.ixo.earth"
       }
@@ -348,8 +419,23 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "pathgen.oracle"
       }
-      ixo_jokes_oracle = {
+      ixo_minerva_oracle = {
         enabled = true
+        domain = "ixoearth"
+        dns_prefix = "minerva"
+      }
+      ixo_minerva_livekit = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "minerva-livekit"
+      }
+      ixo_website_bot_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "website.bot"
+      }
+      ixo_jokes_oracle = {
+        enabled = false
         domain = "ixoearth"
         dns_endpoint = "jokes.oracle.devnet.ixo.earth"
       }
@@ -360,6 +446,11 @@ environments = {
         storage_size = "40Gi"
       }
       ixo_memory_engine = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "memory-engine"
+      }
+      ixo_memory_engine_graphiti = {
         enabled = true
         domain = "ixoearth"
         dns_prefix = "memory-engine"
@@ -397,9 +488,16 @@ environments = {
         enabled = true
         domain = "ixoearth"
       }
+      surrealdb = {
+        enabled = true
+        domain = "ixoearth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
       postgres_operator_crunchydata = {
         enabled = true
         domain = "ixoearth"
+        storage_size = "210Gi"
       }
       prometheus_stack = {
         enabled = true
@@ -442,11 +540,16 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "admin.testmx.ixo.earth"
       }
-      nfs_provisioner = {
+      matrix_livekit = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "livekit-jwt.testmx.ixo.earth"
+      }
+      metrics_server = {
         enabled = true
         domain = "ixoearth"
       }
-      metrics_server = {
+      descheduler = {
         enabled = true
         domain = "ixoearth"
       }
@@ -475,8 +578,24 @@ environments = {
         domain = "ixoearth"
       }
       neo4j = {
+        enabled = true
+        domain = "ixoearth"
+      }
+      falco_security = {
         enabled = false
         domain = "ixoearth"
+        dns_prefix = "falco"
+      }
+      nomic_embedding = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "nomic"
+      }
+      redis = {
+        enabled = true
+        domain = "ixoearth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       # IXO Services
       ixo_cellnode = {
@@ -493,6 +612,11 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.testnetkb.ixo.earth"
+      }
+      ixo_domain_indexer = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "domain-indexer"
       }
       ixo_feegrant_nest = {
         enabled = true
@@ -577,6 +701,11 @@ environments = {
         enabled = false
         domain = "ixoearth"
       }
+      ixo_ussd_supamoto = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "ussd-supamoto"
+      }
       ixo_whizz = {
         enabled = false
         domain = "ixoearth"
@@ -638,10 +767,36 @@ environments = {
         enabled = false
         domain = "ixoearth"
       }
+      ixo_firecrawl = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "firecrawl"
+      }
       ixo_matrix_bids_bot = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "bid.bot.testmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_supamoto_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "supamoto.bot.testmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_supamoto_onboarding_server = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "supamoto-onboarding.testmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_supamoto_claims_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "supamoto.claims.bot.testmx.ixo.earth"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
@@ -667,6 +822,21 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "pathgen.oracle"
       }
+      ixo_minerva_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "minerva"
+      }
+      ixo_minerva_livekit = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "minerva-livekit"
+      }
+      ixo_website_bot_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "website.bot"
+      }
       ixo_jokes_oracle = {
         enabled = false
         domain = "ixoearth"
@@ -683,8 +853,13 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "memory-engine"
       }
+      ixo_memory_engine_graphiti = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "memory-engine"
+      }
       ixo_companion = {
-        enabled = false
+        enabled = true
         domain = "ixoearth"
         dns_prefix = "companion"
       }
@@ -723,9 +898,16 @@ environments = {
         enabled = true
         domain = "ixoworld"
       }
+      surrealdb = {
+        enabled = true
+        domain = "ixoearth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
       postgres_operator_crunchydata = {
         enabled = true
         domain = "ixoworld"
+        storage_size = "300Gi"
       }
       prometheus_stack = {
         enabled = true
@@ -768,11 +950,16 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "admin.mx.ixo.earth"
       }
-      nfs_provisioner = {
+      matrix_livekit = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "livekit-jwt.mx.ixo.earth"
+      }
+      metrics_server = {
         enabled = true
         domain = "ixoworld"
       }
-      metrics_server = {
+      descheduler = {
         enabled = true
         domain = "ixoworld"
       }
@@ -801,11 +988,28 @@ environments = {
       ghost = {
         enabled = true
         domain = "ixoworld"
-        dns_prefix = "ghost"
+        dns_prefix = "impacts"
       }
       neo4j = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "neo4j"
+      }
+      falco_security = {
         enabled = false
         domain = "ixoearth"
+        dns_prefix = "falco"
+      }
+      nomic_embedding = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "nomic"
+      }
+      redis = {
+        enabled = true
+        domain = "ixoearth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       # IXO Services
       ixo_cellnode = {
@@ -822,6 +1026,11 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.mainnetkb.ixo.earth"
+      }
+      ixo_domain_indexer = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "domain-indexer"
       }
       ixo_feegrant_nest = {
         enabled = true
@@ -911,6 +1120,11 @@ environments = {
         enabled = false
         domain = "ixoearth"
       }
+      ixo_ussd_supamoto = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "ussd-supamoto"
+      }
       ixo_whizz = {
         enabled = false
         domain = "ixoearth"
@@ -985,6 +1199,32 @@ environments = {
         storage_class = "bulk"
         storage_size = "40Gi"
       }
+      ixo_firecrawl = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "firecrawl"
+      }
+      ixo_matrix_supamoto_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "supamoto.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_supamoto_onboarding_server = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "supamoto-onboarding"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_supamoto_claims_bot = {
+        enabled = false
+        domain = "ixoearth"
+        dns_endpoint = "supamoto.claims.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
       ixo_matrix_claims_bot = {
         enabled = true
         domain = "ixoworld"
@@ -1007,6 +1247,21 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "pathgen.oracle"
       }
+      ixo_minerva_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "minerva"
+      }
+      ixo_minerva_livekit = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "minerva-livekit"
+      }
+      ixo_website_bot_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "website.bot"
+      }
       ixo_jokes_oracle = {
         enabled = false
         domain = "ixoearth"
@@ -1024,8 +1279,13 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "memory-engine"
       }
+      ixo_memory_engine_graphiti = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "memory-engine"
+      }
       ixo_companion = {
-        enabled = false
+        enabled = true
         domain = "ixoearth"
         dns_prefix = "companion"
       }
@@ -1040,7 +1300,8 @@ additional_manual_synthetic_monitoring_endpoints = {
     "https://devnet.ixo.earth/rpc/",
     "https://dev.api.emerging.eco/emerging-platform/v1/hello",
     "https://devmx.ixo.earth/health",
-    "https://archive.devnet.ixo.earth/rpc/"
+    "https://archive.devnet.ixo.earth/rpc/",
+    "https://livekit-jwt.devmx.ixo.earth/healthz"
   ]
   testnet = [
     "https://payments.testnet.emerging.eco",
@@ -1049,7 +1310,8 @@ additional_manual_synthetic_monitoring_endpoints = {
     "https://testnet.ixo.earth/rpc/",
     "https://stage.api.emerging.eco/emerging-platform/v1/hello",
     "https://testmx.ixo.earth/health",
-    "https://archive.testnet.ixo.earth/rpc/"
+    "https://archive.testnet.ixo.earth/rpc/",
+    "https://livekit-jwt.testmx.ixo.earth/healthz"
   ]
   mainnet = [
     "https://coincache.ixo.earth",
@@ -1062,7 +1324,8 @@ additional_manual_synthetic_monitoring_endpoints = {
     "https://api.emerging.eco/emerging-platform/v1/hello",
     "https://mx.ixo.earth/health",
     "https://ipfs.gateway.ixo.world/health",
-    "https://archive.impacthub.ixo.earth/rpc/"
+    "https://archive.impacthub.ixo.earth/rpc/",
+    "https://livekit-jwt.mx.ixo.earth/healthz"
   ]
 }
 
@@ -1087,6 +1350,7 @@ pg_matrix = {
 }
 
 # Postgres IXO Core DB
+# TODO improve pg_users to be a map instead of a list.
 pg_ixo = {
   pg_cluster_name = "ixo-postgres"
   pg_image        = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres"
@@ -1164,6 +1428,22 @@ pg_ixo = {
     { // 17
       username = "jokes-oracle"
       databases = ["jokes-oracle"]
+    },
+    { // 18
+      username = "supamoto-bot"
+      databases = ["supamoto-bot"]
+    },
+    { // 19
+      username = "supamoto-claims-bot"
+      databases = ["supamoto-claims-bot"]
+    },
+    { // 20
+      username = "firecrawl"
+      databases = ["firecrawl"]
+    },
+    { // 21
+      username = "ussd-supamoto"
+      databases = ["ussd-supamoto"]
     }
   ]
   pg_version             = 15

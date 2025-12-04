@@ -1,0 +1,94 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-ussd-supamoto-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: "FRICASTALKING_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#FRICASTALKING_API_KEY>"
+  - name: "AFRICASTALKING_SENDER_ID"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#AFRICASTALKING_SENDER_ID>"
+  - name: "AFRICASTALKING_USERNAME"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#AFRICASTALKING_USERNAME>"
+  - name: "CHAIN_NETWORK"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#CHAIN_NETWORK>"
+  - name: "CLAIMS_BOT_ACCESS_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#CLAIMS_BOT_ACCESS_TOKEN>"
+  - name: "CLAIMS_BOT_DB_ENCRYPTION_KEY"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#CLAIMS_BOT_DB_ENCRYPTION_KEY>"
+  - name: "CLAIMS_BOT_URL"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#CLAIMS_BOT_URL>"
+  - name: "DATABASE_URL"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#DATABASE_URL>"
+  - name: "DELIVERY_CONFIRMATION_DAYS"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#DELIVERY_CONFIRMATION_DAYS>"
+  - name: "DEMO_PIN"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#DEMO_PIN>"
+  - name: "DEMO_PIN_HASH"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#DEMO_PIN_HASH>"
+  - name: "LOG_LEVEL"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#LOG_LEVEL>"
+  - name: "LOG_NAME"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#LOG_NAME>"
+  - name: "MATRIX_BOT_URL"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#MATRIX_BOT_URL>"
+  - name: "MATRIX_HOME_SERVER"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#MATRIX_HOME_SERVER>"
+  - name: "MATRIX_STATE_BOT_URL"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#MATRIX_STATE_BOT_URL>"
+  - name: "MAX_PIN_ATTEMPTS"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#MAX_PIN_ATTEMPTS>"
+  - name: "METRICS_ENABLED"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#METRICS_ENABLED>"
+  - name: "NODE_ENV"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#NODE_ENV>"
+  - name: "OTP_VALIDITY_MINUTES"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#OTP_VALIDITY_MINUTES>"
+  - name: "PG_DATABASE"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#PG_DATABASE>"
+  - name: "PG_HOST"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#PG_HOST>"
+  - name: "PG_PASSWORD"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#PG_PASSWORD>"
+  - name: "PG_PORT"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#PG_PORT>"
+  - name: "PG_USER"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#PG_USER>"
+  - name: "PIN_ENCRYPTION_KEY"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#PIN_ENCRYPTION_KEY>"
+  - name: "PORT"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#PORT>"
+  - name: "SMS_ENABLED"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#SMS_ENABLED>"
+  - name: "SMS_RETRY_ATTEMPTS"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#SMS_RETRY_ATTEMPTS>"
+  - name: "TIMEZONE"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#TIMEZONE>"
+  - name: "ZM_SERVICE_CODES"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#ZM_SERVICE_CODES>"
+  - name: "ZM_SUPPORT_PHONE"
+    value: "<path:${vault_mount}/data/ixo-ussd-supamoto#ZM_SUPPORT_PHONE>"
+service:
+  port: 3000
+resources:
+  requests:
+    memory: 200Mi
+    cpu: "50m"
+  limits:
+    memory: 350Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

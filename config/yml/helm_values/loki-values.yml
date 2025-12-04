@@ -21,6 +21,7 @@ loki:
     retention_delete_worker_count: 150
     delete_request_store: gcs
   limits_config:
+    max_label_names_per_series: 20
     retention_period: 730h
     retention_stream:
       - selector: '{namespace="core"}'
@@ -40,7 +41,7 @@ loki:
           period: 24h
 chunksCache:
   enabled: true
-  allocatedMemory: 2048
+  allocatedMemory: 512
 compactor:
   replicas: 0
 singleBinary:
@@ -48,6 +49,12 @@ singleBinary:
   persistence:
     storageClass: ${storage_class}
     size: 40Gi
+  resources:
+    requests:
+      memory: 400Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
 read:
   persistence:
     storageClass: ${storage_class}

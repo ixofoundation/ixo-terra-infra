@@ -232,7 +232,7 @@ grafana:
     - name: loki
       access: proxy
       type: loki
-      url: http://loki-gateway.loki.svc.cluster.local
+      url: http://loki.loki.svc.cluster.local:3100
 prometheusOperator:
   prometheusConfigReloader:
     resources:

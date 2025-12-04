@@ -298,3 +298,17 @@ variable "vault_core_mount" {
   type        = string
   default     = "ixo_core"
 }
+
+variable "ixo_ghost_mailgun_user" {
+  description = "Mailgun SMTP username for Ghost email configuration (e.g., ghost@impacts.ixo.world)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "ixo_ghost_mailgun_password" {
+  description = "Mailgun SMTP password for Ghost email configuration"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

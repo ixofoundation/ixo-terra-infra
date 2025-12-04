@@ -1,5 +1,6 @@
 provider:
   name: cloudflare
+registry: noop
 namespaced: false
 rbac:
   create: true
@@ -15,5 +16,3 @@ resources:
   requests:
     memory: 50Mi
     cpu: 10m
-extraArgs:
-  - --txt-new-format-only

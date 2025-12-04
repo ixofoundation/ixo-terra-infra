@@ -84,6 +84,13 @@ env:
   - name: "POSTGRES_HOST"
     value: "${pgCluster}-primary.${pgNamespace}.svc.cluster.local"
   - name: "POSTGRES_PORT"
+    value: "5432"
+  - name: "OPEN_ROUTER_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-jokes-oracle#OPEN_ROUTER_API_KEY>"
+  - name: "MEMORY_MCP_URL"
+    value: "<path:${vault_mount}/data/ixo-jokes-oracle#MEMORY_MCP_URL>"
+  - name: "MEMORY_MCP_API"
+    value: "<path:${vault_mount}/data/ixo-jokes-oracle#MEMORY_MCP_API>"
 service:
   port: 3000
 resources:

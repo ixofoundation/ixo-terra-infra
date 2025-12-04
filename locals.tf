@@ -23,7 +23,7 @@ locals {
     ]),
     lookup(var.additional_manual_synthetic_monitoring_endpoints, terraform.workspace, [])
   )
-  excluded_synthetic_monitoring = [
+  excluded_synthetic_monitoring = [ #TODO move this to variables.tf
     # Application services that shouldn't be monitored
     "ixo_trading_bot_server",
     "hermes",
@@ -45,7 +45,10 @@ locals {
     "hyperlane_validator",
     "aws_vpc",
     "chromadb",
-    "matrix_admin"
+    "matrix_admin",
+    "matrix_livekit",
+    "memory_engine_graphiti",
+    "falco_security"
   ]
 
   vault_mount_path = var.vault_core_mount
@@ -70,7 +73,7 @@ locals {
 
   storage_class_for_environment = {
     for env, env_config in var.environments : env => {
-      for service, config in env_config.application_configs : service => config.enabled && config.storage_class != null ? config.storage_class : null
+      for service, config in env_config.application_configs : service => config.enabled && config.storage_class != null ? var.storage_classes[config.storage_class] : null
     }
   }
 
@@ -284,5 +287,19 @@ EOT
   kind: ValidatingWebhookConfiguration
   jsonPointers:
     - /webhooks
+EOT
+  matrix_ignore_differences = <<EOT
+- group: ""
+  kind: Secret
+  name: matrix-synapse
+  namespace: matrix-synapse
+  jsonPointers:
+    - /data/config.yaml
+- group: apps
+  kind: Deployment
+  name: matrix-synapse
+  namespace: matrix-synapse
+  jsonPointers:
+    - /spec/template/metadata/annotations/checksum~1secrets
 EOT
 }

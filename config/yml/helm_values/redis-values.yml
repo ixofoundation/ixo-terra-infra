@@ -1,0 +1,65 @@
+# Bitnami Redis Configuration
+# Using standalone architecture for small deployments
+
+architecture: standalone
+
+auth:
+  enabled: true
+  existingSecret: ${redis_secret_name}
+
+master:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  
+  persistence:
+    enabled: true
+    size: ${storage_size}
+    storageClass: ${storage_class}
+  
+  # Disable AOF persistence for better performance in non-critical use cases
+  # Set to yes if you need durability
+  disableCommands: []
+
+# Disable replicas for minimal setup
+replica:
+  replicaCount: 0
+
+# Redis configuration
+commonConfiguration: |-
+  # Enable keyspace notifications for expired events
+  notify-keyspace-events Ex
+  # Max memory policy
+  maxmemory-policy allkeys-lru
+  # Disable RDB persistence for minimal setup (can be enabled if needed)
+  save ""
+
+# Metrics configuration (optional, can enable for Prometheus)
+metrics:
+  enabled: false
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+# Security context
+securityContext:
+  enabled: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+# Service configuration
+service:
+  type: ClusterIP
+  ports:
+    redis: 6379
+
+# Network policy
+networkPolicy:
+  enabled: false
+

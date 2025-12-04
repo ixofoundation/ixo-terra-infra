@@ -5,6 +5,12 @@ ingress:
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
+    # SSE/Streaming support
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
   tls:
     - hosts:
         - ${host}
@@ -41,14 +47,48 @@ env:
     value: "<path:${vault_mount}/data/ixo-companion#LANGFUSE_SECRET_KEY>"
   - name: "LANGFUSE_HOST"
     value: "<path:${vault_mount}/data/ixo-companion#LANGFUSE_HOST>"
+  - name: "OPEN_ROUTER_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-companion#OPEN_ROUTER_API_KEY>"
+  - name: "OPEN_ROUTER_BASE_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#OPEN_ROUTER_BASE_URL>"
+  - name: "MEMORY_MCP_API"
+    value: "<path:${vault_mount}/data/ixo-companion#MEMORY_MCP_API>"
+  - name: "MEMORY_MCP_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#MEMORY_MCP_URL>"
+  - name: "RPC_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#RPC_URL>"
+  - name: "BLOCKSYNC_GRAPHQL_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#BLOCKSYNC_GRAPHQL_URL>"
+  - name: "ORACLE_ENTITY_DID"
+    value: "<path:${vault_mount}/data/ixo-companion#ORACLE_ENTITY_DID>"
+  - name: "MEMORY_ENGINE_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#MEMORY_ENGINE_URL>"
+  - name: "MEMORY_SERVICE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-companion#MEMORY_SERVICE_API_KEY>"
+  - name: "SUBSCRIPTION_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#SUBSCRIPTION_URL>"
+  - name: "FIRECRAWL_MCP_URL"
+    value: ${firecrawl_mcp_url}
+  - name: "DOMAIN_INDEXER_URL"
+    value: "http://ixo-domain-indexer.core.svc.cluster.local:8080"
   - name: "NODE_ENV"
     value: "production"
+  - name: "NETWORK"
+    value: "<path:${vault_mount}/data/ixo-companion#NETWORK>"
+  - name: "SECP_MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-companion#SECP_MNEMONIC>"
+  - name: "REDIS_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#REDIS_URL>"
+  - name: "FIRECRAWL_MCP_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#FIRECRAWL_MCP_URL>"
+  - name: "DOMAIN_INDEXER_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#DOMAIN_INDEXER_URL>"
 resources:
   requests:
-    memory: 100Mi
+    memory: 1024Mi
     cpu: "40m"
   limits:
-    memory: 350Mi
+    memory: 1100Mi
 autoscaling:
   enabled: true
   minReplicas: 1
