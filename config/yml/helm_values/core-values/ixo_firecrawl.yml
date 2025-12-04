@@ -1,0 +1,165 @@
+replicaCount: 1
+
+# API Server Configuration
+# CI/CD will update charts/api-server/Chart.yaml appVersion
+# The deployment will use that appVersion as the image tag
+api-server:
+  image:
+    repository: ghcr.io/ixoworld/firecrawel  # Your forked repository
+    pullPolicy: Always
+    # tag: ""  # Leave empty to use Chart.AppVersion from charts/api-server/Chart.yaml
+  resources:
+    requests:
+      cpu: 300m
+      memory: 2.5Gi
+    limits:
+      memory: 2.8Gi
+  env:
+    # ===== Required ENVS ======
+    - name: HOST
+      value: "0.0.0.0"
+    - name: PORT
+      value: "3002"
+    - name: INTERNAL_PORT
+      value: "3002"
+    - name: EXTRACT_WORKER_PORT
+      value: "3004"
+    - name: WORKER_PORT
+      value: "3005"
+    - name: USE_GO_MARKDOWN_PARSER
+      value: "true"
+    - name: ENV
+      value: "production"
+    - name: USE_DB_AUTHENTICATION
+      value: "false"
+    
+    # ===== Service URLs (localhost since same pod) ======
+    - name: PLAYWRIGHT_MICROSERVICE_URL
+      value: "http://localhost:3000/scrape"
+    - name: NUQ_DATABASE_URL
+      value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}?sslmode=require"
+    - name: NODE_TLS_REJECT_UNAUTHORIZED
+      value: "0"
+    
+    # ===== Redis ======
+    - name: REDIS_URL
+      value: "redis://:<path:${vault_mount}/data/ixo-firecrawl#REDIS_PASSWORD>@${redis_host}:${redis_port}"
+    - name: REDIS_RATE_LIMIT_URL
+      value: "redis://:<path:${vault_mount}/data/ixo-firecrawl#REDIS_PASSWORD>@${redis_host}:${redis_port}"
+    
+    # ===== AI Features ======
+    - name: OPENROUTER_API_KEY
+      value: "<path:${vault_mount}/data/ixo-firecrawl#OPENROUTER_API_KEY>"
+    - name: OPENAI_API_KEY
+      value: "<path:${vault_mount}/data/ixo-firecrawl#OPENAI_API_KEY>"
+    - name: LLM_PROVIDER
+      value: "openrouter"
+    - name: MODEL_NAME
+      value: "qwen/qwen3-235b-a22b-2507"
+    - name: OPENAI_BASE_URL
+      value: "https://openrouter.ai/api/v1"
+    - name: VLM_MODEL_NAME
+      value: "qwen/qwen3-vl-235b-a22b-instruct"
+    
+    # ===== Embeddings ======
+    - name: IXO_API_KEY
+      value: "none"
+    - name: EMBEDDING_PROVIDER
+      value: "ixo"
+    - name: IXO_BASE_URL
+      value: "https://nomic.testnet.ixo.earth/v1"
+    
+    # ===== Queue Admin Panel ======
+    - name: BULL_AUTH_KEY
+      value: "<path:${vault_mount}/data/ixo-firecrawl#BULL_AUTH_KEY>"
+
+# MCP Server Configuration
+# CI/CD will update charts/mcp-server/Chart.yaml appVersion
+mcp-server:
+  image:
+    repository: ghcr.io/firecrawl/firecrawl-mcp-server  # Original or your fork
+    pullPolicy: IfNotPresent
+    # tag: ""  # Leave empty to use Chart.AppVersion from charts/mcp-server/Chart.yaml
+  resources:
+    requests:
+      cpu: 50m
+      memory: 250Mi
+    limits:
+      memory: 350Mi
+  env:
+    - name: FIRECRAWL_API_KEY
+      value: "none"
+    - name: FIRECRAWL_API_URL
+      value: "http://localhost:3002"  # localhost since same pod
+    - name: HTTP_STREAMABLE_SERVER
+      value: "true"
+    - name: HTTP_STREAMABLE_HOST
+      value: "0.0.0.0"
+    - name: HOST
+      value: "0.0.0.0"
+    - name: PORT
+      value: "3001"
+
+# Playwright Service Configuration
+# CI/CD will update charts/playwright-service/Chart.yaml appVersion
+playwright-service:
+  image:
+    repository: ghcr.io/firecrawl/playwright-service  # Original or your fork
+    pullPolicy: IfNotPresent
+    # tag: ""  # Leave empty to use Chart.AppVersion from charts/playwright-service/Chart.yaml
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      memory: 250Mi
+  env:
+    - name: PORT
+      value: "3000"
+    # Optional: Configure proxy if needed
+    # - name: PROXY_SERVER
+    #   value: ""
+    # - name: PROXY_USERNAME
+    #   value: ""
+    # - name: PROXY_PASSWORD
+    #   value: ""
+    # - name: BLOCK_MEDIA
+    #   value: ""
+
+# Service configuration
+service:
+  type: ClusterIP
+  apiPort: 3002
+  mcpPort: 3001
+  playwrightPort: 3000
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api
+    - host: mcp-${host}
+      paths:
+        - path: /
+          pathType: Prefix
+          service: mcp
+  tls:
+    - secretName: ixo-firecrawl-tls
+      hosts:
+        - ${host}
+        - mcp-${host}
+
+# Optional: Enable autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+

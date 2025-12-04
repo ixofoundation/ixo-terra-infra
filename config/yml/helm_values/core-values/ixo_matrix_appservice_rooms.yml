@@ -34,5 +34,11 @@ autoscaling:
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
 backup:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
   gcs:
     bucket: ${gcs_bucket}

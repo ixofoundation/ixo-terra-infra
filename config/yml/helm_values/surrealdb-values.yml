@@ -1,0 +1,99 @@
+# SurrealDB Configuration
+# Official Helm chart: https://github.com/surrealdb/helm-charts
+
+# SurrealDB image configuration
+image:
+  repository: surrealdb/surrealdb
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# SurrealDB server configuration
+surrealdb:
+  # Storage backend - using file-based storage for simplicity
+  # For production, consider using TiKV: tikv://pd-service:2379
+  path: "file:///data/surrealdb.db"
+  
+  # Log level
+  log: "info"
+
+# Extra environment variables for SurrealDB pods
+podExtraEnv:
+  # Authentication credentials
+  - name: SURREAL_USER
+    value: "admin"
+  - name: SURREAL_PASS
+    value: "${surrealdb_password}"
+  
+  # RocksDB configuration optimized for vector workloads
+  - name: SURREAL_ROCKSDB_BLOCK_CACHE_SIZE
+    value: "1073741824"  # 1GB block cache
+  - name: SURREAL_ROCKSDB_MAX_OPEN_FILES
+    value: "1024"
+  - name: SURREAL_ROCKSDB_WRITE_BUFFER_SIZE
+    value: "67108864"  # 64MB write buffers
+  - name: SURREAL_ROCKSDB_TARGET_FILE_SIZE_BASE
+    value: "67108864"  # 64MB target file size
+  - name: SURREAL_ROCKSDB_COMPACTION_STYLE
+    value: "level"
+  - name: SURREAL_ROCKSDB_ENABLE_BLOB_FILES
+    value: "true"  # Separate blob storage for large values
+  - name: SURREAL_ROCKSDB_MIN_BLOB_SIZE
+    value: "4096"  # Store values >4KB in blob files
+  - name: SURREAL_ROCKSDB_BLOB_COMPRESSION_TYPE
+    value: "zstd"  # Compress blob files
+  - name: SURREAL_SYNC_DATA
+    value: "false"  # Faster writes (set to true for durability in prod)
+  - name: RUST_BACKTRACE
+    value: "1"  # Enable backtrace for debugging
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: "${storage_class}"
+  accessMode: ReadWriteOnce
+  size: ${storage_size}
+
+# Replica count
+replicaCount: 1
+
+# Pod security context (pod-level)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Container security context (container-level)
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+
+# Pod annotations
+podAnnotations: {}
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+

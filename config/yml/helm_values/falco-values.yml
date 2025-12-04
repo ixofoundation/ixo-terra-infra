@@ -1,0 +1,497 @@
+# Falco Configuration for IXO Infrastructure
+# Monitors runtime security across core services and infrastructure
+
+# Flush falco logs immediately.
+tty: true
+
+# Resource limits for DaemonSet pods
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+podLabels:
+  app.kubernetes.io/part-of: "ixo"
+
+# Custom Falco rules for IXO infrastructure
+customRules:
+  backup-whitelist.yaml: |
+    # Define macros for legitimate backup activities
+    - macro: legitimate_backup_containers
+      condition: >
+        (container.name contains "backup" or 
+         container.name contains "gcp-backups" or
+         container.name contains "matrix-synapse" or
+         container.name = "synapse" or
+         container.image.repository contains "google/cloud-sdk" or
+         container.image.repository contains "ixoworld/synapse")
+    
+    - macro: legitimate_backup_processes
+      condition: >
+        (proc.cmdline contains "zip" or
+         proc.cmdline contains "unzip" or
+         proc.cmdline contains "tar" or
+         proc.cmdline contains "gzip" or
+         proc.cmdline contains "bzip2" or
+         proc.cmdline contains "gsutil" or
+         proc.cmdline contains "aws" or
+         proc.cmdline contains "python" or
+         proc.cmdline contains "date" or
+         proc.cmdline contains "apt-get" or
+         proc.cmdline contains "apt-config" or
+         proc.cmdline contains "dpkg" or
+         proc.cmdline contains "readlink" or
+         proc.cmdline contains "dirname" or
+         proc.cmdline contains "basename" or
+         proc.cmdline contains "uname" or
+         proc.cmdline contains "tput" or
+         proc.cmdline contains "yarn" or
+         proc.cmdline contains "postgres" or
+         proc.cmdline contains "ldconfig" or
+         proc.cmdline contains "sort" or
+         proc.cmdline contains "grep" or
+         proc.cmdline contains "cat" or
+         proc.cmdline contains "promtail" or
+         proc.cmdline contains "rm" or
+         proc.cmdline contains "which" or
+         proc.cmdline contains "gcloud" or
+         proc.cmdline contains "sleep" or
+         proc.cwd contains "/data" or
+         proc.cwd contains "/backup" or
+         proc.cwd contains "/storage" or
+         proc.cwd contains "/synapse/" or
+         proc.cwd contains "/bot/")
+    
+    # PostgreSQL and database operations
+    - macro: legitimate_postgres_containers
+      condition: >
+        (container.image.repository contains "crunchy-postgres" or
+         container.image.repository contains "crunchy-pgbackrest" or
+         container.name in (database, replication-cert-copy, exporter, pgbackrest) or
+         k8s.ns.name in (ixo-postgres, matrix-synapse))
+    
+    - macro: legitimate_postgres_processes
+      condition: >
+        (proc.cmdline contains "pgbackrest" or
+         proc.cmdline contains "awk" or
+         proc.cmdline contains "sed" or
+         proc.cmdline contains "head" or
+         proc.cmdline contains "df" or
+         proc.cmdline contains "sh" or
+         proc.cmdline contains "bash" or
+         proc.cmdline contains "pg_isready" or
+         proc.cmdline contains "patronictl" or
+         proc.cmdline contains "uname" or
+         proc.cmdline contains "sha1sum" or
+         proc.cwd contains "/pgdata")
+    
+    # Calico networking operations
+    - macro: legitimate_calico_containers
+      condition: >
+        (container.image.repository contains "calico/node" or
+         container.image.repository contains "calico/kube-controllers" or
+         container.name in (calico-node, calico-kube-controllers) or
+         k8s.ns.name = "kube-system")
+    
+    - macro: legitimate_calico_processes
+      condition: >
+        (proc.cmdline contains "ipset" or
+         proc.cmdline contains "calico-node" or
+         proc.cmdline contains "birdcl" or
+         proc.cmdline contains "sv" or
+         proc.cmdline contains "iptables" or
+         proc.cmdline contains "ip6tables" or
+         proc.cmdline contains "tc" or
+         proc.cmdline contains "check-status" or
+         proc.cmdline contains "conntrack")
+    
+    # Vault operations
+    - macro: legitimate_vault_containers
+      condition: >
+        (container.image.repository contains "hashicorp/vault" or
+         container.name = "vault" or
+         k8s.ns.name = "vault")
+    
+    - macro: legitimate_vault_processes
+      condition: >
+        (proc.cmdline contains "vault" or
+         proc.cmdline contains "sh")
+    
+    # System monitoring and health checks
+    - macro: legitimate_monitoring_containers
+      condition: >
+        (container.image.repository contains "operatorhubio/catalog" or
+         container.name in (registry-server, exporter, csi-vultr-plugin, controller, acmesolver) or
+         container.name = "" or
+         k8s.ns.name in (operator-lifecycle-manager, kube-system, ingress-nginx))
+    
+    - macro: legitimate_monitoring_processes
+      condition: >
+        (proc.cmdline contains "grpc_health_pro" or
+         proc.cmdline contains "opm" or
+         proc.cmdline contains "pause" or
+         proc.cmdline contains "dpkg" or
+         proc.cmdline contains "docker-entrypoi" or
+         proc.cmdline contains "sed" or
+         proc.cmdline contains "fsck" or
+         proc.cmdline contains "nginx" or
+         proc.cmdline contains "node" or
+         proc.cmdline contains "http" or
+         proc.cmdline contains "python" or
+         proc.cmdline contains "apt-config" or
+         proc.cmdline contains "apt-key" or
+         proc.cmdline contains "mktemp" or
+         proc.cmdline contains "test" or
+         proc.cmdline contains "gpgconf" or
+         proc.cmdline contains "gpgv" or
+         proc.cmdline contains "gpg" or
+         proc.cmdline contains "store" or
+         proc.cmdline contains "tar" or
+         proc.cmdline contains "rm" or
+         proc.cmdline contains "which" or
+         proc.cmdline contains "chmod" or
+         proc.cmdline contains "chown" or
+         proc.cmdline contains "umount" or
+         proc.cmdline contains "mount" or
+         proc.cmdline contains "blockdev" or
+         proc.cmdline contains "blkid" or
+         proc.cmdline contains "dumpe2fs" or
+         proc.cmdline contains "acmesolver" or
+         proc.cmdline contains "mkfs.ext4")
+    
+    # Kubernetes pause and init containers (can have null metadata during initialization)
+    - macro: legitimate_pause_containers
+      condition: >
+        (proc.cmdline = "pause" or
+         proc.cmdline contains "init" or
+         container.name = null or
+         container.name = "" or
+         k8s.pod.name = null or
+         k8s.pod.name = "" or
+         k8s.ns.name = null or
+         k8s.ns.name = "")
+    
+    # Redis operations and health checks
+    - macro: legitimate_redis_containers
+      condition: >
+        (container.image.repository contains "bitnami/redis" or
+         container.name = "redis" or
+         k8s.pod.name contains "redis")
+    
+    - macro: legitimate_redis_processes
+      condition: >
+        (proc.cmdline contains "sh" or
+         proc.cmdline contains "ping_readiness" or
+         proc.cmdline contains "ping_liveness" or
+         proc.cmdline contains "timeout" or
+         proc.cmdline contains "redis-cli" or
+         proc.cmdline contains "head" or
+         proc.cmdline contains "awk" or
+         proc.cwd = "/")
+    
+    # Application health checks
+    - macro: legitimate_app_health_containers
+      condition: >
+        (container.image.repository contains "louislam/uptime-kuma" or
+         container.name = "uptime-kuma" or
+         k8s.ns.name = "uptime-kuma")
+    
+    - macro: legitimate_app_health_processes
+      condition: >
+        (proc.cmdline contains "healthcheck" or
+         proc.cmdline contains "dumb-init" or
+         proc.cmdline contains "entrypoint" or
+         proc.cmdline contains "sh" or
+         proc.cmdline contains "chown" or
+         proc.cmdline contains "setpriv" or
+         proc.cmdline contains "node" or
+         proc.cmdline contains "sudo" or
+         proc.cmdline contains "service" or
+         proc.cmdline contains "basename" or
+         proc.cmdline contains "env" or
+         proc.cwd = "/app/" or
+         proc.cwd = "/")
+    
+    # DNS management services
+    - macro: legitimate_dns_containers
+      condition: >
+        (container.image.repository contains "external-dns/external-dns" or
+         container.name = "external-dns" or
+         k8s.ns.name = "external-dns")
+
+    - macro: legitimate_dns_processes
+      condition: >
+        proc.cmdline contains "external-dns"
+
+    # Kubernetes webhook certificate generation (generic pattern)
+    - macro: legitimate_webhook_cert_containers
+      condition: >
+        (container.image.repository contains "kube-webhook-certgen" or
+         container.image.repository contains "webhook-certgen" or
+         container.name in (create, patch) or
+         k8s.pod.name contains "admission-create" or
+         k8s.pod.name contains "admission-patch" or
+         k8s.ns.name in (ingress-nginx, kube-system))
+
+    - macro: legitimate_webhook_cert_processes
+      condition: >
+        (proc.cmdline contains "kube-webhook" or
+         proc.cmdline contains "webhook" or
+         proc.cmdline contains "admission")
+
+    # Node.js application startup patterns (generic)
+    - macro: legitimate_nodejs_app_containers
+      condition: >
+        (container.image.repository contains "node" or
+         container.image.repository contains "ixoworld" or
+         container.image.repository contains "ixofoundation" or
+         container.name contains "app" or
+         container.name contains "companion" or
+         k8s.pod.name contains "ixo-" or
+         k8s.ns.name in (core, matrix-synapse))
+
+    - macro: legitimate_nodejs_app_processes
+      condition: >
+        (proc.cmdline contains "docker-entrypoint" or
+         proc.cmdline contains "node" or
+         proc.cmdline contains "sh" or
+         proc.cwd contains "/app/" or
+         proc.cwd contains "/usr/src/app/" or
+         proc.cwd contains "/home/node/")
+
+    # Matrix Synapse processes
+    - macro: legitimate_matrix_containers
+      condition: >
+        (k8s.ns.name = "matrix-synapse" or
+         container.name contains "matrix" or
+         container.name contains "ixo-matrix" or
+         container.name contains "gcp-backups" or
+         container.image.repository contains "ixoworld/synapse" or
+         container.image.repository contains "matrix")
+    
+    - macro: legitimate_matrix_processes
+      condition: >
+        (proc.cmdline contains "python" or
+         proc.cmdline contains "gcloud" or
+         proc.cmdline contains "store" or
+         proc.cmdline contains "http" or
+         proc.cmdline contains "deb-systemd-helper" or
+         proc.cmdline contains "tee" or
+         proc.cmdline contains "gpgv" or
+         proc.cmdline contains "gpg" or
+         proc.cmdline contains "gpgconf" or
+         proc.cmdline contains "mktemp" or
+         proc.cmdline contains "chmod" or
+         proc.cmdline contains "chown" or
+         proc.cmdline contains "apt" or
+         proc.cmdline contains "dpkg" or
+         proc.cmdline contains "tar" or
+         proc.cmdline contains "gzip" or
+         proc.cmdline contains "rm" or
+         proc.cmdline contains "sh" or
+         proc.cmdline contains "bash")
+    
+    # IXO application processes (broad filter for all IXO apps across namespaces)
+    - macro: legitimate_ixo_app_containers
+      condition: >
+        (k8s.ns.name in (core, matrix-synapse, nomic-embedding) or
+         container.image.repository contains "ixofoundation/" or
+         container.image.repository contains "ixoworld/" or
+         container.image.repository contains "ggml-org/llama.cpp" or
+         container.name contains "ixo-" or
+         container.name contains "memory-engine" or
+         container.name = "nomic-embedding")
+
+    - macro: legitimate_ixo_app_processes
+      condition: >
+        (proc.cmdline contains "sh" or
+         proc.cmdline contains "bash" or
+         proc.cmdline contains "su" or
+         proc.cmdline contains "python" or
+         proc.cmdline contains "uv" or
+         proc.cmdline contains "uvicorn" or
+         proc.cmdline contains "start.sh" or
+         proc.cmdline contains "uname" or
+         proc.cmdline contains "llama-server" or
+         proc.cmdline contains "download-model" or
+         proc.cmdline contains "mkdir" or
+         proc.cmdline contains "du" or
+         proc.cmdline contains "cut")
+
+    # ArgoCD Git and deployment operations
+    - macro: legitimate_argocd_containers
+      condition: >
+        (container.image.repository contains "argoproj/argocd" or
+         container.image.repository contains "registry.access.redhat.com/ubi8" or
+         container.name in (repo-server, avp) or
+         k8s.ns.name = "app-argocd")
+
+    - macro: legitimate_argocd_processes
+      condition: >
+        (proc.cmdline contains "git" or
+         proc.cmdline contains "helm" or
+         proc.cmdline contains "argocd-vault-plugin" or
+         proc.cmdline contains "find" or
+         proc.cmdline contains "sh" or
+         proc.cmdline contains "bash" or
+         proc.cwd contains "/tmp/_argocd-repo/" or
+         proc.cwd contains "/tmp/_cmp_server/")
+    
+    # Override the default rule to exclude all legitimate system processes
+    - rule: Drop and execute new binary in container
+      desc: "Detect new binary execution (excluding legitimate system processes)"
+      condition: >
+        spawned_process and container and
+        not (
+          (legitimate_backup_containers and legitimate_backup_processes) or
+          (legitimate_postgres_containers and legitimate_postgres_processes) or
+          (legitimate_calico_containers and legitimate_calico_processes) or
+          (legitimate_vault_containers and legitimate_vault_processes) or
+          (legitimate_monitoring_containers and legitimate_monitoring_processes) or
+          (legitimate_redis_containers and legitimate_redis_processes) or
+          (legitimate_app_health_containers and legitimate_app_health_processes) or
+          (legitimate_dns_containers and legitimate_dns_processes) or
+          (legitimate_webhook_cert_containers and legitimate_webhook_cert_processes) or
+          (legitimate_nodejs_app_containers and legitimate_nodejs_app_processes) or
+          (legitimate_ixo_app_containers and legitimate_ixo_app_processes) or
+          (legitimate_argocd_containers and legitimate_argocd_processes) or
+          (legitimate_matrix_containers and legitimate_matrix_processes) or
+          legitimate_pause_containers
+        )
+      output: "New binary executed in container (user=%user.name command=%proc.cmdline container=%container.name proc_cwd=%proc.cwd)"
+      priority: CRITICAL
+      tags: [container, process, mitre_persistence]
+      
+    # Monitor legitimate system processes (informational)
+    - rule: Legitimate System Process Activity
+      desc: "Monitor legitimate system processes for auditing purposes"
+      condition: >
+        spawned_process and container and
+        (
+          (legitimate_backup_containers and legitimate_backup_processes) or
+          (legitimate_postgres_containers and legitimate_postgres_processes) or
+          (legitimate_calico_containers and legitimate_calico_processes) or
+          (legitimate_vault_containers and legitimate_vault_processes) or
+          (legitimate_monitoring_containers and legitimate_monitoring_processes) or
+          (legitimate_redis_containers and legitimate_redis_processes) or
+          (legitimate_app_health_containers and legitimate_app_health_processes) or
+          (legitimate_dns_containers and legitimate_dns_processes) or
+          (legitimate_webhook_cert_containers and legitimate_webhook_cert_processes) or
+          (legitimate_nodejs_app_containers and legitimate_nodejs_app_processes) or
+          (legitimate_ixo_app_containers and legitimate_ixo_app_processes) or
+          (legitimate_argocd_containers and legitimate_argocd_processes) or
+          (legitimate_matrix_containers and legitimate_matrix_processes) or
+          legitimate_pause_containers
+        )
+      output: "Legitimate system process activity (container=%container.name command=%proc.cmdline cwd=%proc.cwd user=%user.name namespace=%k8s.ns.name)"
+      priority: INFORMATIONAL
+      tags: [system, legitimate, informational]
+
+  custom-rules.yaml: |
+    # IXO-specific security rules
+    
+    # Monitor access to core service configurations
+    - rule: Core Service Config Access
+      desc: "Detect unauthorized access to IXO core service configs"
+      condition: >
+        open_read and container and
+        fd.name startswith "/app/config" and
+        not proc.name in (node, npm, yarn, ixo-cellnode, ixo-blocksync)
+      output: "Unauthorized config access in core service (user=%user.name command=%proc.cmdline file=%fd.name)"
+      priority: WARNING
+      tags: [ixo, config, core]
+    
+    # Monitor database connections
+    - rule: Unexpected Database Connection
+      desc: "Detect unexpected database connections"
+      condition: >
+        spawned_process and container and
+        proc.name in (psql, mysql, mongo) and
+        not (container.image.repository contains "postgres" or 
+             container.image.repository contains "mysql" or 
+             container.image.repository contains "mongo")
+      output: "Unexpected database client in non-database container (user=%user.name command=%proc.cmdline container=%container.name)"
+      priority: ERROR
+      tags: [ixo, database, access]
+    
+    # Monitor vault access
+    - rule: Vault Secret Access
+      desc: "Monitor access to vault secrets"
+      condition: >
+        open_read and container and
+        fd.name contains "/vault/secrets" and
+        not proc.name in (vault, argocd-application-controller, argocd-server)
+      output: "Vault secret access detected (user=%user.name command=%proc.cmdline file=%fd.name container=%container.name)"
+      priority: NOTICE
+      tags: [ixo, vault, secrets]
+    
+    # Monitor privilege escalation in core services
+    - rule: Core Service Privilege Escalation
+      desc: "Detect privilege escalation in IXO core services"
+      condition: >
+        spawned_process and container and
+        k8s.ns.name = "core" and
+        proc.name in (su, sudo, doas) and
+        not proc.args contains "npm"
+      output: "Privilege escalation in core service (user=%user.name command=%proc.cmdline container=%container.name)"
+      priority: CRITICAL
+      tags: [ixo, core, privilege-escalation]
+
+# Storage configuration
+persistence:
+  enabled: true
+  storageClass: ${storage_class}
+  size: ${storage_size}
+
+# Falco configuration section
+falco:
+  # Enable JSON output for better parsing
+  json_output: true
+  json_include_output_property: true
+  json_include_tags_property: true
+
+  # Disable buffered outputs for real-time security alerts
+  buffered_outputs: false
+
+  # File output configuration
+  file_output:
+    enabled: true
+    keep_alive: true  # Keep file handle open for better performance
+    filename: "/var/log/falco_events.log"
+    # Force immediate flush for real-time alerts
+    flush: true
+
+  priority: warning
+
+  # Enable webserver for health checks and metrics
+  webserver:
+    enabled: true
+    listen_port: 8765
+    k8s_healthz_endpoint: /healthz
+
+# Mount volumes for log persistence
+volumes:
+  - name: falco-logs
+    hostPath:
+      path: /var/log/falco
+      type: DirectoryOrCreate
+
+volumeMounts:
+  - name: falco-logs
+    mountPath: /var/log/falco
+
+# Configure log rotation
+logrotate:
+  enabled: true
+  config: |
+    /var/log/falco_events.log {
+        daily
+        rotate 30
+        compress
+        delaycompress
+        missingok
+        notifempty
+        create 644 root root
+    }

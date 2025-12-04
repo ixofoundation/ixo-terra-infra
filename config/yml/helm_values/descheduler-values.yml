@@ -1,0 +1,69 @@
+# Descheduler Configuration
+# Official Helm chart: https://github.com/kubernetes-sigs/descheduler
+
+# Run as Deployment instead of CronJob for better reliability
+kind: Deployment
+
+# Enable leader election for high availability
+leaderElection:
+  enabled: true
+
+# Descheduling interval (only used when kind is Deployment)
+deschedulingInterval: 5m
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    memory: 256Mi
+
+# Descheduler policy configuration
+# Note: This replaces the entire default policy, so we must include plugins section
+# to ensure LowNodeUtilization is enabled
+deschedulerPolicy:
+  profiles:
+    - name: default
+      pluginConfig:
+        - name: DefaultEvictor
+          args:
+            podProtections:
+              defaultDisabled:
+                - "PodsWithLocalStorage"
+              extraEnabled:
+                - "PodsWithPVC"
+        - name: RemoveDuplicates
+        - name: RemovePodsHavingTooManyRestarts
+          args:
+            podRestartThreshold: 100
+            includingInitContainers: true
+        - name: RemovePodsViolatingNodeAffinity
+          args:
+            nodeAffinityType:
+              - requiredDuringSchedulingIgnoredDuringExecution
+        - name: RemovePodsViolatingNodeTaints
+        - name: RemovePodsViolatingInterPodAntiAffinity
+        - name: RemovePodsViolatingTopologySpreadConstraint
+        - name: LowNodeUtilization
+          args:
+            thresholds:
+              cpu: 55
+              memory: 55
+              pods: 100  # Set to 100% to disable pod count-based balancing
+            targetThresholds:
+              cpu: 80
+              memory: 75
+              pods: 100  # Set to 100% to disable pod count-based balancing
+      plugins:
+        balance:
+          enabled:
+            - RemoveDuplicates
+            - RemovePodsViolatingTopologySpreadConstraint
+            - LowNodeUtilization
+        deschedule:
+          enabled:
+            - RemovePodsHavingTooManyRestarts
+            - RemovePodsViolatingNodeTaints
+            - RemovePodsViolatingNodeAffinity
+            - RemovePodsViolatingInterPodAntiAffinity
+

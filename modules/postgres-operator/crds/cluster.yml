@@ -46,6 +46,10 @@ spec:
     dynamicConfiguration:
       postgresql:
         parameters:
+%{ if enable_pg_cron ~}
+          shared_preload_libraries: 'pg_cron'
+          cron.database_name: '${pg_cron_database}'
+%{ endif ~}
           log_checkpoints: 'on'
           log_statement: 'mod'
           log_line_prefix: '%t [%p]: host=%h user=%u,db=%d '

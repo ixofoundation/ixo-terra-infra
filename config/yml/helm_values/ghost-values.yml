@@ -1,5 +1,25 @@
+resourcesPreset: 'medium'
+ghostPassword: '${ghost_password}'
+ghostHost: 'https://${host}/'
+ghostEnableHttps: true
+smtpHost: 'smtp.eu.mailgun.org'
+smtpPort: 465
+smtpProtocol: 'ssl'
+smtpUser: '${ghost_smtp_user}'
+smtpPassword: '${ghost_smtp_password}'
+smtpService: 'Mailgun'
+# Configure custom admin URL to make admin interface less discoverable
+ghostConfig: |
+  {
+    "admin": {
+      "url": "https://admin.${host}/"
+    }
+  }
 service:
   type: ClusterIP
+  ports:
+    http: 80
+    https: 443
 ingress:
   enabled: true
   ingressClassName: nginx
@@ -7,6 +27,8 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     nginx.ingress.kubernetes.io/proxy-body-size: 500M
+    # IP whitelist for admin access (uncomment and replace with your IPs)
+    # nginx.ingress.kubernetes.io/whitelist-source-range: "1.2.3.4/32,5.6.7.8/32"
   tls:
     - hosts:
         - ${host}
@@ -22,3 +44,8 @@ mysql:
     database: bitnami_ghost
     username: bn_ghost
 ghostEmail: 'ixo@ixo.world' # todo, make configurable.
+livenessProbe:
+  enabled: true
+readinessProbe:
+  enabled: true
+ghostUsername: 'ixoworld'

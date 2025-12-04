@@ -54,3 +54,17 @@ GRANT CREATE ON SCHEMA "public" to "pathgen-oracle";
 
 \c 'jokes-oracle'
 GRANT CREATE ON SCHEMA "public" to "jokes-oracle";
+
+\c 'supamoto-bot'
+GRANT CREATE ON SCHEMA "public" to "supamoto-bot";
+
+\c 'supamoto-claims-bot'
+GRANT CREATE ON SCHEMA "public" to "supamoto-claims-bot";
+
+\c firecrawl
+GRANT CREATE ON SCHEMA "public" to "firecrawl";
+-- NUQ Queue System: For existing databases, run config/sql/firecrawl-nuq.sql manually:
+-- kubectl exec -n ixo-postgres <pod-name> -c database -- psql -U firecrawl -d firecrawl -f /path/to/firecrawl-nuq.sql
+
+\c 'ussd-supamoto'
+GRANT CREATE ON SCHEMA "public" TO "ussd-supamoto";

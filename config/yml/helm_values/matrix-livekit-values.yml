@@ -1,0 +1,28 @@
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: matrix-livekit-tls
+      hosts:
+        - ${host}
+resources:
+  limits:
+    memory: 250Mi
+  requests:
+    cpu: 50m
+    memory: 100Mi
+
+livekit:
+  url: "<path:${vault_mount}/data/matrix-livekit#LIVEKIT_URL>"
+  keyFromFile: "<path:${vault_mount}/data/matrix-livekit#LIVEKIT_KEY>"
+  secretFromFile: "<path:${vault_mount}/data/matrix-livekit#LIVEKIT_SECRET>"

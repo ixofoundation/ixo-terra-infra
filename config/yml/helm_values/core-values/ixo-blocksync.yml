@@ -35,6 +35,10 @@ env:
     value: "<path:${vault_mount}/data/ixo-blocksync#DATABASE_URL>"
   - name: "ENTITY_MODULE_CONTRACT_ADDRESS"
     value: "<path:${vault_mount}/data/ixo-blocksync#ENTITY_MODULE_CONTRACT_ADDRESS>"
+  - name: "IXO_ARCHIVE_NODE_REST_API"
+    value: "https://archive${environment == "mainnet" ? "" : ".${environment}"}.ixo.earth"
+  - name: "NETWORK"
+    value: "<path:${vault_mount}/data/ixo-blocksync#NETWORK>"
 resources:
   requests:
     memory: 1Gi

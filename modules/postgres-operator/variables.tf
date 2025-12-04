@@ -15,6 +15,8 @@ variable "clusters" {
       pgmonitoring_image     = optional(string)
       pgmonitoring_image_tag = optional(string)
       initSql                = optional(string)
+      enable_pg_cron         = optional(bool, false)
+      pg_cron_database       = optional(string, "postgres")
     }
     )
   )

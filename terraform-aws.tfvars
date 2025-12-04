@@ -47,6 +47,7 @@ versions = {
   hummingbot                   = "0.2.0"
   uptime-kuma                  = "2.21.2" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
   chromadb                     = "0.1.23" # https://github.com/amikos-tech/chromadb-chart
+  redis                        = "23.2.12" # https://artifacthub.io/packages/helm/bitnami/redis
 }
 
 gcp_project_ids = {
@@ -155,7 +156,12 @@ environments = {
         enabled = false
         domain = "ixoearth"
       }
-      
+      redis = {
+        enabled = true
+        domain = "ixoearth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
       # IXO Services
       ixo_cellnode = {
         enabled = false

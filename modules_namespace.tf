@@ -10,6 +10,12 @@ resource "kubernetes_namespace_v1" "ingress_nginx" {
   }
 }
 
+resource "kubernetes_namespace_v1" "redis" {
+  metadata {
+    name = "redis"
+  }
+}
+
 resource "kubernetes_namespace_v1" "postgres_operator" {
   metadata {
     name = "postgres-operator"
@@ -97,5 +103,29 @@ resource "kubernetes_namespace_v1" "ghost" {
 resource "kubernetes_namespace_v1" "neo4j" {
   metadata {
     name = "neo4j"
+  }
+}
+
+resource "kubernetes_namespace_v1" "matrix_livekit" {
+  metadata {
+    name = "matrix-livekit"
+  }
+}
+
+resource "kubernetes_namespace_v1" "falco_security" {
+  metadata {
+    name = "falco-security"
+  }
+}
+
+resource "kubernetes_namespace_v1" "surrealdb" {
+  metadata {
+    name = "surrealdb"
+  }
+}
+
+resource "kubernetes_namespace_v1" "descheduler" {
+  metadata {
+    name = "descheduler"
   }
 }

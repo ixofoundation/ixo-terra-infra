@@ -28,10 +28,10 @@ module "kubernetes_cluster" {
     k8_version                  = var.versions["kubernetes_cluster"]
     cluster_region              = local.region_ids["Amsterdam"]
     ha_controlplanes            = false
-    initial_node_pool_quantity  = 2
+    initial_node_pool_quantity  = 5
     initial_node_pool_scaler    = true
-    initial_node_pool_min_nodes = 2
-    initial_node_pool_max_nodes = 4
+    initial_node_pool_min_nodes = 5
+    initial_node_pool_max_nodes = 6
   }
   
   aws = {
@@ -48,7 +48,7 @@ module "kubernetes_cluster" {
     node_capacity_type      = "ON_DEMAND"
     node_disk_size          = var.environments[terraform.workspace].is_development != true ? 800 : 600
     node_desired_capacity   = var.environments[terraform.workspace].is_development != true ? 3 : 3
-    node_max_capacity       = var.environments[terraform.workspace].is_development != true ? 10 : 4
+    node_max_capacity       = var.environments[terraform.workspace].is_development != true ? 10 : 5
     node_min_capacity       = var.environments[terraform.workspace].is_development != true ? 3 : 1
     node_key_name           = null
     node_security_group_ids = null
@@ -151,6 +151,52 @@ module "postgres_operator_crunchydata" {
     repository      = "https://github.com/ixofoundation/postgres-operator-examples"
     path            = "helm/install"
     values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "redis" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].application_configs["redis"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "redis"
+    namespace = kubernetes_namespace_v1.redis.metadata[0].name
+    helm = {
+      isOci             = true
+      chart             = "redis"
+      revision          = var.versions["redis"]
+    }
+    repository = "registry-1.docker.io/bitnamicharts"
+    values_override = templatefile("${local.helm_values_config_path}/redis-values.yml", {
+      storage_class = local.storage_class_for_environment[terraform.workspace]["redis"]
+      storage_size = local.storage_size_for_environment[terraform.workspace]["redis"]
+      redis_secret_name = kubernetes_secret_v1.redis_secret[0].metadata[0].name
+    })
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "surrealdb" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].application_configs["surrealdb"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "surrealdb"
+    namespace = kubernetes_namespace_v1.surrealdb.metadata[0].name
+    helm = {
+      isOci    = false
+      chart    = "surrealdb"
+      revision = var.versions["surrealdb"]
+    }
+    repository = "https://helm.surrealdb.com"
+    values_override = templatefile("${local.helm_values_config_path}/surrealdb-values.yml", {
+      storage_class      = local.storage_class_for_environment[terraform.workspace]["surrealdb"]
+      storage_size       = local.storage_size_for_environment[terraform.workspace]["surrealdb"]
+      surrealdb_password = random_password.surrealdb_password.result
+    })
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
@@ -346,6 +392,7 @@ module "matrix" {
       isOci    = false
       chart    = "matrix-synapse"
       revision = var.versions["matrix"]
+      ignoreDifferences = local.matrix_ignore_differences
     }
     repository = "https://ananace.gitlab.io/charts"
     values_override = templatefile("${local.helm_values_config_path}/matrix-values.yml",
@@ -358,6 +405,7 @@ module "matrix" {
         app_name        = "matrix"
         gcs_bucket_url  = google_storage_bucket.matrix_backups[0].url
         storage_class   = var.storage_classes["bulk"]
+        livekit_host    = local.dns_for_environment[terraform.workspace]["matrix_livekit"]
       }
     )
   }
@@ -365,26 +413,27 @@ module "matrix" {
   vault_mount_path = local.vault_mount_path
 }
 
-# TODO Remove NFS module, use storage class storage.
-module "nfs_provisioner" {
+module "matrix_livekit" {
   depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].application_configs["nfs_provisioner"].enabled ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["matrix_livekit"].enabled ? 1 : 0
   source     = "./modules/argocd_application"
   application = {
-    name      = "nfs-provisioner"
-    namespace = kubernetes_namespace_v1.nfs_provisioner.metadata[0].name
-    helm = {
-      isOci             = false
-      chart             = "nfs-server-provisioner"
-      revision          = "1.8.0"
-      ignoreDifferences = local.nfs_provisioner_ignore_differences
-    }
-    repository      = "https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner"
-    values_override = templatefile("${local.helm_values_config_path}/nfs-values.yml", {
-      storage_class = var.storage_classes["bulk"]
+    name      = "matrix-livekit"
+    namespace = kubernetes_namespace_v1.matrix_livekit.metadata[0].name
+    repository = var.ixo_terra_infra_repository
+    path = "charts/matrix_livekit"
+    values_override = templatefile("${local.helm_values_config_path}/matrix-livekit-values.yml", {
+      host = local.dns_for_environment[terraform.workspace]["matrix_livekit"]
+      vault_mount = local.vault_mount_path
     })
   }
   argo_namespace   = module.argocd.argo_namespace
+  create_kv        = true
+  kv_defaults = {
+    LIVEKIT_URL = ""
+    LIVEKIT_KEY = ""
+    LIVEKIT_SECRET = ""
+  }
   vault_mount_path = local.vault_mount_path
 }
 
@@ -401,6 +450,25 @@ module "metrics_server" {
       chart    = "metrics-server"
       revision = var.versions["metrics-server"]
     }
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "descheduler" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].application_configs["descheduler"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "descheduler"
+    namespace  = kubernetes_namespace_v1.descheduler.metadata[0].name
+    repository = "https://kubernetes-sigs.github.io/descheduler/"
+    helm = {
+      isOci    = false
+      chart    = "descheduler"
+      revision = var.versions["descheduler"]
+    }
+    values_override = templatefile("${local.helm_values_config_path}/descheduler-values.yml", {})
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
@@ -486,7 +554,9 @@ module "postgres-operator" { # Sets up Cluster Instances
       pg_image             = var.pg_ixo.pg_image
       pg_image_tag         = var.pg_ixo.pg_image_tag
       pg_version           = var.pg_ixo.pg_version
-      pg_instances         = file("${local.postgres_operator_config_path}/ixo-postgres-instances.yml")
+      pg_instances         = templatefile("${local.postgres_operator_config_path}/ixo-postgres-instances.yml", {
+        storage_size = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].storage_size
+      })
       pg_users             = local.pg_users_yaml
       pg_usernames         = local.pg_users_usernames
       pgbackrest_image     = var.pg_ixo.pgbackrest_image
@@ -499,22 +569,24 @@ module "postgres-operator" { # Sets up Cluster Instances
       pgmonitoring_image     = var.pg_ixo.pgmonitoring_image
       pgmonitoring_image_tag = var.pg_ixo.pgmonitoring_image_tag
       initSql                = file("${path.root}/config/sql/ixo-init.sql")
+      enable_pg_cron         = true
+      pg_cron_database       = "firecrawl"
     }
   ]
   gcs_key = file("${path.root}/credentials.json")
 }
 
-module "hyperlane_validator" {
-  source = "./modules/hyperlane"
-  count      = var.environments[terraform.workspace].application_configs["hyperlane_validator"].enabled ? 1 : 0
-  providers = {
-    aws = aws
-  }
-  aws_region = var.environments[terraform.workspace].aws_region
-  environment = terraform.workspace
-  chain_names = var.environments[terraform.workspace].hyperlane.chain_names
-  metadata_chains = var.environments[terraform.workspace].hyperlane.metadata_chains
-}
+# module "hyperlane_validator" {
+#   source = "./modules/hyperlane"
+#   count      = var.environments[terraform.workspace].application_configs["hyperlane_validator"].enabled ? 1 : 0
+#   providers = {
+#     aws = aws
+#   }
+#   aws_region = var.environments[terraform.workspace].aws_region
+#   environment = terraform.workspace
+#   chain_names = var.environments[terraform.workspace].hyperlane.chain_names
+#   metadata_chains = var.environments[terraform.workspace].hyperlane.metadata_chains
+# }
 
 module "ixo_loki_logs" {
   count      = var.environments[terraform.workspace].application_configs["loki"].enabled ? 1 : 0
@@ -525,7 +597,8 @@ module "ixo_loki_logs" {
     kubernetes_namespace_v1.ixo_core.metadata[0].name,
     kubernetes_namespace_v1.ingress_nginx.metadata[0].name,
     kubernetes_namespace_v1.matrix.metadata[0].name,
-    kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+    kubernetes_namespace_v1.ixo-postgres.metadata[0].name,
+    kubernetes_namespace_v1.falco_security.metadata[0].name
   ]
   name      = "ixo"
   namespace = "ixo-loki"
@@ -602,6 +675,9 @@ module "ghost" {
     }
     values_override = templatefile("${local.helm_values_config_path}/ghost-values.yml", {
       host = local.dns_for_environment[terraform.workspace]["ghost"]
+      ghost_password = random_password.ghost_password.result
+      ghost_smtp_user = var.ixo_ghost_mailgun_user
+      ghost_smtp_password = var.ixo_ghost_mailgun_password
     })
   }
   argo_namespace   = module.argocd.argo_namespace
@@ -609,7 +685,7 @@ module "ghost" {
   create_kv        = false
 }
 
-module "neo4j" {
+module "neo4j" { # TODO move to its own sub-module as it requires a Ingress resource.
   count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled ? 1 : 0
   source = "./modules/argocd_application"
   application = {
@@ -654,6 +730,29 @@ module "external_dns_cloudflare" {
   vault_mount_path = null
 }
 
+module "falco_security" {
+  count      = var.environments[terraform.workspace].application_configs["falco_security"].enabled ? 1 : 0
+  depends_on = [module.argocd]
+  source = "./modules/argocd_application"
+  application = {
+    name       = "falco-security"
+    namespace  = kubernetes_namespace_v1.falco_security.metadata[0].name
+    repository = "https://falcosecurity.github.io/charts"
+    helm = {
+      isOci    = false
+      chart    = "falco"
+      revision = var.versions["falco_security"]
+    }
+    values_override = templatefile("${local.helm_values_config_path}/falco-values.yml", {
+      storage_class = var.environments[terraform.workspace].application_configs["falco_security"].storage_class
+      storage_size = var.environments[terraform.workspace].application_configs["falco_security"].storage_size
+    })
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  create_kv        = false
+}
+
 # Requires to be logged in via gcloud auth login
 #module "gce_csi_driver" {
 #  source = "./modules/gce_csi_driver"
@@ -675,4 +774,36 @@ resource "random_password" "mautrix_slack_hs_token" {
   numeric = false
   lower   = true
   upper   = true
+}
+
+module "nomic_embedding" {
+  count  = var.environments[terraform.workspace].application_configs["nomic_embedding"].enabled ? 1 : 0
+  source = "./modules/nomic_embedding"
+  
+  application_name = "nomic-embedding"
+  namespace        = "nomic-embedding"
+  create_namespace = true
+  llama_batch_size = 2048
+  # Backend selection (corrected for actual model availability):
+  # - "llama_cpp": Exact model nomic-embed-text-v2-moe, 800MB-1.2GB memory (RECOMMENDED)
+  # - "vllm": vLLM V1 with native embedding support, 2-3GB memory  
+  # Note: Ollama does NOT have the V2 MoE model, only the older V1.5
+  backend = "llama_cpp"
+  
+  # Resource configuration optimized for your 1-2GB constraint
+  # llama.cpp backend will use these values automatically
+  
+  # Storage configuration (for model caching)
+  storage_class = var.storage_classes["bulk"]
+  
+  # External access configuration
+  enable_ingress = true
+  host          = local.dns_for_environment[terraform.workspace]["nomic_embedding"]
+  enable_tls    = true
+  
+  ingress_annotations = {
+    "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
+    "nginx.ingress.kubernetes.io/proxy-read-timeout" = "300"
+    "nginx.ingress.kubernetes.io/proxy-send-timeout" = "300"
+  }
 }
