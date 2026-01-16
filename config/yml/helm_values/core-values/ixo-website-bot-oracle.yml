@@ -63,6 +63,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MEMORY_SERVICE_API_KEY>"
   - name: "AI_MODEL"
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#AI_MODEL>"
+  - name: "DISABLE_CREDITS"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#DISABLE_CREDITS>"
   - name: PORT
     value: "3000"
 service:

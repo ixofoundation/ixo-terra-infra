@@ -110,9 +110,9 @@ playwright-service:
   resources:
     requests:
       cpu: 50m
-      memory: 100Mi
+      memory: 400Mi
     limits:
-      memory: 250Mi
+      memory: 516Mi
   env:
     - name: PORT
       value: "3000"

@@ -255,8 +255,18 @@ customRules:
     - macro: legitimate_nodejs_app_processes
       condition: >
         (proc.cmdline contains "docker-entrypoint" or
+         proc.cmdline contains "docker-entrypoi" or
          proc.cmdline contains "node" or
+         proc.cmdline contains "yarn" or
+         proc.cmdline contains "tsc" or
+         proc.cmdline contains "npm" or
          proc.cmdline contains "sh" or
+         (proc.cwd contains "/usr/src/app/" and
+          (proc.cmdline contains "sed" or
+           proc.cmdline contains "readlink" or
+           proc.cmdline contains "dirname" or
+           proc.cmdline contains "uname" or
+           proc.cmdline contains "basename")) or
          proc.cwd contains "/app/" or
          proc.cwd contains "/usr/src/app/" or
          proc.cwd contains "/home/node/")
@@ -310,6 +320,7 @@ customRules:
          proc.cmdline contains "bash" or
          proc.cmdline contains "su" or
          proc.cmdline contains "python" or
+         proc.cmdline contains "multiprocessing" or
          proc.cmdline contains "uv" or
          proc.cmdline contains "uvicorn" or
          proc.cmdline contains "start.sh" or
@@ -318,7 +329,37 @@ customRules:
          proc.cmdline contains "download-model" or
          proc.cmdline contains "mkdir" or
          proc.cmdline contains "du" or
-         proc.cmdline contains "cut")
+         proc.cmdline contains "cut" or
+         proc.cwd = "/app/" or
+         proc.cwd contains "/app/")
+
+    # Prometheus and Grafana monitoring stack
+    - macro: legitimate_prometheus_grafana_containers
+      condition: >
+        (k8s.ns.name = "prometheus" or
+         container.image.repository contains "grafana/grafana" or
+         container.image.repository contains "kiwigrid/k8s-sidecar" or
+         container.image.repository contains "busybox" or
+         container.name in (grafana, init-chown-data, grafana-sc-dashboard, grafana-sc-datasources) or
+         k8s.pod.name contains "grafana" or
+         k8s.pod.name contains "prometheus")
+
+    - macro: legitimate_prometheus_grafana_processes
+      condition: >
+        (proc.cmdline contains "grafana" or
+         proc.cmdline contains "prometheus" or
+         proc.cmdline contains "sidecar.py" or
+         proc.cmdline contains "run.sh" or
+         proc.cmdline contains "chown" or
+         proc.cmdline contains "python" or
+         proc.cmdline contains "multiprocessing" or
+         proc.cmdline contains "resource_tracker" or
+         proc.cmdline contains "forkserver" or
+         proc.cmdline contains "grep" or
+         proc.cmdline contains "sed" or
+         proc.cmdline contains "env" or
+         proc.cwd = "/usr/share/grafana/" or
+         proc.cwd contains "/app/")
 
     # ArgoCD Git and deployment operations
     - macro: legitimate_argocd_containers
@@ -339,6 +380,36 @@ customRules:
          proc.cwd contains "/tmp/_argocd-repo/" or
          proc.cwd contains "/tmp/_cmp_server/")
     
+    # Generic handler for ANY process with null container metadata (during container initialization)
+    # This covers all cases where containers are starting up and metadata isn't populated yet
+    - macro: has_null_container_metadata
+      condition: >
+        (container.name = null or
+         container.image.repository = null or
+         k8s.pod.name = null or
+         k8s.ns.name = null)
+
+    - macro: any_legitimate_process
+      condition: >
+        (legitimate_backup_processes or
+         legitimate_postgres_processes or
+         legitimate_calico_processes or
+         legitimate_vault_processes or
+         legitimate_monitoring_processes or
+         legitimate_redis_processes or
+         legitimate_app_health_processes or
+         legitimate_dns_processes or
+         legitimate_webhook_cert_processes or
+         legitimate_nodejs_app_processes or
+         legitimate_ixo_app_processes or
+         legitimate_prometheus_grafana_processes or
+         legitimate_argocd_processes or
+         legitimate_matrix_processes)
+
+    - macro: legitimate_null_metadata
+      condition: >
+        (has_null_container_metadata and any_legitimate_process)
+    
     # Override the default rule to exclude all legitimate system processes
     - rule: Drop and execute new binary in container
       desc: "Detect new binary execution (excluding legitimate system processes)"
@@ -356,8 +427,10 @@ customRules:
           (legitimate_webhook_cert_containers and legitimate_webhook_cert_processes) or
           (legitimate_nodejs_app_containers and legitimate_nodejs_app_processes) or
           (legitimate_ixo_app_containers and legitimate_ixo_app_processes) or
+          (legitimate_prometheus_grafana_containers and legitimate_prometheus_grafana_processes) or
           (legitimate_argocd_containers and legitimate_argocd_processes) or
           (legitimate_matrix_containers and legitimate_matrix_processes) or
+          legitimate_null_metadata or
           legitimate_pause_containers
         )
       output: "New binary executed in container (user=%user.name command=%proc.cmdline container=%container.name proc_cwd=%proc.cwd)"
@@ -381,8 +454,10 @@ customRules:
           (legitimate_webhook_cert_containers and legitimate_webhook_cert_processes) or
           (legitimate_nodejs_app_containers and legitimate_nodejs_app_processes) or
           (legitimate_ixo_app_containers and legitimate_ixo_app_processes) or
+          (legitimate_prometheus_grafana_containers and legitimate_prometheus_grafana_processes) or
           (legitimate_argocd_containers and legitimate_argocd_processes) or
           (legitimate_matrix_containers and legitimate_matrix_processes) or
+          legitimate_null_metadata or
           legitimate_pause_containers
         )
       output: "Legitimate system process activity (container=%container.name command=%proc.cmdline cwd=%proc.cwd user=%user.name namespace=%k8s.ns.name)"

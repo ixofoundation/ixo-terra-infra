@@ -37,8 +37,8 @@ backup:
   resources:
     requests:
       cpu: 10m
-      memory: 128Mi
+      memory: 350Mi
     limits:
-      memory: 450Mi
+      memory: 550Mi
   gcs:
     bucket: ${gcs_bucket}

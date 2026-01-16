@@ -1033,6 +1033,27 @@ module "ixo_trading_bot_server" {
   vault_mount_path = local.vault_mount_path
 }
 
+module "ixo_domain_creator_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_domain_creator_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-domain-creator-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/domain-creator-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_domain_creator_oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
+        vault_mount = local.vault_mount_path
+      }
+    )
+  }
+  create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
 module "ixo_subscriptions_oracle" {
   count  = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -1182,6 +1203,30 @@ module "ixo_jokes_oracle" {
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[17].username
         pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[17].username]
+      }
+    )
+    create_kv = true
+    argo_namespace = module.argocd.argo_namespace
+    vault_mount_path = local.vault_mount_path
+  }
+  create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_ecs_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-ecs-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ecs-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_ecs_oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_ecs_oracle"]
+        vault_mount = local.vault_mount_path
       }
     )
     create_kv = true

@@ -18,7 +18,7 @@ persistentVolume:
   storageClass: ${storage_class}
   size: ${storage_size}
 service:
-  port: 8083
+  port: 8084
 env:
   - name: "PORT"
     value: "8083"

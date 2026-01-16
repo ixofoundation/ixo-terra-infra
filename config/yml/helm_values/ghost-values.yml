@@ -1,3 +1,5 @@
+image:
+  repository: bitnamilegacy/ghost
 resourcesPreset: 'medium'
 ghostPassword: '${ghost_password}'
 ghostHost: 'https://${host}/'
@@ -39,6 +41,8 @@ ingress:
         - path: /
           pathType: Prefix
 mysql:
+  image: 
+    repository: bitnamilegacy/mysql
   auth:
     existingSecret: ghost-mysql-secret
     database: bitnami_ghost

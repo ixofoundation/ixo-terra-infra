@@ -28,10 +28,10 @@ module "kubernetes_cluster" {
     k8_version                  = var.versions["kubernetes_cluster"]
     cluster_region              = local.region_ids["Amsterdam"]
     ha_controlplanes            = false
-    initial_node_pool_quantity  = 5
-    initial_node_pool_scaler    = true
-    initial_node_pool_min_nodes = 5
-    initial_node_pool_max_nodes = 6
+    initial_node_pool_quantity  = 7
+    initial_node_pool_scaler    = false
+    initial_node_pool_min_nodes = 1
+    initial_node_pool_max_nodes = 1
   }
   
   aws = {
