@@ -28,15 +28,15 @@ vault_core_mount = "ixo_core"
 
 # Versioning for all services.
 versions = {
-  kubernetes_cluster           = "v1.33.0+3"#"v1.32.2+1"#####
-  argocd                       = "7.8.23"  # https://artifacthub.io/packages/helm/argo/argo-cd
+  kubernetes_cluster           = "v1.34.1+2"#"v1.32.2+1"#######
+  argocd                       = "9.1.5"  # https://artifacthub.io/packages/helm/argo/argo-cd
   cert-manager                 = "1.17.1" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
   nginx-ingress-controller     = "4.12.1" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
   postgres-operator            = "5.6.1"  # https://access.crunchydata.com/documentation/postgres-operator/5.5/installation/helm
-  prometheus-stack             = "70.4.2" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
+  prometheus-stack             = "80.0.0" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
   external-dns                 = "1.16.1" # https://artifacthub.io/packages/helm/external-dns/external-dns
   vault                        = "0.30.0" # https://artifacthub.io/packages/helm/hashicorp/vault
-  loki                         = "6.29.0" # https://artifacthub.io/packages/helm/grafana/loki
+  loki                         = "6.46.0" # https://artifacthub.io/packages/helm/grafana/loki
   prometheus-blackbox-exporter = "9.4.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
   dex                          = "0.23.0" # https://artifacthub.io/packages/helm/dex/dex
   tailscale                    = "1.82.0" # https://pkgs.tailscale.com/helmcharts/index.yaml
@@ -236,7 +236,7 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "state.bot.devmx.ixo.earth"
         storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_size = "80Gi"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
@@ -301,7 +301,7 @@ environments = {
         domain = "ixoearth"
       }
       ixo_ussd_supamoto = {
-        enabled = false
+        enabled = true
         domain = "ixoearth"
         dns_prefix = "ussd-supamoto"
       }
@@ -438,6 +438,16 @@ environments = {
         enabled = false
         domain = "ixoearth"
         dns_endpoint = "jokes.oracle.devnet.ixo.earth"
+      }
+      ixo_domain_creator_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "domain-creator"
+      }
+      ixo_ecs_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "ecs-oracle"
       }
       ixo_observable_framework_builder = {
         enabled = false
@@ -638,7 +648,7 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "state.bot.testmx.ixo.earth"
         storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_size = "250Gi"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
@@ -842,6 +852,16 @@ environments = {
         domain = "ixoearth"
         dns_endpoint = "jokes.oracle.testnet.ixo.earth"
       }
+      ixo_domain_creator_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "domain-creator"
+      }
+      ixo_ecs_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "ecs-oracle"
+      }
       ixo_observable_framework_builder = {
         enabled = false
         domain = "ixoearth"
@@ -1001,7 +1021,7 @@ environments = {
         dns_prefix = "falco"
       }
       nomic_embedding = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_prefix = "nomic"
       }
@@ -1146,7 +1166,7 @@ environments = {
         dns_endpoint = "notifications.ixo.earth"
       }
       ixo_guru = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_endpoint = "guru.ixo.earth"
       }
@@ -1212,14 +1232,14 @@ environments = {
         storage_size = "40Gi"
       }
       ixo_matrix_supamoto_onboarding_server = {
-        enabled = false
+        enabled = true
         domain = "ixoearth"
         dns_prefix = "supamoto-onboarding"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       ixo_matrix_supamoto_claims_bot = {
-        enabled = false
+        enabled = true
         domain = "ixoearth"
         dns_endpoint = "supamoto.claims.bot.mx.ixo.earth"
         storage_class = "bulk"
@@ -1266,6 +1286,16 @@ environments = {
         enabled = false
         domain = "ixoearth"
         dns_endpoint = "jokes.oracle.ixo.earth"
+      }
+      ixo_domain_creator_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "domain-creator"
+      }
+      ixo_ecs_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "ecs-oracle"
       }
       ixo_observable_framework_builder = {
         enabled = true

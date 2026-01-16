@@ -96,10 +96,10 @@ containers:
   apiServer:
     resources:
       requests:
-        memory: 2560Mi
+        memory: 3Gi
         cpu: "20m"
       limits:
-        memory: 2688Mi
+        memory: 3.1Gi
   worker:
     resources:
       requests:
@@ -110,10 +110,10 @@ containers:
   mcpServer:
     resources:
       requests:
-        memory: 400Mi
+        memory: 2096Mi
         cpu: "30m"
       limits:
-        memory: 1024Mi
+        memory: 2096Mi
 autoscaling:
   enabled: true
   minReplicas: 1

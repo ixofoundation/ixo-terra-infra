@@ -38,6 +38,7 @@ extraConfig:
     #   action: deny
   enable_authenticated_media: false
   max_event_delay_duration: 24h
+  max_upload_size: 100M
   media_retention:
     local_media_lifetime: null
     remote_media_lifetime: 14d

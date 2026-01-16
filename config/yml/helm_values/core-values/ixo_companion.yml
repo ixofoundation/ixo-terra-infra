@@ -83,6 +83,12 @@ env:
     value: "<path:${vault_mount}/data/ixo-companion#FIRECRAWL_MCP_URL>"
   - name: "DOMAIN_INDEXER_URL"
     value: "<path:${vault_mount}/data/ixo-companion#DOMAIN_INDEXER_URL>"
+  - name: "MATRIX_VALUE_PIN"
+    value: "<path:${vault_mount}/data/ixo-companion#MATRIX_VALUE_PIN>"
+  - name: "THROW_ON_INSUFFICIENT_CREDITS"
+    value: "<path:${vault_mount}/data/ixo-companion#THROW_ON_INSUFFICIENT_CREDITS>"
+  - name: "DISABLE_CREDITS"
+    value: "<path:${vault_mount}/data/ixo-companion#DISABLE_CREDITS>"
 resources:
   requests:
     memory: 1024Mi

@@ -32,6 +32,26 @@ resource "kubernetes_ingress_v1" "redirect" {
         }
       }
     }
+    dynamic "rule" {
+      for_each = terraform.workspace == "mainnet" ? [1] : []
+      content {
+        host = element(lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"]), 1)
+        http {
+          path {
+            path      = "/"
+            path_type = "Prefix"
+            backend {
+              service {
+                name = "ingress-nginx-controller"
+                port {
+                  number = 80
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     rule {
       host = element(lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"]), 0)
       http {

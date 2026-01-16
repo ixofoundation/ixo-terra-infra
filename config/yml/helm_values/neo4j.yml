@@ -6,6 +6,23 @@ neo4j:
     cpu: 500m
     memory: 2Gi
 
+# SSL/TLS configuration for Bolt protocol
+ssl:
+  bolt:
+    privateKey:
+      secretName: neo4j-tls
+      subPath: tls.key
+    publicCertificate:
+      secretName: neo4j-tls
+      subPath: tls.crt
+    trustedCerts:
+      sources: []
+
+config:
+  dbms.connector.bolt.enabled: "true"
+  dbms.connector.bolt.tls_level: "OPTIONAL"
+  server.bolt.tls_level: "OPTIONAL"
+
 volumes:
   data:
     mode: 'dynamic'

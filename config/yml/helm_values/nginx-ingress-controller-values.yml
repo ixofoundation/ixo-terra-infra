@@ -1,3 +1,7 @@
+# Expose TCP port for Neo4j Bolt protocol
+tcp:
+  7687: "neo4j/neo4j:7687"
+
 controller:
   config:
     # ========================================
@@ -20,13 +24,13 @@ controller:
     # ========================================
     
     keep-alive: "4"
-    proxy-body-size: "50m"
+    proxy-body-size: "110m"
     strict-validate-path-type: "false"
     # Enable request ID generation for better tracing
     generate-request-id: "true"
     # Enable upstream response time logging
     upstream-keepalive-connections: "32"
-    upstream-keepalive-timeout: "60"
+    upstream-keepalive-timeout: "180"
     proxy-read-timeout: "3600"  # 1 hour timeout for long-lived connections
     proxy-send-timeout: "3600"  # 1 hour send timeout
     # Standard nginx access log format (keep default)
@@ -110,7 +114,7 @@ controller:
       }
       if ($host = "chronicle.impacts.network") {
           rewrite ^/$ https://impacts.ixo.world redirect;
-          rewrite ^/(.*)$ https://impacts.ixo.world redirect;
+          rewrite ^/(.*)$ https://impacts.ixo.world/$1 redirect;
       }
   addHeaders:
     Host: "$host"

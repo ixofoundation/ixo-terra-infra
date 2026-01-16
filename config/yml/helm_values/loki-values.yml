@@ -8,6 +8,8 @@ loki:
     filesystem:
       chunks_directory: /var/loki/chunks
       rules_directory: /var/loki/rules
+  podSecurityContext:
+    fsGroupChangePolicy: "OnRootMismatch"
   storage_config:
     gcs:
       bucket_name: ${gcs_bucket}
@@ -51,10 +53,10 @@ singleBinary:
     size: 40Gi
   resources:
     requests:
-      memory: 400Mi
+      memory: 1.8Gi
       cpu: 100m
     limits:
-      memory: 512Mi
+      memory: 2Gi
 read:
   persistence:
     storageClass: ${storage_class}

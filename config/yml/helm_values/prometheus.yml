@@ -176,6 +176,8 @@ prometheus:
                 - role: pod
                   label: app.kubernetes.io/component=crunchy-alertmanager
 grafana:
+  sidecar:
+    skipTlsVerify: true
   plugins:
     - nline-plotlyjs-panel
   env:
