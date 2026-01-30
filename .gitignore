@@ -1,6 +1,7 @@
 /.idea/
 /ixo-terra-infra.iml
 /modules/kubernetes_cluster/kubeconfig.yaml
+modules/kubernetes_cluster/modules/vultr/kubeconfig_*.yaml
 **/.terraform/
 /.terraform.lock.hcl
 /terraform.tfstate.d/
