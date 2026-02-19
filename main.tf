@@ -330,6 +330,10 @@ resource "google_storage_bucket" "matrix_backups" {
       age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
     }
   }
+
+  lifecycle {
+    ignore_changes = [ lifecycle_rule ]
+  }
 }
 
 resource "google_storage_bucket" "loki_logs_backups" {
@@ -449,5 +453,26 @@ resource "kubernetes_ingress_v1" "neo4j" {
         }
       }
     }
+  }
+}
+
+# SLACK WEBHOOK URL SECRETS
+resource "kubernetes_secret_v1" "slack_webhook_url" {
+  metadata {
+    name = "slack-webhook-url"
+    namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
+  }
+  data = {
+    webhook-url = ""
+  }
+}
+
+resource "kubernetes_secret_v1" "slack_webhook_url_matrix" {
+  metadata {
+    name = "slack-webhook-url-matrix"
+    namespace = kubernetes_namespace_v1.matrix.metadata[0].name
+  }
+  data = {
+    webhook-url = ""
   }
 }

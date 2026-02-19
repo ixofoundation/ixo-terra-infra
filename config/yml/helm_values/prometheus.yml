@@ -44,6 +44,13 @@ defaultRules:
     prometheusOperator: false
     windows: false
 prometheus:
+  additionalRulesForClusterRole:
+    - apiGroups: [""]
+      resources:
+        - nodes/metrics
+        - nodes/stats
+        - nodes/proxy
+      verbs: ["get", "list", "watch"]
   prometheusSpec:
     replicas: 1
     resources:
@@ -184,6 +191,10 @@ grafana:
     CLIENT_SECRET: ${grafana_oidc_secret}
   deploymentStrategy:
     type: Recreate
+  livenessProbe:
+    initialDelaySeconds: 60
+  readinessProbe:
+    initialDelaySeconds: 60
   persistence:
     enabled: true
     type: pvc

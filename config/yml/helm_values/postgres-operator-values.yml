@@ -1,1 +1,6 @@
 monitoring: true
+# extraEnv:
+#   - name: PGO_FEATURE_GATES
+#     value: "InstanceSidecars=true"
+features:
+  InstanceSidecars: true

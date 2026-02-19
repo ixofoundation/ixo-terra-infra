@@ -32,3 +32,7 @@ volumes:
         - ReadWriteOnce
       requests:
         storage: ${storage_size}
+
+image:
+  repository "neo4j"
+  tag: "2025.6.0"

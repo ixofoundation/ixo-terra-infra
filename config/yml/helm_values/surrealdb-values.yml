@@ -4,7 +4,7 @@
 # SurrealDB image configuration
 image:
   repository: surrealdb/surrealdb
-  tag: latest
+  tag: v2.6.2
   pullPolicy: IfNotPresent
 
 # SurrealDB server configuration

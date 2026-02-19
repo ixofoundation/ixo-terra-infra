@@ -42,6 +42,9 @@ deschedulerPolicy:
             nodeAffinityType:
               - requiredDuringSchedulingIgnoredDuringExecution
         - name: RemovePodsViolatingNodeTaints
+          args:
+            excludedTaints:
+              - dedicated=bigmem:NoSchedule
         - name: RemovePodsViolatingInterPodAntiAffinity
         - name: RemovePodsViolatingTopologySpreadConstraint
         - name: LowNodeUtilization

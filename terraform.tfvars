@@ -28,29 +28,29 @@ vault_core_mount = "ixo_core"
 
 # Versioning for all services.
 versions = {
-  kubernetes_cluster           = "v1.34.1+2"#"v1.32.2+1"#######
-  argocd                       = "9.1.5"  # https://artifacthub.io/packages/helm/argo/argo-cd
-  cert-manager                 = "1.17.1" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
-  nginx-ingress-controller     = "4.12.1" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
-  postgres-operator            = "5.6.1"  # https://access.crunchydata.com/documentation/postgres-operator/5.5/installation/helm
-  prometheus-stack             = "80.0.0" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
-  external-dns                 = "1.16.1" # https://artifacthub.io/packages/helm/external-dns/external-dns
-  vault                        = "0.30.0" # https://artifacthub.io/packages/helm/hashicorp/vault
-  loki                         = "6.46.0" # https://artifacthub.io/packages/helm/grafana/loki
-  prometheus-blackbox-exporter = "9.4.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
-  dex                          = "0.23.0" # https://artifacthub.io/packages/helm/dex/dex
-  tailscale                    = "1.82.0" # https://pkgs.tailscale.com/helmcharts/index.yaml
-  matrix                       = "3.12.12" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
-  openebs                      = "4.2.0" # https://artifacthub.io/packages/helm/openebs/openebs
-  metrics-server               = "3.12.2" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
+  kubernetes_cluster           = "v1.34.1+3"#"v1.32.2+1"#######
+  argocd                       = "9.4.2"  # https://artifacthub.io/packages/helm/argo/argo-cd
+  cert-manager                 = "1.19.3" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
+  nginx-ingress-controller     = "4.14.3" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
+  postgres-operator            = "6.0.0"  # https://access.crunchydata.com/documentation/postgres-operator/6.0/installation/helm
+  prometheus-stack             = "82.1.0" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
+  external-dns                 = "1.20.0" # https://artifacthub.io/packages/helm/external-dns/external-dns
+  vault                        = "0.32.0" # https://artifacthub.io/packages/helm/hashicorp/vault
+  loki                         = "6.53.0" # https://artifacthub.io/packages/helm/grafana/loki
+  prometheus-blackbox-exporter = "11.8.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
+  dex                          = "0.24.0" # https://artifacthub.io/packages/helm/dex/dex
+  tailscale                    = "1.94.2" # https://pkgs.tailscale.com/helmcharts/index.yaml
+  matrix                       = "3.12.21" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
+  openebs                      = "4.4.0" # https://artifacthub.io/packages/helm/openebs/openebs
+  metrics-server               = "3.13.0" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
   descheduler                  = "0.34.0" # https://artifacthub.io/packages/helm/descheduler/descheduler
   hummingbot                   = "0.2.0"
-  uptime-kuma                  = "2.21.2" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
+  uptime-kuma                  = "4.0.0" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
   chromadb                     = "0.1.23" # https://github.com/amikos-tech/chromadb-chart
   ghost                        = "25.0.4" # https://artifacthub.io/packages/helm/bitnami/ghost
-  neo4j                        = "2025.6.0" # https://artifacthub.io/packages/helm/neo4j-helm-charts/neo4j
-  falco_security               = "6.2.2" # https://artifacthub.io/packages/helm/falcosecurity/falco
-  redis                        = "23.2.12" # https://artifacthub.io/packages/helm/bitnami/redis
+  neo4j                        = "2026.1.4" # https://artifacthub.io/packages/helm/neo4j-helm-charts/neo4j
+  falco_security               = "8.0.0" # https://artifacthub.io/packages/helm/falcosecurity/falco
+  redis                        = "25.3.0" # https://artifacthub.io/packages/helm/bitnami/redis
   surrealdb                    = "0.4.0" # https://artifacthub.io/packages/helm/surrealdb/surrealdb
 }
 
@@ -365,7 +365,7 @@ environments = {
         domain = "ixoearth"
       }
       ixo_firecrawl = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_prefix = "firecrawl"
       }
@@ -590,11 +590,14 @@ environments = {
       neo4j = {
         enabled = true
         domain = "ixoearth"
+        dns_prefix = "neo4j"
       }
       falco_security = {
-        enabled = false
+        enabled = true
         domain = "ixoearth"
         dns_prefix = "falco"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       nomic_embedding = {
         enabled = true
@@ -853,7 +856,7 @@ environments = {
         dns_endpoint = "jokes.oracle.testnet.ixo.earth"
       }
       ixo_domain_creator_oracle = {
-        enabled = false
+        enabled = true
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }
@@ -1288,7 +1291,7 @@ environments = {
         dns_endpoint = "jokes.oracle.ixo.earth"
       }
       ixo_domain_creator_oracle = {
-        enabled = false
+        enabled = true
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }

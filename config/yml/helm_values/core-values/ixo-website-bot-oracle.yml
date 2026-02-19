@@ -65,6 +65,14 @@ env:
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#AI_MODEL>"
   - name: "DISABLE_CREDITS"
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#DISABLE_CREDITS>"
+  - name: "SUBSCRIPTION_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#SUBSCRIPTION_URL>"
+  - name: "RPC_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#RPC_URL>"
+  - name: "SECP_MNEMONIC"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#SECP_MNEMONIC>"
+  - name: "BLOCKSYNC_GRAPHQL_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#BLOCKSYNC_GRAPHQL_URL>"
   - name: PORT
     value: "3000"
 service:

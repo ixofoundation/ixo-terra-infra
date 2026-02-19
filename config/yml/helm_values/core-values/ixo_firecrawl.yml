@@ -10,10 +10,10 @@ api-server:
     # tag: ""  # Leave empty to use Chart.AppVersion from charts/api-server/Chart.yaml
   resources:
     requests:
-      cpu: 300m
-      memory: 2.5Gi
+      cpu: 2000m
+      memory: 6Gi
     limits:
-      memory: 2.8Gi
+      memory: 6.5Gi
   env:
     # ===== Required ENVS ======
     - name: HOST
@@ -82,10 +82,10 @@ mcp-server:
     # tag: ""  # Leave empty to use Chart.AppVersion from charts/mcp-server/Chart.yaml
   resources:
     requests:
-      cpu: 50m
-      memory: 250Mi
+      cpu: 500m
+      memory: 550Mi
     limits:
-      memory: 350Mi
+      memory: 650Mi
   env:
     - name: FIRECRAWL_API_KEY
       value: "none"
@@ -109,10 +109,10 @@ playwright-service:
     # tag: ""  # Leave empty to use Chart.AppVersion from charts/playwright-service/Chart.yaml
   resources:
     requests:
-      cpu: 50m
-      memory: 400Mi
+      cpu: 500m
+      memory: 600Mi
     limits:
-      memory: 516Mi
+      memory: 716Mi
   env:
     - name: PORT
       value: "3000"

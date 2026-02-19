@@ -89,6 +89,12 @@ env:
     value: "<path:${vault_mount}/data/ixo-companion#THROW_ON_INSUFFICIENT_CREDITS>"
   - name: "DISABLE_CREDITS"
     value: "<path:${vault_mount}/data/ixo-companion#DISABLE_CREDITS>"
+  - name: "SANDBOX_MCP_URL"
+    value: "<path:${vault_mount}/data/ixo-companion#SANDBOX_MCP_URL>"
+  - name: "MATRIX_ROOM_ID"
+    value: "<path:${vault_mount}/data/ixo-companion#MATRIX_ROOM_ID>"
+  - name: "MATRIX_ACCOUNT_ROOM_ID"
+    value: "<path:${vault_mount}/data/ixo-companion#MATRIX_ACCOUNT_ROOM_ID>"
 resources:
   requests:
     memory: 1024Mi

@@ -148,8 +148,13 @@ module "postgres_operator_crunchydata" {
   application = { # We use a fork of the main Operator helm chart to enable feature gates.
     name            = "postgres-operator"
     namespace       = kubernetes_namespace_v1.postgres_operator.metadata[0].name
-    repository      = "https://github.com/ixofoundation/postgres-operator-examples"
-    path            = "helm/install"
+    repository      = "registry.developers.crunchydata.com/crunchydata"
+    helm = {
+      isOci             = true
+      chart             = "pgo"
+      revision          = var.versions["postgres-operator"]
+    }
+    #path            = "helm/install"
     values_override = templatefile("${local.helm_values_config_path}/postgres-operator-values.yml", {})
   }
   argo_namespace   = module.argocd.argo_namespace

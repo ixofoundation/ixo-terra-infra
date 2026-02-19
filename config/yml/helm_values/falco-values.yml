@@ -69,12 +69,16 @@ customRules:
       condition: >
         (container.image.repository contains "crunchy-postgres" or
          container.image.repository contains "crunchy-pgbackrest" or
-         container.name in (database, replication-cert-copy, exporter, pgbackrest) or
+         container.name in (database, replication-cert-copy, exporter, pgbackrest, postgres-startup) or
          k8s.ns.name in (ixo-postgres, matrix-synapse))
     
     - macro: legitimate_postgres_processes
       condition: >
         (proc.cmdline contains "pgbackrest" or
+         proc.cmdline contains "psql" or
+         proc.cmdline contains "patroni" or
+         proc.cmdline contains "postgres " or
+         proc.cmdline contains "pg_controldata" or
          proc.cmdline contains "awk" or
          proc.cmdline contains "sed" or
          proc.cmdline contains "head" or
@@ -123,9 +127,9 @@ customRules:
     - macro: legitimate_monitoring_containers
       condition: >
         (container.image.repository contains "operatorhubio/catalog" or
-         container.name in (registry-server, exporter, csi-vultr-plugin, controller, acmesolver) or
+         container.name in (registry-server, exporter, csi-vultr-plugin, controller, acmesolver, operator, notifications-controller, redis, copyutil, download-tools, repo-server, avp, metrics-server, loki-canary) or
          container.name = "" or
-         k8s.ns.name in (operator-lifecycle-manager, kube-system, ingress-nginx))
+         k8s.ns.name in (operator-lifecycle-manager, kube-system, ingress-nginx, postgres-operator, app-argocd, metrics-server, loki))
     
     - macro: legitimate_monitoring_processes
       condition: >
@@ -137,6 +141,7 @@ customRules:
          proc.cmdline contains "sed" or
          proc.cmdline contains "fsck" or
          proc.cmdline contains "nginx" or
+         proc.cmdline contains "wait-shutdown" or
          proc.cmdline contains "node" or
          proc.cmdline contains "http" or
          proc.cmdline contains "python" or
@@ -159,7 +164,23 @@ customRules:
          proc.cmdline contains "blkid" or
          proc.cmdline contains "dumpe2fs" or
          proc.cmdline contains "acmesolver" or
-         proc.cmdline contains "mkfs.ext4")
+         proc.cmdline contains "mkfs.ext4" or
+         proc.cmdline contains "postgres-operat" or
+         proc.cmdline contains "tini" or
+         proc.cmdline contains "argocd-notifications" or
+         proc.cmdline contains "argocd-notifica" or
+         proc.cmdline contains "readlink" or
+         proc.cmdline contains "redis-server" or
+         proc.cmdline contains "id " or
+         proc.cmdline contains "ls " or
+         proc.cmdline contains "cp " or
+         proc.cmdline contains "gzip" or
+         proc.cmdline contains "argocd-repo-server" or
+         proc.cmdline contains "argocd-repo-ser" or
+         proc.cmdline contains "gpg-agent" or
+         proc.cmdline contains "argocd-cmp-serv" or
+         proc.cmdline contains "metrics-server" or
+         proc.cmdline contains "loki-canary")
     
     # Kubernetes pause and init containers (can have null metadata during initialization)
     - macro: legitimate_pause_containers
@@ -361,12 +382,53 @@ customRules:
          proc.cwd = "/usr/share/grafana/" or
          proc.cwd contains "/app/")
 
-    # ArgoCD Git and deployment operations
+    # CSI drivers (e.g. Vultr CSI controller sidecars: csi-resizer, csi-snapshotter, etc.)
+    - macro: legitimate_csi_containers
+      condition: >
+        (k8s.ns.name = "kube-system" and
+         (k8s.pod.name startswith "csi-vultr-" or
+          container.name in (csi-resizer, csi-snapshotter, csi-provisioner, csi-attacher, csi-vultr-plugin) or
+          container.image.repository contains "csi")) or
+        (container.image.repository contains "vultr/csi" or
+         container.image.repository contains "kubernetes-csi")
+
+    - macro: legitimate_csi_processes
+      condition: >
+        (proc.cmdline contains "csi-resizer" or
+         proc.cmdline contains "csi-snapshotter" or
+         proc.cmdline contains "csi-provisioner" or
+         proc.cmdline contains "csi-attacher" or
+         proc.cmdline contains "csi.sock" or
+         proc.cmdline contains "resize2fs" or
+         proc.cmdline contains "/dev/disk/")
+
+    # Tailscale (VPN / network overlay: tailscaled, sysctl, iptables, modprobe)
+    - macro: legitimate_tailscale_containers
+      condition: >
+        (k8s.ns.name = "tailscale" or
+         container.image.repository contains "tailscale" or
+         k8s.pod.name startswith "ts-" or
+         container.name in (tailscale, sysctler))
+
+    - macro: legitimate_tailscale_processes
+      condition: >
+        (proc.cmdline contains "tailscaled" or
+         proc.cmdline contains "containerboot" or
+         proc.cmdline contains "sysctl" or
+         proc.cmdline contains "iptables" or
+         proc.cmdline contains "ip6tables" or
+         proc.cmdline contains "modprobe" or
+         proc.cmdline contains "ts-input" or
+         proc.cmdline contains "ts-forward" or
+         proc.cmdline contains "ts-postrouting" or
+         (proc.cmdline contains "sh " and proc.cmdline contains "sysctl"))
+
+    # ArgoCD Git and deployment operations (including Dex SSO)
     - macro: legitimate_argocd_containers
       condition: >
         (container.image.repository contains "argoproj/argocd" or
          container.image.repository contains "registry.access.redhat.com/ubi8" or
-         container.name in (repo-server, avp) or
+         container.name in (repo-server, avp, dex-server) or
          k8s.ns.name = "app-argocd")
 
     - macro: legitimate_argocd_processes
@@ -374,11 +436,31 @@ customRules:
         (proc.cmdline contains "git" or
          proc.cmdline contains "helm" or
          proc.cmdline contains "argocd-vault-plugin" or
+         proc.cmdline contains "argocd-dex" or
+         proc.cmdline contains "argocd-applicat" or
+         proc.cmdline contains "argocd-applicationset" or
+         proc.cmdline contains "argocd-server" or
+         proc.cmdline contains "rundex" or
+         proc.cmdline contains "dex serve" or
          proc.cmdline contains "find" or
          proc.cmdline contains "sh" or
          proc.cmdline contains "bash" or
          proc.cwd contains "/tmp/_argocd-repo/" or
          proc.cwd contains "/tmp/_cmp_server/")
+
+    # cert-manager (TLS certificate issuance and webhook)
+    - macro: legitimate_certmanager_containers
+      condition: >
+        (k8s.ns.name = "cert-manager" or
+         container.image.repository contains "jetstack/cert-manager" or
+         container.name in (cert-manager-controller, cert-manager-webhook, cert-manager-cainjector, cert-manager-startupapicheck))
+
+    - macro: legitimate_certmanager_processes
+      condition: >
+        (proc.cmdline contains "controller " and proc.cmdline contains "cluster-resource-namespace=cert-manager") or
+        (proc.cmdline contains "webhook " and proc.cmdline contains "cert-manager") or
+        proc.cmdline contains "cainjector" or
+        proc.cmdline contains "startupapicheck"
     
     # Generic handler for ANY process with null container metadata (during container initialization)
     # This covers all cases where containers are starting up and metadata isn't populated yet
@@ -396,6 +478,8 @@ customRules:
          legitimate_calico_processes or
          legitimate_vault_processes or
          legitimate_monitoring_processes or
+         legitimate_csi_processes or
+         legitimate_tailscale_processes or
          legitimate_redis_processes or
          legitimate_app_health_processes or
          legitimate_dns_processes or
@@ -404,6 +488,7 @@ customRules:
          legitimate_ixo_app_processes or
          legitimate_prometheus_grafana_processes or
          legitimate_argocd_processes or
+         legitimate_certmanager_processes or
          legitimate_matrix_processes)
 
     - macro: legitimate_null_metadata
@@ -421,6 +506,8 @@ customRules:
           (legitimate_calico_containers and legitimate_calico_processes) or
           (legitimate_vault_containers and legitimate_vault_processes) or
           (legitimate_monitoring_containers and legitimate_monitoring_processes) or
+          (legitimate_csi_containers and legitimate_csi_processes) or
+          (legitimate_tailscale_containers and legitimate_tailscale_processes) or
           (legitimate_redis_containers and legitimate_redis_processes) or
           (legitimate_app_health_containers and legitimate_app_health_processes) or
           (legitimate_dns_containers and legitimate_dns_processes) or
@@ -429,6 +516,7 @@ customRules:
           (legitimate_ixo_app_containers and legitimate_ixo_app_processes) or
           (legitimate_prometheus_grafana_containers and legitimate_prometheus_grafana_processes) or
           (legitimate_argocd_containers and legitimate_argocd_processes) or
+          (legitimate_certmanager_containers and legitimate_certmanager_processes) or
           (legitimate_matrix_containers and legitimate_matrix_processes) or
           legitimate_null_metadata or
           legitimate_pause_containers
@@ -448,6 +536,8 @@ customRules:
           (legitimate_calico_containers and legitimate_calico_processes) or
           (legitimate_vault_containers and legitimate_vault_processes) or
           (legitimate_monitoring_containers and legitimate_monitoring_processes) or
+          (legitimate_csi_containers and legitimate_csi_processes) or
+          (legitimate_tailscale_containers and legitimate_tailscale_processes) or
           (legitimate_redis_containers and legitimate_redis_processes) or
           (legitimate_app_health_containers and legitimate_app_health_processes) or
           (legitimate_dns_containers and legitimate_dns_processes) or
@@ -456,6 +546,7 @@ customRules:
           (legitimate_ixo_app_containers and legitimate_ixo_app_processes) or
           (legitimate_prometheus_grafana_containers and legitimate_prometheus_grafana_processes) or
           (legitimate_argocd_containers and legitimate_argocd_processes) or
+          (legitimate_certmanager_containers and legitimate_certmanager_processes) or
           (legitimate_matrix_containers and legitimate_matrix_processes) or
           legitimate_null_metadata or
           legitimate_pause_containers
