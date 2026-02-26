@@ -421,20 +421,20 @@ resource "kubernetes_ingress_v1" "neo4j" {
   count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled ? 1 : 0
   depends_on = [module.neo4j]
   metadata {
-    name = "neo4j"
+    name      = "neo4j"
     namespace = kubernetes_namespace_v1.neo4j.metadata[0].name
     annotations = {
-      "cert-manager.io/cluster-issuer" = "letsencrypt-staging"
-      "nginx.ingress.kubernetes.io/proxy-read-timeout" = "3600"
-      "nginx.ingress.kubernetes.io/proxy-send-timeout" = "3600"
-      "nginx.ingress.kubernetes.io/proxy-connect-timeout" = "3600"
-      "nginx.ingress.kubernetes.io/websocket-services" = "neo4j"
+      "cert-manager.io/cluster-issuer"           = "letsencrypt-staging"
+      "nginx.org/proxy-read-timeout"             = "3600"
+      "nginx.org/proxy-send-timeout"             = "3600"
+      "nginx.org/proxy-connect-timeout"          = "3600"
+      "nginx.org/websocket-services"             = "neo4j"
     }
   }
   spec {
     ingress_class_name = "nginx"
     tls {
-      hosts = ["${local.dns_for_environment[terraform.workspace]["neo4j"]}"]
+      hosts       = ["${local.dns_for_environment[terraform.workspace]["neo4j"]}"]
       secret_name = "neo4j-tls"
     }
     rule {
@@ -454,6 +454,122 @@ resource "kubernetes_ingress_v1" "neo4j" {
       }
     }
   }
+}
+
+# F5 NGINX Ingress Controller: TCP routing for Neo4j Bolt (port 7687).
+# Requires GlobalConfiguration listener "neo4j-bolt" (from f5-nginx-ingress-controller-values).
+# See: https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/
+# Note: This must be applied AFTER neo4j ingress is applied & certificate is created (neo4j-tls). (same goes for neo4j bolt tls config).
+resource "kubectl_manifest" "neo4j_bolt_transport_server" {
+  count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled ? 1 : 0
+  depends_on = [module.ingress_nginx, module.neo4j]
+
+  yaml_body = <<-YAML
+    apiVersion: k8s.nginx.org/v1
+    kind: TransportServer
+    metadata:
+      name: neo4j-bolt
+      namespace: ${kubernetes_namespace_v1.neo4j.metadata[0].name}
+    spec:
+      ingressClassName: nginx
+      listener:
+        name: neo4j-bolt
+        protocol: TCP
+      upstreams:
+        - name: neo4j-bolt
+          service: neo4j
+          port: 7687
+      action:
+        pass: neo4j-bolt
+  YAML
+}
+
+# NGINX Virtual Server Configuration, TODO improve modularity.
+resource "kubectl_manifest" "prometheus_stack_virtual_server" {
+  count = var.environments[terraform.workspace].application_configs["prometheus_stack"].enabled ? 1 : 0
+
+  depends_on = [module.ingress_nginx, module.argocd, module.prometheus_stack]
+
+  yaml_body = <<-YAML
+    apiVersion: k8s.nginx.org/v1
+    kind: VirtualServer
+    metadata:
+      name: prometheus-stack-host
+      namespace: ${kubernetes_namespace_v1.ingress_nginx.metadata[0].name}
+    spec:
+      host: ${local.prometheus_stack_host}
+      ingressClassName: nginx
+      tls:
+        secret: prometheus-stack-host-tls
+        cert-manager:
+          cluster-issuer: letsencrypt-staging
+        redirect:
+          enable: false
+      upstreams:
+      - name: grafana
+        service: ${kubernetes_namespace_v1.prometheus_stack.metadata[0].name}/kube-prometheus-stack-grafana
+        port: 80
+      routes:
+      - path: /argocd
+        route: ${module.argocd.argo_namespace}/argocd-route
+      - path: /grafana
+        route: ${kubernetes_namespace_v1.prometheus_stack.metadata[0].name}/grafana-route
+      - path: /
+        action:
+          pass: grafana
+  YAML
+}
+
+resource "kubectl_manifest" "argocd_virtual_server_route" {
+  count = var.environments[terraform.workspace].application_configs["prometheus_stack"].enabled ? 1 : 0
+
+  depends_on = [module.argocd]
+
+  yaml_body = <<-YAML
+    apiVersion: k8s.nginx.org/v1
+    kind: VirtualServerRoute
+    metadata:
+      name: argocd-route
+      namespace: ${module.argocd.argo_namespace}
+    spec:
+      host: ${local.prometheus_stack_host}
+      ingressClassName: nginx
+      upstreams:
+      - name: argocd-server
+        service: argocd-server
+        port: 443
+        tls:
+          enable: true
+      subroutes:
+      - path: /argocd
+        action:
+          pass: argocd-server
+  YAML
+}
+
+resource "kubectl_manifest" "grafana_virtual_server_route" {
+  count = var.environments[terraform.workspace].application_configs["prometheus_stack"].enabled ? 1 : 0
+
+  depends_on = [module.prometheus_stack]
+
+  yaml_body = <<-YAML
+    apiVersion: k8s.nginx.org/v1
+    kind: VirtualServerRoute
+    metadata:
+      name: grafana-route
+      namespace: ${kubernetes_namespace_v1.prometheus_stack.metadata[0].name}
+    spec:
+      host: ${local.prometheus_stack_host}
+      ingressClassName: nginx
+      upstreams:
+      - name: grafana
+        service: kube-prometheus-stack-grafana
+        port: 80
+      subroutes:
+      - path: /grafana
+        action:
+          pass: grafana
+  YAML
 }
 
 # SLACK WEBHOOK URL SECRETS

@@ -5,12 +5,12 @@ ingress:
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    # SSE/Streaming support
-    nginx.ingress.kubernetes.io/proxy-buffering: "off"
-    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
-    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # SSE/Streaming support (F5 NGINX Ingress Controller)
+    nginx.org/proxy-buffering: "false"
+    nginx.org/proxy-request-buffering: "false"
+    nginx.org/proxy-http-version: "1.1"
+    nginx.org/proxy-read-timeout: "3600"
+    nginx.org/proxy-send-timeout: "3600"
   tls:
     - hosts:
         - ${host}
@@ -41,12 +41,6 @@ env:
     value: "<path:${vault_mount}/data/ixo-companion#MATRIX_RECOVERY_PHRASE>"
   - name: "OPENAI_API_KEY"
     value: "<path:${vault_mount}/data/ixo-companion#OPENAI_API_KEY>"
-  - name: "LANGFUSE_PUBLIC_KEY"
-    value: "<path:${vault_mount}/data/ixo-companion#LANGFUSE_PUBLIC_KEY>"
-  - name: "LANGFUSE_SECRET_KEY"
-    value: "<path:${vault_mount}/data/ixo-companion#LANGFUSE_SECRET_KEY>"
-  - name: "LANGFUSE_HOST"
-    value: "<path:${vault_mount}/data/ixo-companion#LANGFUSE_HOST>"
   - name: "OPEN_ROUTER_API_KEY"
     value: "<path:${vault_mount}/data/ixo-companion#OPEN_ROUTER_API_KEY>"
   - name: "OPEN_ROUTER_BASE_URL"
@@ -67,8 +61,6 @@ env:
     value: "<path:${vault_mount}/data/ixo-companion#MEMORY_SERVICE_API_KEY>"
   - name: "SUBSCRIPTION_URL"
     value: "<path:${vault_mount}/data/ixo-companion#SUBSCRIPTION_URL>"
-  - name: "FIRECRAWL_MCP_URL"
-    value: ${firecrawl_mcp_url}
   - name: "DOMAIN_INDEXER_URL"
     value: "http://ixo-domain-indexer.core.svc.cluster.local:8080"
   - name: "NODE_ENV"
@@ -95,6 +87,14 @@ env:
     value: "<path:${vault_mount}/data/ixo-companion#MATRIX_ROOM_ID>"
   - name: "MATRIX_ACCOUNT_ROOM_ID"
     value: "<path:${vault_mount}/data/ixo-companion#MATRIX_ACCOUNT_ROOM_ID>"
+  - name: "LANGSMITH_TRACING"
+    value: "<path:${vault_mount}/data/ixo-companion#LANGSMITH_TRACING>"
+  - name: "LANGSMITH_ENDPOINT"
+    value: "<path:${vault_mount}/data/ixo-companion#LANGSMITH_ENDPOINT>"
+  - name: "LANGSMITH_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-companion#LANGSMITH_API_KEY>"
+  - name: "LANGSMITH_PROJECT"
+    value: "<path:${vault_mount}/data/ixo-companion#LANGSMITH_PROJECT>"
 resources:
   requests:
     memory: 1024Mi

@@ -29,12 +29,6 @@ env:
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_ORACLE_ADMIN_USER_ID>"
   - name: MATRIX_RECOVERY_PHRASE
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_RECOVERY_PHRASE>"
-  - name: LANGFUSE_PUBLIC_KEY
-    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGFUSE_PUBLIC_KEY>"
-  - name: LANGFUSE_SECRET_KEY
-    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGFUSE_SECRET_KEY>"
-  - name: LANGFUSE_HOST
-    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGFUSE_HOST>"
   - name: OPEN_ROUTER_API_KEY
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#OPEN_ROUTER_API_KEY>"
   - name: DATABASE_USE_SSL
@@ -73,6 +67,16 @@ env:
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#SECP_MNEMONIC>"
   - name: "BLOCKSYNC_GRAPHQL_URL"
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#BLOCKSYNC_GRAPHQL_URL>"
+  - name: SANDBOX_MCP_URL
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#SANDBOX_MCP_URL>"
+  - name: "LANGSMITH_TRACING"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGSMITH_TRACING>"
+  - name: "LANGSMITH_ENDPOINT"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGSMITH_ENDPOINT>"
+  - name: "LANGSMITH_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGSMITH_API_KEY>"
+  - name: "LANGSMITH_PROJECT"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGSMITH_PROJECT>"
   - name: PORT
     value: "3000"
 service:

@@ -1,0 +1,196 @@
+# F5 NGINX Ingress Controller - migrated from community ingress-nginx
+# Chart: nginx-ingress (e.g. repo https://nginx.github.io/kubernetes-ingress or OCI)
+# Docs: https://docs.nginx.com/nginx-ingress-controller/install/helm/parameters/
+#
+# PROVIDE: Replace or confirm any value marked with "PROVIDE" or "TODO".
+# Template: ${host} is passed by Terraform templatefile() for external-dns annotation.
+
+controller:
+  # ---- Replicas & scaling (from original) ----
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    create: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 50
+    targetMemoryUtilizationPercentage: 70
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 180
+      scaleUp:
+        stabilizationWindowSeconds: 300
+        policies:
+          - type: Pods
+            value: 2
+            periodSeconds: 60
+
+  # ---- Pod disruption budget (was minAvailable: 1) ----
+  podDisruptionBudget:
+    enabled: true
+    # minAvailable and maxUnavailable are mutually exclusive
+    minAvailable: 1
+    # maxUnavailable: 0
+
+  # ---- Pod labels (was controller.labels) ----
+  pod:
+    extraLabels:
+      app: ingress-nginx
+      app.kubernetes.io/part-of: ixo
+
+  # ---- Topology spread (optional; not enabled by default in F5 chart) ----
+  # Spreads controller pods across zones and nodes (useful for HA with externalTrafficPolicy: Local).
+  # Default in F5 chart is {} (no spread). Keep this if you want same behaviour as community ingress-nginx.
+  # Adjust matchLabels to your release (e.g. app.kubernetes.io/instance: <release-name>).
+  topologySpreadConstraints:
+    - labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: nginx-ingress
+          app.kubernetes.io/component: controller
+      topologyKey: topology.kubernetes.io/zone
+      maxSkew: 1
+      whenUnsatisfiable: ScheduleAnyway
+    - labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: nginx-ingress
+          app.kubernetes.io/component: controller
+      topologyKey: kubernetes.io/hostname
+      maxSkew: 1
+      whenUnsatisfiable: ScheduleAnyway
+
+  # ---- Resources (from original) ----
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      memory: 150Mi
+
+  # ---- Snippets required for http-snippets / server-snippets ----
+  enableSnippets: true
+
+  # ---- Service (external-dns: use templatefile to inject ${host}) ----
+  service:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: ${host}
+
+  # ---- IngressClass (keep "nginx" for existing Ingresses) ----
+  ingressClass:
+    name: nginx
+    create: true
+    setAsDefaultIngress: false
+
+  # ---- Custom resources (required for TCP via GlobalConfiguration + TransportServer) ----
+  enableCustomResources: true
+
+  # ---- cert-manager for VirtualServer TLS (required for spec.tls.cert-manager) ----
+  enableCertManager: true
+
+  # ---- TCP: Neo4j Bolt 7687 ----
+  # Creates GlobalConfiguration with listener; you must create a TransportServer CR
+  # that references this listener and routes to neo4j/neo4j:7687.
+  globalConfiguration:
+    create: true
+    spec:
+      listeners:
+        - name: neo4j-bolt
+          port: 7687
+          protocol: TCP
+
+  # ---- ConfigMap entries (F5 key names; see ConfigMap resource docs) ----
+  config:
+    entries:
+      # Timeouts (24h for WebSocket / long-lived connections)
+      keepalive-timeout: "180s"
+      proxy-read-timeout: "86400s"
+      proxy-send-timeout: "86400s"
+
+      # Body size (ingress-nginx: proxy-body-size → F5: client-max-body-size)
+      client-max-body-size: "110m"
+
+      # Upstream keepalive (F5: keepalive for upstream)
+      keepalive: "32"
+
+      # Logging (F5 sets $namespace/$service_name in location context only; avoid using them in http-level map)
+      log-format: '{"timestamp":"$time_iso8601","remote_addr":"$remote_addr","remote_user":"$remote_user","request":"$request","status":$status,"body_bytes_sent":$body_bytes_sent,"http_referer":"$http_referer","http_user_agent":"$http_user_agent","http_x_forwarded_for":"$http_x_forwarded_for","request_time":$request_time,"upstream_response_time":"$upstream_response_time","upstream_connect_time":"$upstream_connect_time","upstream_header_time":"$upstream_header_time","host":"$host","upstream_addr":"$upstream_addr","content_type":"$content_type","content_length":"$content_length","response_body_size":"$upstream_response_length","cache_status":"$upstream_cache_status","ssl_protocol":"$ssl_protocol","ssl_cipher":"$ssl_cipher","request_id":"$request_id"}'
+      log-format-escaping: "json"
+
+      # Default server access log
+      default-server-access-log-off: "true"
+
+      # Client body buffer (same key name)
+      client-body-buffer-size: "4k"
+
+      # WebSocket pass-through: inject Upgrade/Connection into every location (e.g. /ws, /graphql)
+      location-snippets: |
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+      # Snippets (F5: http-snippets / server-snippets, plural)
+      # Note: $namespace / $service_name are set only in location context by F5, not in http context,
+      # so we cannot use them in http-snippets (e.g. map $namespace ...). Removed request_body_preview map.
+      server-snippets: |
+        keepalive_timeout 4s 4s;
+
+        add_header Host $host;
+        add_header X-Real-IP $remote_addr;
+        add_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        if ($request_uri ~* "^/.well-known") {
+          break;
+        }
+
+        # IXO Redirects
+        if ($host = "blockscantest.devnet.ixo.earth") {
+            rewrite ^/$ https://explorer.ixo.earth/devnet-ixo redirect;
+            rewrite ^/ixo$ https://explorer.ixo.earth/devnet-ixo redirect;
+            rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/devnet-ixo/tx/$1 redirect;
+            rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/devnet-ixo/block/$1 redirect;
+            rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/devnet-ixo/gov/$1 redirect;
+            rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/devnet-ixo/account/$1 redirect;
+            rewrite ^/(.*)$ https://explorer.ixo.earth/devnet-ixo redirect;
+        }
+        if ($host = "blockscan.devnet.ixo.earth") {
+            rewrite ^/$ https://explorer.ixo.earth/devnet-ixo redirect;
+            rewrite ^/ixo$ https://explorer.ixo.earth/devnet-ixo redirect;
+            rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/devnet-ixo/tx/$1 redirect;
+            rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/devnet-ixo/block/$1 redirect;
+            rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/devnet-ixo/gov/$1 redirect;
+            rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/devnet-ixo/account/$1 redirect;
+            rewrite ^/(.*)$ https://explorer.ixo.earth/devnet-ixo redirect;
+        }
+        if ($host = "blockscan.testnet.ixo.earth") {
+            rewrite ^/$ https://explorer.ixo.earth/testnet-ixo redirect;
+            rewrite ^/ixo$ https://explorer.ixo.earth/testnet-ixo redirect;
+            rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/testnet-ixo/tx/$1 redirect;
+            rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/testnet-ixo/block/$1 redirect;
+            rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/testnet-ixo/gov/$1 redirect;
+            rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/testnet-ixo/account/$1 redirect;
+            rewrite ^/(.*)$ https://explorer.ixo.earth/testnet-ixo redirect;
+        }
+        if ($host = "blockscan-pandora.ixo.earth") {
+            rewrite ^/$ https://explorer.ixo.earth/testnet-ixo redirect;
+            rewrite ^/ixo$ https://explorer.ixo.earth/testnet-ixo redirect;
+            rewrite ^/ixo/transactions/(.*)$ https://explorer.ixo.earth/testnet-ixo/tx/$1 redirect;
+            rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/testnet-ixo/block/$1 redirect;
+            rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/testnet-ixo/gov/$1 redirect;
+            rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/testnet-ixo/account/$1 redirect;
+            rewrite ^/(.*)$ https://explorer.ixo.earth/testnet-ixo redirect;
+        }
+        if ($host = "blockscan.ixo.world") {
+            rewrite ^/$ https://staking-explorer.com/explorer/impacthub redirect;
+            rewrite ^/ixo$ https://staking-explorer.com/explorer/impacthub redirect;
+            rewrite ^/ixo/transactions/(.*)$ https://staking-explorer.com/transaction.php?chain=impacthub&tx=$1 redirect;
+            rewrite ^/ixo/blocks/(.*)$ https://staking-explorer.com/block.php?chain=impacthub&height=$1 redirect;
+            rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/ixo/gov/$1 redirect;
+            rewrite ^/ixo/accounts/(.*)$ https://staking-explorer.com/account.php?chain=impacthub&addr=$1 redirect;
+            rewrite ^/(.*)$ https://staking-explorer.com/explorer/impacthub redirect;
+        }
+        if ($host = "chronicle.impacts.network") {
+            rewrite ^/$ https://impacts.ixo.world redirect;
+            rewrite ^/(.*)$ https://impacts.ixo.world/$1 redirect;
+        }

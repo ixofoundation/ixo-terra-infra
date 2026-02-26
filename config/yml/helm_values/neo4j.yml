@@ -34,5 +34,5 @@ volumes:
         storage: ${storage_size}
 
 image:
-  repository "neo4j"
-  tag: "2025.6.0"
+  repository: "neo4j"
+  tag: "2025.06.0"

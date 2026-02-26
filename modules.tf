@@ -125,13 +125,13 @@ module "ingress_nginx" {
     name      = "nginx-ingress-controller"
     namespace = kubernetes_namespace_v1.ingress_nginx.metadata[0].name
     helm = {
-      isOci             = false
-      chart             = "ingress-nginx"
+      isOci             = true
+      chart             = "nginx-ingress"
       revision          = var.versions["nginx-ingress-controller"]
       ignoreDifferences = local.nginx_ignore_differences
     }
-    repository = "https://kubernetes.github.io/ingress-nginx"
-    values_override = templatefile("${local.helm_values_config_path}/nginx-ingress-controller-values.yml",
+    repository = "ghcr.io/nginx/charts"
+    values_override = templatefile("${local.helm_values_config_path}/f5-nginx-ingress-controller-values.yml",
       {
         host = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
       }
@@ -807,8 +807,8 @@ module "nomic_embedding" {
   enable_tls    = true
   
   ingress_annotations = {
-    "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
-    "nginx.ingress.kubernetes.io/proxy-read-timeout" = "300"
-    "nginx.ingress.kubernetes.io/proxy-send-timeout" = "300"
+    "cert-manager.io/cluster-issuer"   = "letsencrypt-prod"
+    "nginx.org/proxy-read-timeout"    = "300"
+    "nginx.org/proxy-send-timeout"    = "300"
   }
 }

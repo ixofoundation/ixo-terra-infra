@@ -228,10 +228,11 @@ grafana:
       root_url: "%(protocol)s://%(domain)s/grafana/"
       serve_from_sub_path: true
   ingress:
-    enabled: true
+    enabled: false  # Routing via F5 VirtualServer (prometheus-stack-host) and VirtualServerRoute grafana-route
     ingressClassName: nginx
     annotations:
-      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.org/mergeable-ingress-type: "minion"
+      nginx.org/path-regex: "case_insensitive"
       cert-manager.io/cluster-issuer: letsencrypt-staging
     hosts:
       - ${host}

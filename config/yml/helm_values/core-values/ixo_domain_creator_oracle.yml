@@ -63,6 +63,16 @@ env:
     value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#MATRIX_ACCOUNT_ROOM_ID>"
   - name: DISABLE_CREDITS
     value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#DISABLE_CREDITS>"
+  - name: SANDBOX_MCP_URL
+    value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#SANDBOX_MCP_URL>"
+  - name: "LANGSMITH_TRACING"
+    value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#LANGSMITH_TRACING>"
+  - name: "LANGSMITH_ENDPOINT"
+    value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#LANGSMITH_ENDPOINT>"
+  - name: "LANGSMITH_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#LANGSMITH_API_KEY>"
+  - name: "LANGSMITH_PROJECT"
+    value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#LANGSMITH_PROJECT>"
 service:
   port: 4200
 resources:

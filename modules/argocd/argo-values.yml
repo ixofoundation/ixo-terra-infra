@@ -147,12 +147,12 @@ server:
       app: argocd-server
     minAvailable: 2
   ingress:
-    enabled: true
+    enabled: false  # Routing via F5 VirtualServer (prometheus-stack-host) and VirtualServerRoute argocd-route
     annotations:
-      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-      ingress.kubernetes.io/proxy-body-size: 100M
+      nginx.org/mergeable-ingress-type: "minion"
+      nginx.org/ssl-services: "argocd-server"
+      ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.org/proxy-body-size: 100M
     ingressClassName: nginx
     hostname: ${host}
     path: /argocd

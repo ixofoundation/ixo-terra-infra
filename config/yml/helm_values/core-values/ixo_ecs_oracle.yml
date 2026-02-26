@@ -19,12 +19,6 @@ env:
     value: "production"
   - name: PORT
     value: "3000"
-  - name: LANGFUSE_PUBLIC_KEY
-    value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGFUSE_PUBLIC_KEY>"
-  - name: LANGFUSE_SECRET_KEY
-    value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGFUSE_SECRET_KEY>"
-  - name: LANGFUSE_HOST
-    value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGFUSE_HOST>"
   - name: OPEN_ROUTER_API_KEY
     value: "<path:${vault_mount}/data/ixo-ecs-oracle#OPEN_ROUTER_API_KEY>"
   - name: SECP_MNEMONIC
@@ -81,6 +75,14 @@ env:
     value: "<path:${vault_mount}/data/ixo-ecs-oracle#THROW_ON_INSUFFICIENT_CREDITS>"
   - name: "SANDBOX_MCP_URL"
     value: "<path:${vault_mount}/data/ixo-ecs-oracle#SANDBOX_MCP_URL>"
+  - name: "LANGSMITH_TRACING"
+    value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGSMITH_TRACING>"
+  - name: "LANGSMITH_ENDPOINT"
+    value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGSMITH_ENDPOINT>"
+  - name: "LANGSMITH_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGSMITH_API_KEY>"
+  - name: "LANGSMITH_PROJECT"
+    value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGSMITH_PROJECT>"
 service:
   port: 3000
 resources:

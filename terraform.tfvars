@@ -28,10 +28,10 @@ vault_core_mount = "ixo_core"
 
 # Versioning for all services.
 versions = {
-  kubernetes_cluster           = "v1.34.1+3"#"v1.32.2+1"#######
+  kubernetes_cluster           = "v1.35.0+1"
   argocd                       = "9.4.2"  # https://artifacthub.io/packages/helm/argo/argo-cd
   cert-manager                 = "1.19.3" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
-  nginx-ingress-controller     = "4.14.3" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
+  nginx-ingress-controller     = "2.4.4" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
   postgres-operator            = "6.0.0"  # https://access.crunchydata.com/documentation/postgres-operator/6.0/installation/helm
   prometheus-stack             = "82.1.0" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
   external-dns                 = "1.20.0" # https://artifacthub.io/packages/helm/external-dns/external-dns
@@ -160,7 +160,7 @@ environments = {
         domain = "ixoearth"
       }
       uptime_kuma = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_endpoint = "status.devnet.ixo.earth"
       }
@@ -749,7 +749,7 @@ environments = {
         domain = "ixoearth"
       }
       ixo_ai_oracles_giza = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_endpoint = "gizatest.ixo.earth"
       }
@@ -987,7 +987,7 @@ environments = {
         domain = "ixoworld"
       }
       hermes = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
         dns_endpoint = "hermes.ixo.earth"
       }
@@ -1349,7 +1349,6 @@ additional_manual_synthetic_monitoring_endpoints = {
   mainnet = [
     "https://coincache.ixo.earth",
     "https://trading.bot.ixo.earth/api/",
-    "https://hermes.ixo.earth/version",
     "https://reclaim.ixo.earth",
     "https://signx.ixo.earth",
     "https://ixo.rpc.m.stavr.tech",

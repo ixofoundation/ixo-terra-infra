@@ -22,7 +22,7 @@ resource "kubernetes_ingress_v1" "redirect" {
             path_type = "Prefix"
             backend {
               service {
-                name = "ingress-nginx-controller"
+                name = "nginx-ingress-controller"
                 port {
                   number = 80
                 }
@@ -42,7 +42,7 @@ resource "kubernetes_ingress_v1" "redirect" {
             path_type = "Prefix"
             backend {
               service {
-                name = "ingress-nginx-controller"
+                name = "nginx-ingress-controller"
                 port {
                   number = 80
                 }
@@ -60,7 +60,7 @@ resource "kubernetes_ingress_v1" "redirect" {
           path_type = "Prefix"
           backend {
             service {
-              name = "ingress-nginx-controller"
+              name = "nginx-ingress-controller"
               port {
                 number = 80
               }

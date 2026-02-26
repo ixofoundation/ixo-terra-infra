@@ -34,8 +34,8 @@ api-server:
       value: "false"
     
     # ===== Service URLs (localhost since same pod) ======
-    - name: PLAYWRIGHT_MICROSERVICE_URL
-      value: "http://localhost:3000/scrape"
+    # - name: PLAYWRIGHT_MICROSERVICE_URL
+    #   value: "http://localhost:3000/scrape"
     - name: NUQ_DATABASE_URL
       value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}?sslmode=require"
     - name: NODE_TLS_REJECT_UNAUTHORIZED
@@ -89,8 +89,8 @@ mcp-server:
   env:
     - name: FIRECRAWL_API_KEY
       value: "none"
-    - name: FIRECRAWL_API_URL
-      value: "http://localhost:3002"  # localhost since same pod
+    # - name: FIRECRAWL_API_URL
+    #   value: "http://localhost:3002"  # localhost since same pod
     - name: HTTP_STREAMABLE_SERVER
       value: "true"
     - name: HTTP_STREAMABLE_HOST
@@ -98,7 +98,7 @@ mcp-server:
     - name: HOST
       value: "0.0.0.0"
     - name: PORT
-      value: "3001"
+      value: "8030"
 
 # Playwright Service Configuration
 # CI/CD will update charts/playwright-service/Chart.yaml appVersion

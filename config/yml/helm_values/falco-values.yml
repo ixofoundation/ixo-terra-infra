@@ -351,8 +351,10 @@ customRules:
          proc.cmdline contains "mkdir" or
          proc.cmdline contains "du" or
          proc.cmdline contains "cut" or
+         proc.cmdline contains "df " or
          proc.cwd = "/app/" or
-         proc.cwd contains "/app/")
+         proc.cwd contains "/app/" or
+         proc.cwd contains "/bot/")
 
     # Prometheus and Grafana monitoring stack
     - macro: legitimate_prometheus_grafana_containers
@@ -461,6 +463,56 @@ customRules:
         (proc.cmdline contains "webhook " and proc.cmdline contains "cert-manager") or
         proc.cmdline contains "cainjector" or
         proc.cmdline contains "startupapicheck"
+
+    # Neo4j database (entrypoint and config scripts: tini, id, printenv, awk, stat, grep, sed, sort, cut)
+    - macro: legitimate_neo4j_containers
+      condition: >
+        (k8s.ns.name = "neo4j" or
+         container.name = "neo4j" or
+         k8s.pod.name startswith "neo4j" or
+         container.image.repository contains "neo4j")
+    
+    - macro: legitimate_neo4j_processes
+      condition: >
+        (proc.cmdline contains "tini" or
+         proc.cmdline contains "docker-entrypoi" or
+         proc.cmdline contains "docker-entrypoint" or
+         proc.cmdline contains "id " or
+         proc.cmdline contains "id -u" or
+         proc.cmdline contains "id -g" or
+         proc.cmdline contains "id -G" or
+         proc.cmdline contains "printenv" or
+         proc.cmdline contains "awk" or
+         proc.cmdline contains "stat " or
+         proc.cmdline contains "stat -c" or
+         proc.cmdline contains "grep " or
+         proc.cmdline contains "grep -q" or
+         proc.cmdline contains "grep -F" or
+         proc.cmdline contains "sed " or
+         proc.cmdline contains "sed s|" or
+         proc.cmdline contains "sed --in-place" or
+         proc.cmdline contains "sort " or
+         proc.cmdline contains "sort -rn" or
+         proc.cmdline contains "cut " or
+         proc.cmdline contains "cut -d" or
+         proc.cwd contains "/var/lib/neo4j" or
+         proc.cwd startswith "/startup" or
+         proc.cwd = "/import" or
+         proc.cwd = "/licenses")
+
+    # ChromaDB (disk usage checks: df -P for /index_data)
+    - macro: legitimate_chromadb_containers
+      condition: >
+        (k8s.ns.name = "chromadb" or
+         container.name = "chromadb" or
+         k8s.pod.name startswith "chromadb" or
+         container.image.repository contains "chromadb")
+    
+    - macro: legitimate_chromadb_processes
+      condition: >
+        (proc.cmdline contains "df " or
+         proc.cmdline contains "df -P" or
+         proc.cwd contains "/index_data")
     
     # Generic handler for ANY process with null container metadata (during container initialization)
     # This covers all cases where containers are starting up and metadata isn't populated yet
@@ -489,6 +541,8 @@ customRules:
          legitimate_prometheus_grafana_processes or
          legitimate_argocd_processes or
          legitimate_certmanager_processes or
+         legitimate_neo4j_processes or
+         legitimate_chromadb_processes or
          legitimate_matrix_processes)
 
     - macro: legitimate_null_metadata
@@ -517,6 +571,8 @@ customRules:
           (legitimate_prometheus_grafana_containers and legitimate_prometheus_grafana_processes) or
           (legitimate_argocd_containers and legitimate_argocd_processes) or
           (legitimate_certmanager_containers and legitimate_certmanager_processes) or
+          (legitimate_neo4j_containers and legitimate_neo4j_processes) or
+          (legitimate_chromadb_containers and legitimate_chromadb_processes) or
           (legitimate_matrix_containers and legitimate_matrix_processes) or
           legitimate_null_metadata or
           legitimate_pause_containers
@@ -547,6 +603,8 @@ customRules:
           (legitimate_prometheus_grafana_containers and legitimate_prometheus_grafana_processes) or
           (legitimate_argocd_containers and legitimate_argocd_processes) or
           (legitimate_certmanager_containers and legitimate_certmanager_processes) or
+          (legitimate_neo4j_containers and legitimate_neo4j_processes) or
+          (legitimate_chromadb_containers and legitimate_chromadb_processes) or
           (legitimate_matrix_containers and legitimate_matrix_processes) or
           legitimate_null_metadata or
           legitimate_pause_containers

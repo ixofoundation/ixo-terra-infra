@@ -21,8 +21,8 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    ingress.kubernetes.io/proxy-body-size: 100M
-    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.org/proxy-body-size: 100M
+    nginx.org/use-regex: "true"
     cert-manager.io/cluster-issuer: letsencrypt-staging
   tls:
     - hosts:

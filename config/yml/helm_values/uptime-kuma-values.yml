@@ -9,9 +9,9 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
   annotations:
-    ingress.kubernetes.io/proxy-body-size: 100M
+    nginx.org/proxy-body-size: 100M
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.org/use-regex: "true"
   tls:
     - hosts:
       - ${host}

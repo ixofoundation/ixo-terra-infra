@@ -82,10 +82,12 @@ env:
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#SENTRY_TRACES_SAMPLE_RATE>"
   - name: "SERVICE_API_KEY"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#SERVICE_API_KEY>"
+  - name: "BRIDGE_API_KEY"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#BRIDGE_API_KEY>"
+  - name: "NETWORK"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#NETWORK>"
   - name: "MCP_PORT"
     value: "9000"
-  - name: "MATRIX_BOT_STORE_PATH"
-    value: "/storage/matrix_bot_store"
 resources:
   requests:
     memory: 100Mi
@@ -103,10 +105,10 @@ containers:
   worker:
     resources:
       requests:
-        memory: 150Mi
+        memory: 100Mi
         cpu: "20m"
       limits:
-        memory: 256Mi
+        memory: 206Mi
   mcpServer:
     resources:
       requests:
@@ -119,3 +121,26 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
+matrix-bridge-api:
+  enabled: true
+  env:
+    - name: "BRIDGE_API_KEY"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#BRIDGE_API_KEY>"
+    - name: "MATRIX_BASE_URL"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_BASE_URL>"
+    - name: "MATRIX_HOMESERVER_NAME"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_HOMESERVER_NAME>"
+    - name: "MATRIX_ORACLE_ADMIN_ACCESS_TOKEN"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_ORACLE_ADMIN_ACCESS_TOKEN>"
+    - name: "MATRIX_ORACLE_ADMIN_USER_ID"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_ORACLE_ADMIN_USER_ID>"
+    - name: "MATRIX_ORACLE_ADMIN_PASSWORD"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_ORACLE_ADMIN_PASSWORD>"
+    - name: "MATRIX_RECOVERY_PHRASE"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_RECOVERY_PHRASE>"
+  resources:
+    requests:
+      cpu: 20m
+      memory: 750Mi
+    limits:
+      memory: 1Gi

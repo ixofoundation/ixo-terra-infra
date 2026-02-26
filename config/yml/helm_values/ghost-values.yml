@@ -28,9 +28,9 @@ ingress:
   hostname: ${host}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    nginx.ingress.kubernetes.io/proxy-body-size: 500M
+    nginx.org/proxy-body-size: 500M
     # IP whitelist for admin access (uncomment and replace with your IPs)
-    # nginx.ingress.kubernetes.io/whitelist-source-range: "1.2.3.4/32,5.6.7.8/32"
+    # nginx.org/whitelist-source-range: "1.2.3.4/32,5.6.7.8/32"
   tls:
     - hosts:
         - ${host}
