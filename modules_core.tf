@@ -756,6 +756,30 @@ module "ixo_matrix_claims_bot" {
   vault_mount_path = local.vault_mount_path
 }
 
+module "ixo_matrix_whatsapp" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_whatsapp"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-matrix-whatsapp"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-whatsapp"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_whatsapp.yml",
+      {
+        postgres_uri = "postgres://${var.pg_matrix.pg_users[0].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_matrix.pg_users[0].username])}@${var.pg_matrix.pg_cluster_name}-primary.${kubernetes_namespace_v1.matrix.metadata[0].name}.svc.cluster.local/matrix_whatsapp?sslmode=require"
+        matrix_domain = local.dns_for_environment[terraform.workspace]["matrix"]
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_whatsapp"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_whatsapp"]
+        as_token = random_password.matrix_whatsapp_as_token.result
+        hs_token = random_password.matrix_whatsapp_hs_token.result
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
 module "ixo_faq_assistant" {
   count  = var.environments[terraform.workspace].application_configs["ixo_faq_assistant"].enabled ? 1 : 0
   source = "./modules/argocd_application"

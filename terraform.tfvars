@@ -404,6 +404,12 @@ environments = {
         storage_class = "bulk"
         storage_size = "200Gi"
       }
+      ixo_matrix_whatsapp = {
+        enabled = false
+        domain = "ixoearth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
       ixo_subscriptions_oracle = {
         enabled = false
         domain = "ixoearth"
@@ -817,6 +823,12 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "claim.bot.testmx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_whatsapp = {
+        enabled = false
+        domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
@@ -1252,6 +1264,12 @@ environments = {
         enabled = true
         domain = "ixoworld"
         dns_endpoint = "claim.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_matrix_whatsapp = {
+        enabled = true
+        domain = "ixoworld"
         storage_class = "bulk"
         storage_size = "40Gi"
       }

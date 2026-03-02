@@ -781,6 +781,22 @@ resource "random_password" "mautrix_slack_hs_token" {
   upper   = true
 }
 
+resource "random_password" "matrix_whatsapp_as_token" {
+  length  = 64
+  special = false
+  numeric = false
+  lower   = true
+  upper   = true
+}
+
+resource "random_password" "matrix_whatsapp_hs_token" {
+  length  = 64
+  special = false
+  numeric = false
+  lower   = true
+  upper   = true
+}
+
 module "nomic_embedding" {
   count  = var.environments[terraform.workspace].application_configs["nomic_embedding"].enabled ? 1 : 0
   source = "./modules/nomic_embedding"

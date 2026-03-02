@@ -211,6 +211,8 @@ locals {
     ]
   )
 
+  prometheus_stack_host = var.environments[terraform.workspace].application_configs["prometheus_stack"].enabled ? var.environments[terraform.workspace].application_configs["prometheus_stack"].dns_endpoint : null
+
   # Argo Helm Ignore Differences
   prometheus_stack_ignore_differences = <<EOT
 - group: admissionregistration.k8s.io

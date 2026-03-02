@@ -124,6 +124,7 @@ extraConfig:
   registration_requires_token: true
   app_service_config_files:
     - /data/appservice/rooms/production.yaml
+    - /data/appservice/whatsapp/registration.yaml
   experimental_features:
     msc3202_device_masquerading: true
     msc3202_transaction_extensions: true
@@ -290,12 +291,17 @@ synapse:
     - name: matrix-rooms
       configMap:
         name: ixo-matrix-appservice-rooms-registration
+    - name: matrix-whatsapp
+      configMap:
+        name: ixo-matrix-whatsapp-registration
     - name: gcp-service-account-key
       secret:
         secretName: gcp-key-secret
   extraVolumeMounts:
     - name: matrix-rooms
       mountPath: /data/appservice/rooms
+    - name: matrix-whatsapp
+      mountPath: /data/appservice/whatsapp
     - name: gcp-service-account-key
       mountPath: /secrets/gcp
   extraCommands: # This is for backing up.
