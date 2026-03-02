@@ -130,7 +130,7 @@ playwright-service:
 service:
   type: ClusterIP
   apiPort: 3002
-  mcpPort: 3001
+  mcpPort: 8030
   playwrightPort: 3000
 
 # Ingress configuration
