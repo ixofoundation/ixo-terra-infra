@@ -11,7 +11,7 @@ ingress:
   annotations:
     nginx.org/proxy-body-size: 100M
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
-    nginx.org/mergeable-ingress-type: "master"
+    acme.cert-manager.io/http01-edit-in-place: "true"
     nginx.org/use-regex: "true"
   tls:
     - hosts:

@@ -362,7 +362,7 @@ resource "kubernetes_ingress_v1" "nomic_embedding" {
       {
         "kubernetes.io/ingress.class"           = var.ingress_class
         "cert-manager.io/cluster-issuer"         = "letsencrypt-staging"
-        "nginx.org/mergeable-ingress-type"        = "master"
+        "acme.cert-manager.io/http01-edit-in-place" = "true"
       }
     )
   }

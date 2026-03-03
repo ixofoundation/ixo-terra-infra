@@ -425,7 +425,7 @@ resource "kubernetes_ingress_v1" "neo4j" {
     namespace = kubernetes_namespace_v1.neo4j.metadata[0].name
     annotations = {
       "cert-manager.io/cluster-issuer"           = "letsencrypt-staging"
-      "nginx.org/mergeable-ingress-type"          = "master"
+      "acme.cert-manager.io/http01-edit-in-place" = "true"
       "nginx.org/proxy-read-timeout"             = "3600"
       "nginx.org/proxy-send-timeout"             = "3600"
       "nginx.org/proxy-connect-timeout"          = "3600"

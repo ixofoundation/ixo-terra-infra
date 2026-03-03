@@ -16,7 +16,3 @@ spec:
       - http01:
           ingress:
             ingressClassName: nginx
-            ingressTemplate:
-              metadata:
-                annotations:
-                  nginx.org/mergeable-ingress-type: "minion"

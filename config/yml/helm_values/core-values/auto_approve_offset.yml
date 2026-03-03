@@ -6,7 +6,7 @@ ingress:
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
-    nginx.org/mergeable-ingress-type: "master"
+    acme.cert-manager.io/http01-edit-in-place: "true"
   tls:
     - hosts:
         - ${host}

@@ -4,7 +4,7 @@ resource "kubernetes_ingress_v1" "redirect" {
     namespace = var.nginx_namespace
     annotations = {
       "cert-manager.io/cluster-issuer"        = "letsencrypt-staging"
-      "nginx.org/mergeable-ingress-type"      = "master"
+      "acme.cert-manager.io/http01-edit-in-place" = "true"
     }
   }
   spec {
