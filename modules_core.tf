@@ -1664,6 +1664,35 @@ module "ixo_ussd_supamoto" {
   vault_mount_path = local.vault_mount_path
 }
 
+module "ixo_sygnal" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_sygnal"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-sygnal"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/sygnal"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_sygnal.yml",
+      {
+        host        = local.dns_for_environment[terraform.workspace]["ixo_sygnal"]
+        vault_mount = local.vault_mount_path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        # Database is deprecated.
+        # pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        # pgUsername  = var.pg_ixo.pg_users[22].username
+        # pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[22].username])
+      }
+    )
+  }
+  create_kv = true
+  kv_defaults = {
+    APNS_P8_KEY                  = "" # base64-encoded content of AuthKey_G73NBYKQL3.p8
+    FIREBASE_SERVICE_ACCOUNT_JSON = "" # base64-encoded content of ixomobile-6a4b0-firebase-adminsdk-551h8-090e05f791.json
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
 module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
  source     = "./modules/ixo_blocksync_migration"

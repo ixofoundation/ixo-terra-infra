@@ -104,6 +104,8 @@ controller:
   # ---- ConfigMap entries (F5 key names; see ConfigMap resource docs) ----
   config:
     entries:
+      ssl-redirect: "true"
+
       # Timeouts (24h for WebSocket / long-lived connections)
       keepalive-timeout: "180s"
       proxy-read-timeout: "86400s"
@@ -139,10 +141,6 @@ controller:
         add_header Host $host;
         add_header X-Real-IP $remote_addr;
         add_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-        if ($request_uri ~* "^/.well-known") {
-          break;
-        }
 
         # IXO Redirects
         if ($host = "blockscantest.devnet.ixo.earth") {

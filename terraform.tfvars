@@ -476,6 +476,10 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "companion"
       }
+      ixo_sygnal = {
+        enabled = false
+        domain = "ixoearth"
+      }
     }
   }
   testnet = {
@@ -897,6 +901,10 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_prefix = "companion"
+      }
+      ixo_sygnal = {
+        enabled = false
+        domain = "ixoearth"
       }
     }
   }
@@ -1340,6 +1348,11 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "companion"
       }
+      ixo_sygnal = {
+        enabled = true
+        domain = "ixoworld"
+        dns_prefix = "sygnal"
+      }
     }
   }
 }
@@ -1494,6 +1507,10 @@ pg_ixo = {
     { // 21
       username = "ussd-supamoto"
       databases = ["ussd-supamoto"]
+    },
+    { // 22
+      username  = "sygnal"
+      databases = ["sygnal"]
     }
   ]
   pg_version             = 15

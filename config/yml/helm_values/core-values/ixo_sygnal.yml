@@ -1,0 +1,61 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.org/mergeable-ingress-type: "master"
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-sygnal-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+# Database is deprecated.
+# database:
+#   name: postgres
+#   args:
+#     host: ""
+#     port: 5432
+#     user: ""
+#     password: ""
+#     database: ""
+#     sslmode: require
+# Secret files mounted at /secrets/ in the pod.
+# Values must be base64-encoded content stored in vault.
+# Requires helm chart support for secretFiles + extraVolumes/extraVolumeMounts.
+secretFiles:
+  AuthKey_G73NBYKQL3.p8: "<path:${vault_mount}/data/ixo-sygnal#APNS_P8_KEY>"
+  ixomobile-6a4b0-firebase-adminsdk-551h8-090e05f791.json: "<path:${vault_mount}/data/ixo-sygnal#FIREBASE_SERVICE_ACCOUNT_JSON>"
+extraVolumes:
+  - name: secrets
+    secret:
+      secretName: ixo-sygnal-files
+extraVolumeMounts:
+  - name: secrets
+    mountPath: /secrets
+    readOnly: true
+apps:
+  com.ixo.mobilerelease:
+    type: apns
+    keyfile: /secrets/AuthKey_G73NBYKQL3.p8
+    key_id: G73NBYKQL3
+    team_id: 22SU8P8XG8
+    topic: com.ixo.mobilerelease
+    send_badge_counts: false
+  com.ixo.mobile:
+    type: gcm
+    api_version: v1
+    project_id: ixomobile-6a4b0
+    service_account_file: /secrets/ixomobile-6a4b0-firebase-adminsdk-551h8-090e05f791.json
+    send_badge_counts: false
+resources:
+  requests:
+    memory: 128Mi
+    cpu: "50m"
+  limits:
+    memory: 256Mi

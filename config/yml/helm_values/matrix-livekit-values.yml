@@ -4,6 +4,7 @@ ingress:
   annotations:
     kubernetes.io/tls-acme: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    nginx.org/mergeable-ingress-type: "master"
     ingress.kubernetes.io/ssl-redirect: "true"
     nginx.org/ssl-protocols: "TLSv1.2 TLSv1.3"
   hosts:

@@ -5,6 +5,7 @@ ingress:
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.org/mergeable-ingress-type: "master"
     # SSE/Streaming support (F5 NGINX Ingress Controller)
     nginx.org/proxy-buffering: "false"
     nginx.org/proxy-request-buffering: "false"

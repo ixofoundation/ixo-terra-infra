@@ -3,7 +3,8 @@ resource "kubernetes_ingress_v1" "redirect" {
     name      = "ixo-rerouting"
     namespace = var.nginx_namespace
     annotations = {
-      "cert-manager.io/cluster-issuer" : "letsencrypt-staging"
+      "cert-manager.io/cluster-issuer"        = "letsencrypt-staging"
+      "nginx.org/mergeable-ingress-type"      = "master"
     }
   }
   spec {

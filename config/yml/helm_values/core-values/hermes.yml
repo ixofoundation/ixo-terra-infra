@@ -12,6 +12,7 @@ ingress:
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.org/mergeable-ingress-type: "master"
   tls:
     - hosts:
         - ${host}

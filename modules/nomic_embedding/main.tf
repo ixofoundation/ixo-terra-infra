@@ -360,8 +360,9 @@ resource "kubernetes_ingress_v1" "nomic_embedding" {
     annotations = merge(
       var.ingress_annotations,
       {
-        "kubernetes.io/ingress.class" = var.ingress_class
-        "cert-manager.io/cluster-issuer" = "letsencrypt-staging"
+        "kubernetes.io/ingress.class"           = var.ingress_class
+        "cert-manager.io/cluster-issuer"         = "letsencrypt-staging"
+        "nginx.org/mergeable-ingress-type"        = "master"
       }
     )
   }
