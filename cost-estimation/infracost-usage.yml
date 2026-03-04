@@ -78,4 +78,4 @@ vault:
 # Certificate manager
 cert_manager:
   # SSL certificate requests
-  monthly_certificate_requests: 50  # 50 certificate requests per month 
+  monthly_certificate_requests: 50  # 50 certificate requests per month

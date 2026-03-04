@@ -44,4 +44,4 @@ projects:
 settings:
   currency: USD
   include_all_paths: true
-  ignore_cli_error: false 
+  ignore_cli_error: false

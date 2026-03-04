@@ -48,7 +48,7 @@ estimate_environment() {
     print_info "Estimating costs for environment: $env"
     
     # Create output directory if it doesn't exist
-    mkdir -p cost-estimates
+    mkdir -p cost-estimation/results
     
     # Run Infracost breakdown
     if [[ "$output_format" == "json" ]]; then
@@ -56,9 +56,9 @@ estimate_environment() {
             --path . \
             --terraform-workspace "$env" \
             --terraform-var-file terraform.tfvars \
-            --usage-file infracost-usage.yml \
+            --usage-file cost-estimation/infracost-usage.yml \
             --format json \
-            --out-file "cost-estimates/${env}-costs.json"
+            --out-file "cost-estimation/results/${env}-costs.json"
         
         print_success "Cost estimate saved to cost-estimates/${env}-costs.json"
     else
@@ -66,16 +66,16 @@ estimate_environment() {
             --path . \
             --terraform-workspace "$env" \
             --terraform-var-file terraform.tfvars \
-            --usage-file infracost-usage.yml \
+            --usage-file cost-estimation/infracost-usage.yml \
             --format table \
-            --out-file "cost-estimates/${env}-costs.txt"
+            --out-file "cost-estimation/results/${env}-costs.txt"
         
-        print_success "Cost estimate saved to cost-estimates/${env}-costs.txt"
+        print_success "Cost estimate saved to cost-estimation/results/${env}-costs.txt"
         
         # Also display on screen
         echo ""
         echo "=== Cost Estimate for $env ==="
-        cat "cost-estimates/${env}-costs.txt"
+        cat "cost-estimation/results/${env}-costs.txt"
         echo ""
     fi
 }
@@ -95,9 +95,9 @@ compare_environments() {
                 --path . \
                 --terraform-workspace "$env" \
                 --terraform-var-file terraform.tfvars \
-                --usage-file infracost-usage.yml \
+                --usage-file cost-estimation/infracost-usage.yml \
                 --format json \
-                --out-file "cost-estimates/${env}-costs.json"
+                --out-file "cost-estimation/results/${env}-costs.json"
         fi
     done
     
@@ -108,14 +108,14 @@ compare_environments() {
         env2="${workspace_array[i+1]}"
         
         if [[ "$env1" != "default" && "$env2" != "default" ]]; then
-            if [[ -f "cost-estimates/${env1}-costs.json" ]] && [[ -f "cost-estimates/${env2}-costs.json" ]]; then
+            if [[ -f "cost-estimation/results/${env1}-costs.json" ]] && [[ -f "cost-estimation/results/${env2}-costs.json" ]]; then
                 infracost diff \
-                    --path1 "cost-estimates/${env1}-costs.json" \
-                    --path2 "cost-estimates/${env2}-costs.json" \
+                    --path1 "cost-estimation/results/${env1}-costs.json" \
+                    --path2 "cost-estimation/results/${env2}-costs.json" \
                     --format table \
-                    --out-file "cost-estimates/${env1}-vs-${env2}.txt"
+                    --out-file "cost-estimation/results/${env1}-vs-${env2}.txt"
                 
-                print_success "Comparison saved to cost-estimates/${env1}-vs-${env2}.txt"
+                print_success "Comparison saved to cost-estimation/results/${env1}-vs-${env2}.txt"
             fi
         fi
     done
@@ -123,19 +123,19 @@ compare_environments() {
 
 # Function to estimate costs using the config file
 estimate_with_config() {
-    print_info "Running cost estimation using infracost.yml config..."
+    print_info "Running cost estimation using cost-estimation/infracost.yml config..."
     
     infracost breakdown \
-        --config-file infracost.yml \
+        --config-file cost-estimation/infracost.yml \
         --format table \
-        --out-file "cost-estimates/all-environments.txt"
+        --out-file "cost-estimation/results/all-environments.txt"
     
-    print_success "All environments cost estimate saved to cost-estimates/all-environments.txt"
+    print_success "All environments cost estimate saved to cost-estimation/results/all-environments.txt"
     
     # Display summary
     echo ""
     echo "=== Cost Summary for All Environments ==="
-    cat "cost-estimates/all-environments.txt"
+    cat "cost-estimation/results/all-environments.txt"
     echo ""
 }
 
@@ -144,27 +144,27 @@ generate_report() {
     print_info "Generating comprehensive cost report..."
     
     # Create report directory
-    mkdir -p cost-reports
+    mkdir -p cost-estimation/reports
     
     # Generate HTML report
     infracost breakdown \
-        --config-file infracost.yml \
+        --config-file cost-estimation/infracost.yml \
         --format html \
-        --out-file "cost-reports/ixo-infrastructure-costs.html"
+        --out-file "cost-estimation/reports/ixo-infrastructure-costs.html"
     
     # Generate JSON for further analysis
     infracost breakdown \
-        --config-file infracost.yml \
+        --config-file cost-estimation/infracost.yml \
         --format json \
-        --out-file "cost-reports/ixo-infrastructure-costs.json"
+        --out-file "cost-estimation/reports/ixo-infrastructure-costs.json"
     
-    print_success "HTML report saved to cost-reports/ixo-infrastructure-costs.html"
-    print_success "JSON report saved to cost-reports/ixo-infrastructure-costs.json"
+    print_success "HTML report saved to cost-estimation/reports/ixo-infrastructure-costs.html"
+    print_success "JSON report saved to cost-estimation/reports/ixo-infrastructure-costs.json"
     
     # Remind user about Vultr costs
     echo ""
     print_info "📋 For complete cost estimates including Vultr VKE infrastructure:"
-    echo "   👉 Check README-vultr-cost-estimates.md for detailed breakdowns"
+    echo "   👉 Check cost-estimation/cost-estimation/README-vultr-cost-estimates.md for detailed breakdowns"
     echo "   👉 Infracost only covers AWS/GCP resources, not Vultr VKE costs"
     echo ""
 }
@@ -176,7 +176,7 @@ case "${1:-}" in
         echo ""
         print_info "💡 Note: These costs only include AWS/GCP resources"
         print_info "📋 For complete cost estimates including Vultr VKE infrastructure:"
-        echo "   👉 Check README-vultr-cost-estimates.md"
+        echo "   👉 Check cost-estimation/cost-estimation/README-vultr-cost-estimates.md"
         echo ""
         ;;
     *)
@@ -186,7 +186,7 @@ case "${1:-}" in
             echo ""
             print_info "💡 Note: These costs only include AWS/GCP resources"
             print_info "📋 For complete cost estimates including Vultr VKE infrastructure:"
-            echo "   👉 Check README-vultr-cost-estimates.md"
+            echo "   👉 Check cost-estimation/cost-estimation/README-vultr-cost-estimates.md"
             echo ""
         else
             case "${1:-}" in
@@ -217,7 +217,7 @@ case "${1:-}" in
                     echo ""
                     echo "Analysis Commands:"
                     echo "  compare                     - Compare costs between environments"
-                    echo "  config                      - Use infracost.yml to estimate all environments"
+                    echo "  config                      - Use cost-estimation/infracost.yml to estimate all environments"
                     echo "  report                      - Generate comprehensive HTML/JSON reports"
                     echo "  all                         - Run all cost analysis commands"
                     echo ""
@@ -233,8 +233,8 @@ case "${1:-}" in
                     echo "  $0 all                      - Run complete cost analysis"
                     echo ""
                     echo "📋 Documentation:"
-                    echo "  README-cost-estimation.md     - Complete cost estimation guide"
-                    echo "  README-vultr-cost-estimates.md - Vultr pricing breakdown"
+                    echo "  cost-estimation/cost-estimation/README-cost-estimation.md     - Complete cost estimation guide"
+                    echo "  cost-estimation/cost-estimation/README-vultr-cost-estimates.md - Vultr pricing breakdown"
                     echo ""
                     echo "💡 Tip: Create your own environment names like 'mycompany_dev' instead of using"
                     echo "    the IXO-specific names (devnet/testnet/mainnet)"

@@ -8,8 +8,8 @@ modules/kubernetes_cluster/modules/vultr/kubeconfig_*.yaml
 credentials.json
 
 # Cost estimation outputs
-cost-estimates/
-cost-reports/
-*-costs.json
-*-costs.txt
-infracost-*.json
+cost-estimation/results/
+cost-estimation/reports/
+cost-estimation/results/*-costs.json
+cost-estimation/results/*-costs.txt
+cost-estimation/results/infracost-*.json

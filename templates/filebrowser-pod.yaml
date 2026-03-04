@@ -32,5 +32,3 @@ spec:
       persistentVolumeClaim:
         claimName: ${ORG}-core-common-storage  # Replace ${ORG} with your organization name
 
-
-

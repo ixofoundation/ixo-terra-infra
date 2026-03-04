@@ -1,0 +1,400 @@
+[1mProject:[22m ixo-terra-infra-devnet
+[1mWorkspace:[22m devnet
+
+ [4mName[24m                                                                                     [4mMonthly Qty[24m  [4mUnit[24m                      [4mMonthly Cost[24m    
+                                                                                                                                                 
+ [1mmodule.gcp_kms_core.google_kms_crypto_key.this[22m                                                                                                  
+ [2m├─[22m Key versions                                                                                25.92  months                           $1.56  * 
+ [2m└─[22m Operations                                                                     Monthly cost depends on usage: $0.03 per 10k operations       
+                                                                                                                                                 
+ [1mmodule.gcp_kms_loki.google_kms_crypto_key.this[22m                                                                                                  
+ [2m├─[22m Key versions                                                                                25.92  months                           $1.56  * 
+ [2m└─[22m Operations                                                                     Monthly cost depends on usage: $0.03 per 10k operations       
+                                                                                                                                                 
+ [1mmodule.gcp_kms_matrix.google_kms_crypto_key.this[22m                                                                                                
+ [2m├─[22m Key versions                                                                                25.92  months                           $1.56  * 
+ [2m└─[22m Operations                                                                     Monthly cost depends on usage: $0.03 per 10k operations       
+                                                                                                                                                 
+ [1mmodule.gcp_kms_vault.google_kms_crypto_key.this[22m                                                                                                 
+ [2m├─[22m Key versions                                                                                25.92  months                           $1.56  * 
+ [2m└─[22m Operations                                                                     Monthly cost depends on usage: $0.03 per 10k operations       
+                                                                                                                                                 
+ [1mgoogle_storage_bucket.loki_logs_backups[0][22m                                                                                                      
+ [2m├─[22m Storage (standard)                                                             Monthly cost depends on usage: $0.026 per GiB                 
+ [2m├─[22m Object adds, bucket/object list (class A)                                      Monthly cost depends on usage: $0.05 per 10k operations       
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                         Monthly cost depends on usage: $0.004 per 10k operations      
+ [2m└─[22m Network egress                                                                                                                               
+ [2m   ├─[22m Data transfer in same continent                                             Monthly cost depends on usage: $0.02 per GB                   
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)            Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)  Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                      Monthly cost depends on usage: $0.23 per GB                   
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                      Monthly cost depends on usage: $0.19 per GB                   
+                                                                                                                                                 
+ [1mgoogle_storage_bucket.matrix_backups[0][22m                                                                                                         
+ [2m├─[22m Storage (standard)                                                             Monthly cost depends on usage: $0.026 per GiB                 
+ [2m├─[22m Object adds, bucket/object list (class A)                                      Monthly cost depends on usage: $0.05 per 10k operations       
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                         Monthly cost depends on usage: $0.004 per 10k operations      
+ [2m└─[22m Network egress                                                                                                                               
+ [2m   ├─[22m Data transfer in same continent                                             Monthly cost depends on usage: $0.02 per GB                   
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)            Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)  Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                      Monthly cost depends on usage: $0.23 per GB                   
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                      Monthly cost depends on usage: $0.19 per GB                   
+                                                                                                                                                 
+ [1mgoogle_storage_bucket.postgres_backups[0][22m                                                                                                       
+ [2m├─[22m Storage (standard)                                                             Monthly cost depends on usage: $0.026 per GiB                 
+ [2m├─[22m Object adds, bucket/object list (class A)                                      Monthly cost depends on usage: $0.05 per 10k operations       
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                         Monthly cost depends on usage: $0.004 per 10k operations      
+ [2m└─[22m Network egress                                                                                                                               
+ [2m   ├─[22m Data transfer in same continent                                             Monthly cost depends on usage: $0.02 per GB                   
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)            Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)  Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                      Monthly cost depends on usage: $0.23 per GB                   
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                      Monthly cost depends on usage: $0.19 per GB                   
+                                                                                                                                                 
+ [1mProject total[22m                                                                                                                          $6.22    
+
+──────────────────────────────────
+[1mProject:[22m ixo-terra-infra-testnet
+[1mWorkspace:[22m testnet
+
+ [4mName[24m                                                                                                                        [4mMonthly Qty[24m  [4mUnit[24m                      [4mMonthly Cost[24m    
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["basesepolia"].aws_ecs_service.validator_service[22m                                                                          
+ [2m├─[22m Per GB per hour                                                                                                                    6  GB                              $21.46    
+ [2m└─[22m Per vCPU per hour                                                                                                                  1  CPU                             $32.49    
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["pandora8"].aws_ecs_service.validator_service[22m                                                                             
+ [2m├─[22m Per GB per hour                                                                                                                    6  GB                              $21.46    
+ [2m└─[22m Per vCPU per hour                                                                                                                  1  CPU                             $32.49    
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["relayer"].aws_ecs_service.validator_service[22m                                                                              
+ [2m├─[22m Per GB per hour                                                                                                                    6  GB                              $21.46    
+ [2m└─[22m Per vCPU per hour                                                                                                                  1  CPU                             $32.49    
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].aws_nat_gateway.validator_nat_gateway[22m                                                                                                                
+ [2m├─[22m NAT gateway                                                                                                                      730  hours                           $33.58    
+ [2m└─[22m Data processed                                                                                                    Monthly cost depends on usage: $0.046 per GB                  
+                                                                                                                                                                                    
+ [1mmodule.gcp_kms_core.google_kms_crypto_key.this[22m                                                                                                                                     
+ [2m├─[22m Key versions                                                                                                                   25.92  months                           $1.56  * 
+ [2m└─[22m Operations                                                                                                        Monthly cost depends on usage: $0.03 per 10k operations       
+                                                                                                                                                                                    
+ [1mmodule.gcp_kms_loki.google_kms_crypto_key.this[22m                                                                                                                                     
+ [2m├─[22m Key versions                                                                                                                   25.92  months                           $1.56  * 
+ [2m└─[22m Operations                                                                                                        Monthly cost depends on usage: $0.03 per 10k operations       
+                                                                                                                                                                                    
+ [1mmodule.gcp_kms_matrix.google_kms_crypto_key.this[22m                                                                                                                                   
+ [2m├─[22m Key versions                                                                                                                   25.92  months                           $1.56  * 
+ [2m└─[22m Operations                                                                                                        Monthly cost depends on usage: $0.03 per 10k operations       
+                                                                                                                                                                                    
+ [1mmodule.gcp_kms_vault.google_kms_crypto_key.this[22m                                                                                                                                    
+ [2m├─[22m Key versions                                                                                                                   25.92  months                           $1.56  * 
+ [2m└─[22m Operations                                                                                                        Monthly cost depends on usage: $0.03 per 10k operations       
+                                                                                                                                                                                    
+ [1mgoogle_storage_bucket.loki_logs_backups[0][22m                                                                                                                                         
+ [2m├─[22m Storage (standard)                                                                                                Monthly cost depends on usage: $0.026 per GiB                 
+ [2m├─[22m Object adds, bucket/object list (class A)                                                                         Monthly cost depends on usage: $0.05 per 10k operations       
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                                                            Monthly cost depends on usage: $0.004 per 10k operations      
+ [2m└─[22m Network egress                                                                                                                                                                  
+ [2m   ├─[22m Data transfer in same continent                                                                                Monthly cost depends on usage: $0.02 per GB                   
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)                                               Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)                                     Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                                                         Monthly cost depends on usage: $0.23 per GB                   
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                                                         Monthly cost depends on usage: $0.19 per GB                   
+                                                                                                                                                                                    
+ [1mgoogle_storage_bucket.matrix_backups[0][22m                                                                                                                                            
+ [2m├─[22m Storage (standard)                                                                                                Monthly cost depends on usage: $0.026 per GiB                 
+ [2m├─[22m Object adds, bucket/object list (class A)                                                                         Monthly cost depends on usage: $0.05 per 10k operations       
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                                                            Monthly cost depends on usage: $0.004 per 10k operations      
+ [2m└─[22m Network egress                                                                                                                                                                  
+ [2m   ├─[22m Data transfer in same continent                                                                                Monthly cost depends on usage: $0.02 per GB                   
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)                                               Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)                                     Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                                                         Monthly cost depends on usage: $0.23 per GB                   
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                                                         Monthly cost depends on usage: $0.19 per GB                   
+                                                                                                                                                                                    
+ [1mgoogle_storage_bucket.postgres_backups[0][22m                                                                                                                                          
+ [2m├─[22m Storage (standard)                                                                                                Monthly cost depends on usage: $0.026 per GiB                 
+ [2m├─[22m Object adds, bucket/object list (class A)                                                                         Monthly cost depends on usage: $0.05 per 10k operations       
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                                                            Monthly cost depends on usage: $0.004 per 10k operations      
+ [2m└─[22m Network egress                                                                                                                                                                  
+ [2m   ├─[22m Data transfer in same continent                                                                                Monthly cost depends on usage: $0.02 per GB                   
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)                                               Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)                                     Monthly cost depends on usage: $0.12 per GB                   
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                                                         Monthly cost depends on usage: $0.23 per GB                   
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                                                         Monthly cost depends on usage: $0.19 per GB                   
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs["basesepolia"][22m                                                                                                     
+ [2m├─[22m Data ingested                                                                                                     Monthly cost depends on usage: $0.54 per GB                   
+ [2m├─[22m Archival Storage                                                                                                  Monthly cost depends on usage: $0.028 per GB                  
+ [2m└─[22m Insights queries data scanned                                                                                     Monthly cost depends on usage: $0.0054 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs["pandora8"][22m                                                                                                        
+ [2m├─[22m Data ingested                                                                                                     Monthly cost depends on usage: $0.54 per GB                   
+ [2m├─[22m Archival Storage                                                                                                  Monthly cost depends on usage: $0.028 per GB                  
+ [2m└─[22m Insights queries data scanned                                                                                     Monthly cost depends on usage: $0.0054 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs["relayer"][22m                                                                                                         
+ [2m├─[22m Data ingested                                                                                                     Monthly cost depends on usage: $0.54 per GB                   
+ [2m├─[22m Archival Storage                                                                                                  Monthly cost depends on usage: $0.028 per GB                  
+ [2m└─[22m Insights queries data scanned                                                                                     Monthly cost depends on usage: $0.0054 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs_init["basesepolia"][22m                                                                                                
+ [2m├─[22m Data ingested                                                                                                     Monthly cost depends on usage: $0.54 per GB                   
+ [2m├─[22m Archival Storage                                                                                                  Monthly cost depends on usage: $0.028 per GB                  
+ [2m└─[22m Insights queries data scanned                                                                                     Monthly cost depends on usage: $0.0054 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs_init["pandora8"][22m                                                                                                   
+ [2m├─[22m Data ingested                                                                                                     Monthly cost depends on usage: $0.54 per GB                   
+ [2m├─[22m Archival Storage                                                                                                  Monthly cost depends on usage: $0.028 per GB                  
+ [2m└─[22m Insights queries data scanned                                                                                     Monthly cost depends on usage: $0.0054 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs_init["relayer"][22m                                                                                                    
+ [2m├─[22m Data ingested                                                                                                     Monthly cost depends on usage: $0.54 per GB                   
+ [2m├─[22m Archival Storage                                                                                                  Monthly cost depends on usage: $0.028 per GB                  
+ [2m└─[22m Insights queries data scanned                                                                                     Monthly cost depends on usage: $0.0054 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["basesepolia"].module.efs.aws_efs_file_system.validator_fs[22m                                                                
+ [2m└─[22m Storage (standard)                                                                                                Monthly cost depends on usage: $0.30 per GB                   
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["basesepolia"].module.s3.aws_s3_bucket.configs_bucket[22m                                                                     
+ [2m└─[22m Standard                                                                                                                                                                        
+ [2m   ├─[22m Storage                                                                                                        Monthly cost depends on usage: $0.023 per GB                  
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                                 Monthly cost depends on usage: $0.005 per 1k requests         
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                            Monthly cost depends on usage: $0.0004 per 1k requests        
+ [2m   ├─[22m Select data scanned                                                                                            Monthly cost depends on usage: $0.002 per GB                  
+ [2m   └─[22m Select data returned                                                                                           Monthly cost depends on usage: $0.0007 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["basesepolia"].module.s3.aws_s3_bucket.validator_bucket[22m                                                                   
+ [2m└─[22m Standard                                                                                                                                                                        
+ [2m   ├─[22m Storage                                                                                                        Monthly cost depends on usage: $0.023 per GB                  
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                                 Monthly cost depends on usage: $0.005 per 1k requests         
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                            Monthly cost depends on usage: $0.0004 per 1k requests        
+ [2m   ├─[22m Select data scanned                                                                                            Monthly cost depends on usage: $0.002 per GB                  
+ [2m   └─[22m Select data returned                                                                                           Monthly cost depends on usage: $0.0007 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["pandora8"].module.efs.aws_efs_file_system.validator_fs[22m                                                                   
+ [2m└─[22m Storage (standard)                                                                                                Monthly cost depends on usage: $0.30 per GB                   
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["pandora8"].module.s3.aws_s3_bucket.configs_bucket[22m                                                                        
+ [2m└─[22m Standard                                                                                                                                                                        
+ [2m   ├─[22m Storage                                                                                                        Monthly cost depends on usage: $0.023 per GB                  
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                                 Monthly cost depends on usage: $0.005 per 1k requests         
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                            Monthly cost depends on usage: $0.0004 per 1k requests        
+ [2m   ├─[22m Select data scanned                                                                                            Monthly cost depends on usage: $0.002 per GB                  
+ [2m   └─[22m Select data returned                                                                                           Monthly cost depends on usage: $0.0007 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["pandora8"].module.s3.aws_s3_bucket.validator_bucket[22m                                                                      
+ [2m└─[22m Standard                                                                                                                                                                        
+ [2m   ├─[22m Storage                                                                                                        Monthly cost depends on usage: $0.023 per GB                  
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                                 Monthly cost depends on usage: $0.005 per 1k requests         
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                            Monthly cost depends on usage: $0.0004 per 1k requests        
+ [2m   ├─[22m Select data scanned                                                                                            Monthly cost depends on usage: $0.002 per GB                  
+ [2m   └─[22m Select data returned                                                                                           Monthly cost depends on usage: $0.0007 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["relayer"].module.efs.aws_efs_file_system.validator_fs[22m                                                                    
+ [2m└─[22m Storage (standard)                                                                                                Monthly cost depends on usage: $0.30 per GB                   
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["relayer"].module.s3.aws_s3_bucket.configs_bucket[22m                                                                         
+ [2m└─[22m Standard                                                                                                                                                                        
+ [2m   ├─[22m Storage                                                                                                        Monthly cost depends on usage: $0.023 per GB                  
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                                 Monthly cost depends on usage: $0.005 per 1k requests         
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                            Monthly cost depends on usage: $0.0004 per 1k requests        
+ [2m   ├─[22m Select data scanned                                                                                            Monthly cost depends on usage: $0.002 per GB                  
+ [2m   └─[22m Select data returned                                                                                           Monthly cost depends on usage: $0.0007 per GB                 
+                                                                                                                                                                                    
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["relayer"].module.s3.aws_s3_bucket.validator_bucket[22m                                                                       
+ [2m└─[22m Standard                                                                                                                                                                        
+ [2m   ├─[22m Storage                                                                                                        Monthly cost depends on usage: $0.023 per GB                  
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                                 Monthly cost depends on usage: $0.005 per 1k requests         
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                            Monthly cost depends on usage: $0.0004 per 1k requests        
+ [2m   ├─[22m Select data scanned                                                                                            Monthly cost depends on usage: $0.002 per GB                  
+ [2m   └─[22m Select data returned                                                                                           Monthly cost depends on usage: $0.0007 per GB                 
+                                                                                                                                                                                    
+ [1mProject total[22m                                                                                                                                                           $201.64    
+
+──────────────────────────────────
+[1mProject:[22m ixo-terra-infra-mainnet
+[1mWorkspace:[22m mainnet
+
+ [4mName[24m                                                                                                                     [4mMonthly Qty[24m  [4mUnit[24m                        [4mMonthly Cost[24m    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["base"].aws_ecs_service.validator_service[22m                                                                                
+ [2m├─[22m Per GB per hour                                                                                                                 6  GB                                $21.46    
+ [2m└─[22m Per vCPU per hour                                                                                                               1  CPU                               $32.49    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["ixo5"].aws_ecs_service.validator_service[22m                                                                                
+ [2m├─[22m Per GB per hour                                                                                                                 6  GB                                $21.46    
+ [2m└─[22m Per vCPU per hour                                                                                                               1  CPU                               $32.49    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["relayer"].aws_ecs_service.validator_service[22m                                                                             
+ [2m├─[22m Per GB per hour                                                                                                                 6  GB                                $21.46    
+ [2m└─[22m Per vCPU per hour                                                                                                               1  CPU                               $32.49    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].aws_nat_gateway.validator_nat_gateway[22m                                                                                                               
+ [2m├─[22m NAT gateway                                                                                                                   730  hours                             $33.58    
+ [2m└─[22m Data processed                                                                                                Monthly cost depends on usage: $0.046 per GB                     
+                                                                                                                                                                                   
+ [1mmodule.gcp_kms_core.google_kms_crypto_key.this[22m                                                                                                                                    
+ [2m├─[22m Key versions                                                                                                                25.92  months                             $1.56  * 
+ [2m└─[22m Operations                                                                                                    Monthly cost depends on usage: $0.03 per 10k operations          
+                                                                                                                                                                                   
+ [1mmodule.gcp_kms_loki.google_kms_crypto_key.this[22m                                                                                                                                    
+ [2m├─[22m Key versions                                                                                                                25.92  months                             $1.56  * 
+ [2m└─[22m Operations                                                                                                    Monthly cost depends on usage: $0.03 per 10k operations          
+                                                                                                                                                                                   
+ [1mmodule.gcp_kms_matrix.google_kms_crypto_key.this[22m                                                                                                                                  
+ [2m├─[22m Key versions                                                                                                                25.92  months                             $1.56  * 
+ [2m└─[22m Operations                                                                                                    Monthly cost depends on usage: $0.03 per 10k operations          
+                                                                                                                                                                                   
+ [1mmodule.gcp_kms_vault.google_kms_crypto_key.this[22m                                                                                                                                   
+ [2m├─[22m Key versions                                                                                                                25.92  months                             $1.56  * 
+ [2m└─[22m Operations                                                                                                    Monthly cost depends on usage: $0.03 per 10k operations          
+                                                                                                                                                                                   
+ [1mgoogle_storage_bucket.loki_logs_backups[0][22m                                                                                                                                        
+ [2m├─[22m Storage (standard)                                                                                            Monthly cost depends on usage: $0.026 per GiB                    
+ [2m├─[22m Object adds, bucket/object list (class A)                                                                     Monthly cost depends on usage: $0.05 per 10k operations          
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                                                        Monthly cost depends on usage: $0.004 per 10k operations         
+ [2m└─[22m Network egress                                                                                                                                                                 
+ [2m   ├─[22m Data transfer in same continent                                                                            Monthly cost depends on usage: $0.02 per GB                      
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)                                           Monthly cost depends on usage: $0.12 per GB                      
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)                                 Monthly cost depends on usage: $0.12 per GB                      
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                                                     Monthly cost depends on usage: $0.23 per GB                      
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                                                     Monthly cost depends on usage: $0.19 per GB                      
+                                                                                                                                                                                   
+ [1mgoogle_storage_bucket.matrix_backups[0][22m                                                                                                                                           
+ [2m├─[22m Storage (standard)                                                                                            Monthly cost depends on usage: $0.026 per GiB                    
+ [2m├─[22m Object adds, bucket/object list (class A)                                                                     Monthly cost depends on usage: $0.05 per 10k operations          
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                                                        Monthly cost depends on usage: $0.004 per 10k operations         
+ [2m└─[22m Network egress                                                                                                                                                                 
+ [2m   ├─[22m Data transfer in same continent                                                                            Monthly cost depends on usage: $0.02 per GB                      
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)                                           Monthly cost depends on usage: $0.12 per GB                      
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)                                 Monthly cost depends on usage: $0.12 per GB                      
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                                                     Monthly cost depends on usage: $0.23 per GB                      
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                                                     Monthly cost depends on usage: $0.19 per GB                      
+                                                                                                                                                                                   
+ [1mgoogle_storage_bucket.postgres_backups[0][22m                                                                                                                                         
+ [2m├─[22m Storage (standard)                                                                                            Monthly cost depends on usage: $0.026 per GiB                    
+ [2m├─[22m Object adds, bucket/object list (class A)                                                                     Monthly cost depends on usage: $0.05 per 10k operations          
+ [2m├─[22m Object gets, retrieve bucket/object metadata (class B)                                                        Monthly cost depends on usage: $0.004 per 10k operations         
+ [2m└─[22m Network egress                                                                                                                                                                 
+ [2m   ├─[22m Data transfer in same continent                                                                            Monthly cost depends on usage: $0.02 per GB                      
+ [2m   ├─[22m Data transfer to worldwide excluding Asia, Australia (first 1TB)                                           Monthly cost depends on usage: $0.12 per GB                      
+ [2m   ├─[22m Data transfer to Asia excluding China, but including Hong Kong (first 1TB)                                 Monthly cost depends on usage: $0.12 per GB                      
+ [2m   ├─[22m Data transfer to China excluding Hong Kong (first 1TB)                                                     Monthly cost depends on usage: $0.23 per GB                      
+ [2m   └─[22m Data transfer to Australia (first 1TB)                                                                     Monthly cost depends on usage: $0.19 per GB                      
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs["base"][22m                                                                                                           
+ [2m├─[22m Data ingested                                                                                                 Monthly cost depends on usage: $0.54 per GB                      
+ [2m├─[22m Archival Storage                                                                                              Monthly cost depends on usage: $0.028 per GB                     
+ [2m└─[22m Insights queries data scanned                                                                                 Monthly cost depends on usage: $0.0054 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs["ixo5"][22m                                                                                                           
+ [2m├─[22m Data ingested                                                                                                 Monthly cost depends on usage: $0.54 per GB                      
+ [2m├─[22m Archival Storage                                                                                              Monthly cost depends on usage: $0.028 per GB                     
+ [2m└─[22m Insights queries data scanned                                                                                 Monthly cost depends on usage: $0.0054 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs["relayer"][22m                                                                                                        
+ [2m├─[22m Data ingested                                                                                                 Monthly cost depends on usage: $0.54 per GB                      
+ [2m├─[22m Archival Storage                                                                                              Monthly cost depends on usage: $0.028 per GB                     
+ [2m└─[22m Insights queries data scanned                                                                                 Monthly cost depends on usage: $0.0054 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs_init["base"][22m                                                                                                      
+ [2m├─[22m Data ingested                                                                                                 Monthly cost depends on usage: $0.54 per GB                      
+ [2m├─[22m Archival Storage                                                                                              Monthly cost depends on usage: $0.028 per GB                     
+ [2m└─[22m Insights queries data scanned                                                                                 Monthly cost depends on usage: $0.0054 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs_init["ixo5"][22m                                                                                                      
+ [2m├─[22m Data ingested                                                                                                 Monthly cost depends on usage: $0.54 per GB                      
+ [2m├─[22m Archival Storage                                                                                              Monthly cost depends on usage: $0.028 per GB                     
+ [2m└─[22m Insights queries data scanned                                                                                 Monthly cost depends on usage: $0.0054 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].aws_cloudwatch_log_group.ecs_logs_init["relayer"][22m                                                                                                   
+ [2m├─[22m Data ingested                                                                                                 Monthly cost depends on usage: $0.54 per GB                      
+ [2m├─[22m Archival Storage                                                                                              Monthly cost depends on usage: $0.028 per GB                     
+ [2m└─[22m Insights queries data scanned                                                                                 Monthly cost depends on usage: $0.0054 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["base"].module.efs.aws_efs_file_system.validator_fs[22m                                                                      
+ [2m└─[22m Storage (standard)                                                                                            Monthly cost depends on usage: $0.30 per GB                      
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["base"].module.s3.aws_s3_bucket.configs_bucket[22m                                                                           
+ [2m└─[22m Standard                                                                                                                                                                       
+ [2m   ├─[22m Storage                                                                                                    Monthly cost depends on usage: $0.023 per GB                     
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                             Monthly cost depends on usage: $0.005 per 1k requests            
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                        Monthly cost depends on usage: $0.0004 per 1k requests           
+ [2m   ├─[22m Select data scanned                                                                                        Monthly cost depends on usage: $0.002 per GB                     
+ [2m   └─[22m Select data returned                                                                                       Monthly cost depends on usage: $0.0007 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["base"].module.s3.aws_s3_bucket.validator_bucket[22m                                                                         
+ [2m└─[22m Standard                                                                                                                                                                       
+ [2m   ├─[22m Storage                                                                                                    Monthly cost depends on usage: $0.023 per GB                     
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                             Monthly cost depends on usage: $0.005 per 1k requests            
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                        Monthly cost depends on usage: $0.0004 per 1k requests           
+ [2m   ├─[22m Select data scanned                                                                                        Monthly cost depends on usage: $0.002 per GB                     
+ [2m   └─[22m Select data returned                                                                                       Monthly cost depends on usage: $0.0007 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["ixo5"].module.efs.aws_efs_file_system.validator_fs[22m                                                                      
+ [2m└─[22m Storage (standard)                                                                                            Monthly cost depends on usage: $0.30 per GB                      
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["ixo5"].module.s3.aws_s3_bucket.configs_bucket[22m                                                                           
+ [2m└─[22m Standard                                                                                                                                                                       
+ [2m   ├─[22m Storage                                                                                                    Monthly cost depends on usage: $0.023 per GB                     
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                             Monthly cost depends on usage: $0.005 per 1k requests            
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                        Monthly cost depends on usage: $0.0004 per 1k requests           
+ [2m   ├─[22m Select data scanned                                                                                        Monthly cost depends on usage: $0.002 per GB                     
+ [2m   └─[22m Select data returned                                                                                       Monthly cost depends on usage: $0.0007 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["ixo5"].module.s3.aws_s3_bucket.validator_bucket[22m                                                                         
+ [2m└─[22m Standard                                                                                                                                                                       
+ [2m   ├─[22m Storage                                                                                                    Monthly cost depends on usage: $0.023 per GB                     
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                             Monthly cost depends on usage: $0.005 per 1k requests            
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                        Monthly cost depends on usage: $0.0004 per 1k requests           
+ [2m   ├─[22m Select data scanned                                                                                        Monthly cost depends on usage: $0.002 per GB                     
+ [2m   └─[22m Select data returned                                                                                       Monthly cost depends on usage: $0.0007 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["relayer"].module.efs.aws_efs_file_system.validator_fs[22m                                                                   
+ [2m└─[22m Storage (standard)                                                                                            Monthly cost depends on usage: $0.30 per GB                      
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["relayer"].module.s3.aws_s3_bucket.configs_bucket[22m                                                                        
+ [2m└─[22m Standard                                                                                                                                                                       
+ [2m   ├─[22m Storage                                                                                                    Monthly cost depends on usage: $0.023 per GB                     
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                             Monthly cost depends on usage: $0.005 per 1k requests            
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                        Monthly cost depends on usage: $0.0004 per 1k requests           
+ [2m   ├─[22m Select data scanned                                                                                        Monthly cost depends on usage: $0.002 per GB                     
+ [2m   └─[22m Select data returned                                                                                       Monthly cost depends on usage: $0.0007 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.hyperlane_validator[0].module.hyperlane_validator["relayer"].module.s3.aws_s3_bucket.validator_bucket[22m                                                                      
+ [2m└─[22m Standard                                                                                                                                                                       
+ [2m   ├─[22m Storage                                                                                                    Monthly cost depends on usage: $0.023 per GB                     
+ [2m   ├─[22m PUT, COPY, POST, LIST requests                                                                             Monthly cost depends on usage: $0.005 per 1k requests            
+ [2m   ├─[22m GET, SELECT, and all other requests                                                                        Monthly cost depends on usage: $0.0004 per 1k requests           
+ [2m   ├─[22m Select data scanned                                                                                        Monthly cost depends on usage: $0.002 per GB                     
+ [2m   └─[22m Select data returned                                                                                       Monthly cost depends on usage: $0.0007 per GB                    
+                                                                                                                                                                                   
+ [1mmodule.ixo_agent_images_slack[0].aws_api_gateway_rest_api.lambda_api[22m                                                                                                              
+ [2m└─[22m Requests (first 333M)                                                                                         Monthly cost depends on usage: $3.50 per 1M requests             
+                                                                                                                                                                                   
+ [1mmodule.ixo_agent_images_slack[0].aws_lambda_function.this[22m                                                                                                                         
+ [2m├─[22m Requests                                                                                                      Monthly cost depends on usage: $0.20 per 1M requests             
+ [2m├─[22m Ephemeral storage                                                                                             Monthly cost depends on usage: $0.0000000323 per GB-seconds      
+ [2m└─[22m Duration (first 6B)                                                                                           Monthly cost depends on usage: $0.0000166667 per GB-seconds      
+                                                                                                                                                                                   
+ [1mProject total[22m                                                                                                                                                          $201.64    
+
+[1m OVERALL TOTAL[22m                                                                                                                                                          $409.50 
+
+*Usage costs were estimated using infracost-usage.yml, see docs for other options.
+
+──────────────────────────────────
+271 cloud resources were detected:
+∙ 61 were estimated
+∙ 210 were free
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Project                                            ┃ Baseline cost ┃ Usage cost* ┃ Total cost ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━╋━━━━━━━━━━━━┫
+┃ ixo-terra-infra-devnet                             ┃         $0.00 ┃          $6 ┃         $6 ┃
+┃ ixo-terra-infra-testnet                            ┃          $195 ┃          $6 ┃       $202 ┃
+┃ ixo-terra-infra-mainnet                            ┃          $195 ┃          $6 ┃       $202 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━┻━━━━━━━━━━━━┛

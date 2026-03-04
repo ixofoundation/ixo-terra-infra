@@ -25,13 +25,13 @@ This Terraform project provides Infrastructure as Code (IaC) for managing core s
 
 ### 📋 Cost Documentation
 
-- **[README-cost-estimation.md](README-cost-estimation.md)** - Complete cost estimation guide
+- **[cost-estimation/README-cost-estimation.md](cost-estimation/README-cost-estimation.md)** - Complete cost estimation guide
   - How to run cost estimates before deployment
   - Interactive tools for different environments
   - Cost optimization strategies
   - CI/CD integration for automatic cost tracking
 
-- **[README-vultr-cost-estimates.md](README-vultr-cost-estimates.md)** - Detailed cost breakdowns
+- **[cost-estimation/README-vultr-cost-estimates.md](cost-estimation/README-vultr-cost-estimates.md)** - Detailed cost breakdowns
   - Environment-specific cost analysis
   - Vultr vs AWS cost comparisons
   - Infrastructure component pricing
@@ -131,8 +131,8 @@ chmod +x estimate-costs.sh
 ./estimate-costs.sh your_dev_env
 
 # For detailed cost breakdowns, see:
-# - README-cost-estimation.md (how to run estimates)
-# - README-vultr-cost-estimates.md (detailed pricing)
+# - cost-estimation/README-cost-estimation.md (how to run estimates)
+# - cost-estimation/README-vultr-cost-estimates.md (detailed pricing)
 ```
 
 ### 3. Create Your Configuration

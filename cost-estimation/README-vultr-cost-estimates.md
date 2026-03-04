@@ -252,6 +252,6 @@ A: Very accurate for base infrastructure. Actual costs may vary ±10% based on u
 A: No! Use any names that make sense for your organization. The cost estimates apply to any environment type.
 
 ### Getting Help
-1. **Cost estimates**: Run `./estimate-costs.sh your_env_name`
+1. **Cost estimates**: Run `./estimate-costs.sh your_env_name` (from repo root)
 2. **Detailed analysis**: Check generated reports in `cost-reports/`
-3. **Optimization**: Review Grafana dashboards for usage patterns 
+3. **Optimization**: Review Grafana dashboards for usage patterns

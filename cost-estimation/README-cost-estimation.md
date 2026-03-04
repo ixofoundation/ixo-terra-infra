@@ -25,6 +25,8 @@ This repository includes comprehensive cost estimation tools for the IXO Terra i
 
 ### Running Cost Estimates
 
+Run from the **repository root**:
+
 ```bash
 # Make the script executable
 chmod +x estimate-costs.sh
@@ -51,6 +53,8 @@ chmod +x estimate-costs.sh
 
 ## 📋 Cost Estimation Files
 
+All cost-estimation config and docs live in this `cost-estimation/` directory:
+
 ### 1. `infracost.yml`
 Main configuration file that defines:
 - Multiple environments (configurable for your organization)
@@ -67,7 +71,7 @@ Usage patterns file that defines:
 - Network transfer estimates
 - API operation counts
 
-### 3. `estimate-costs.sh`
+### 3. `estimate-costs.sh` (repository root)
 Interactive script that provides:
 - Environment-specific cost estimates
 - Cost comparisons between environments
@@ -177,20 +181,20 @@ Already implemented in GCS buckets:
 
 ## 📈 Direct Infracost Commands
 
-### If you want to run Infracost directly:
+Run from the **repository root**:
 
 ```bash
 # Basic breakdown for your development environment
 infracost breakdown --path . --terraform-workspace your_dev_env
 
 # With usage file for more accurate estimates
-infracost breakdown --path . --terraform-workspace your_dev_env --usage-file infracost-usage.yml
+infracost breakdown --path . --terraform-workspace your_dev_env --usage-file cost-estimation/infracost-usage.yml
 
-# Multiple environments at once (requires custom infracost.yml)
-infracost breakdown --config-file infracost.yml
+# Multiple environments at once (uses cost-estimation config)
+infracost breakdown --config-file cost-estimation/infracost.yml
 
 # Generate HTML report
-infracost breakdown --config-file infracost.yml --format html --out-file report.html
+infracost breakdown --config-file cost-estimation/infracost.yml --format html --out-file report.html
 ```
 
 ### Cost Comparison
@@ -221,7 +225,7 @@ infracost diff --path1 your_dev-costs.json --path2 your_prod-costs.json
 
 ### Updating Environment Names
 
-1. **Modify `infracost.yml`** to use your environment names:
+1. **Modify `cost-estimation/infracost.yml`** to use your environment names:
    ```yaml
    projects:
      - path: .
@@ -293,8 +297,8 @@ kubelet_volume_stats_used_bytes
 
 ### Validation
 ```bash
-# Validate Infracost configuration
-infracost breakdown --config-file infracost.yml --dry-run
+# Validate Infracost configuration (run from repo root)
+infracost breakdown --config-file cost-estimation/infracost.yml --dry-run
 
 # Check Terraform configuration
 terraform validate
@@ -306,7 +310,7 @@ infracost configure get api_key
 ## 🤝 Contributing
 
 ### Adding New Services
-1. Update `infracost-usage.yml` with usage patterns
+1. Update `cost-estimation/infracost-usage.yml` with usage patterns
 2. Update `README-vultr-cost-estimates.md` with manual pricing
 3. Test with `./estimate-costs.sh your_test_env`
 
@@ -317,7 +321,7 @@ infracost configure get api_key
 
 ### For Your Organization
 1. Fork this repository
-2. Update environment names in `infracost.yml` and documentation
+2. Update environment names in `cost-estimation/infracost.yml` and documentation
 3. Modify cost estimates to match your expected usage patterns
 4. Update variable files with your organization's defaults
 
@@ -333,7 +337,7 @@ infracost configure get api_key
 For questions about cost estimation:
 1. Check the `README-vultr-cost-estimates.md` for detailed breakdowns
 2. Run `./estimate-costs.sh all` for comprehensive analysis
-3. Review generated reports in `cost-reports/` directory
+3. Review generated reports in `cost-reports/` directory (at repo root)
 
 ## 🚨 Important Notes
 
@@ -341,4 +345,4 @@ For questions about cost estimation:
 - **Actual costs may vary** based on usage patterns and optional features
 - **Always run cost estimates** before making infrastructure changes
 - **Monitor actual usage** to optimize costs over time
-- **Customize environment names** to match your organization's conventions 
+- **Customize environment names** to match your organization's conventions
