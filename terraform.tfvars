@@ -450,6 +450,16 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }
+      ixo_kyc_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "kyc"
+      }
+      ixo_yellowcard_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "yellowcard"
+      }
       ixo_ecs_oracle = {
         enabled = false
         domain = "ixoearth"
@@ -875,6 +885,20 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_prefix = "domain-creator"
+      }
+      ixo_kyc_oracle = {
+        enabled = true
+        domain = "ixoworld"
+        dns_prefix = "kyc"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_yellowcard_oracle = {
+        enabled = true
+        domain = "ixoworld"
+        dns_prefix = "yellowcard"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_ecs_oracle = {
         enabled = true
@@ -1320,6 +1344,20 @@ environments = {
         enabled = true
         domain = "ixoearth"
         dns_prefix = "domain-creator"
+      }
+      ixo_kyc_oracle = {
+        enabled = true
+        domain = "ixoworld"
+        dns_prefix = "kyc"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      ixo_yellowcard_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "yellowcard"
+        storage_class = "bulk"
+        storage_size = "40Gi"
       }
       ixo_ecs_oracle = {
         enabled = false

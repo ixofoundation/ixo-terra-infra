@@ -66,9 +66,9 @@ controller:
   resources:
     requests:
       cpu: 100m
-      memory: 100Mi
+      memory: 200Mi
     limits:
-      memory: 150Mi
+      memory: 350Mi
 
   # ---- Snippets required for http-snippets / server-snippets ----
   enableSnippets: true
@@ -136,8 +136,6 @@ controller:
       # Note: $namespace / $service_name are set only in location context by F5, not in http context,
       # so we cannot use them in http-snippets (e.g. map $namespace ...). Removed request_body_preview map.
       server-snippets: |
-        keepalive_timeout 4s 4s;
-
         add_header Host $host;
         add_header X-Real-IP $remote_addr;
         add_header X-Forwarded-For $proxy_add_x_forwarded_for;

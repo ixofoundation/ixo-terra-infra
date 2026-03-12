@@ -1078,6 +1078,48 @@ module "ixo_domain_creator_oracle" {
   vault_mount_path = local.vault_mount_path
 }
 
+module "ixo_kyc_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_kyc_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-kyc-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/kyc-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_oracle"]
+        vault_mount = local.vault_mount_path
+      }
+    )
+  }
+  create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_yellowcard_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_yellowcard_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-yellowcard-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-yellowcard-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_yellowcard_oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
+        vault_mount = local.vault_mount_path
+      }
+    )
+  }
+  create_kv = true
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
 module "ixo_subscriptions_oracle" {
   count  = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle"].enabled ? 1 : 0
   source = "./modules/argocd_application"
