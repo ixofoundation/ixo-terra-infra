@@ -14,8 +14,8 @@ permissions:
   "*": relay
   "${matrix_domain}": user
 encryption:
-  allow: false
-  default: false
+  allow: true
+  default: true
   require: false
 resources:
   requests:

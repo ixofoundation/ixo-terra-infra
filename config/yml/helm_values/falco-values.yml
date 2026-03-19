@@ -180,7 +180,9 @@ customRules:
          proc.cmdline contains "gpg-agent" or
          proc.cmdline contains "argocd-cmp-serv" or
          proc.cmdline contains "metrics-server" or
-         proc.cmdline contains "loki-canary")
+         proc.cmdline contains "loki-canary" or
+         proc.cmdline contains "memcached" or
+         proc.cmdline contains "package-server")
     
     # Kubernetes pause and init containers (can have null metadata during initialization)
     - macro: legitimate_pause_containers
@@ -360,10 +362,11 @@ customRules:
     - macro: legitimate_prometheus_grafana_containers
       condition: >
         (k8s.ns.name = "prometheus" or
+         k8s.ns.name startswith "prometheus-" or
          container.image.repository contains "grafana/grafana" or
          container.image.repository contains "kiwigrid/k8s-sidecar" or
          container.image.repository contains "busybox" or
-         container.name in (grafana, init-chown-data, grafana-sc-dashboard, grafana-sc-datasources) or
+         container.name in (grafana, init-chown-data, grafana-sc-dashboard, grafana-sc-datasources, blackbox-exporter) or
          k8s.pod.name contains "grafana" or
          k8s.pod.name contains "prometheus")
 
@@ -378,6 +381,7 @@ customRules:
          proc.cmdline contains "multiprocessing" or
          proc.cmdline contains "resource_tracker" or
          proc.cmdline contains "forkserver" or
+         proc.cmdline contains "blackbox_export" or
          proc.cmdline contains "grep" or
          proc.cmdline contains "sed" or
          proc.cmdline contains "env" or

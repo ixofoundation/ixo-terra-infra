@@ -1,12 +1,62 @@
 #file: noinspection YAMLSchemaValidation
 alertmanager:
   alertmanagerSpec:
+    # Mount the webhook secret so config can reference it via file path
+    secrets:
+      - alertmanager-slack-webhook
     resources:
       requests:
         cpu: 40m
         memory: 200Mi
       limits:
         memory: 400Mi
+  templateFiles:
+    slack.tmpl: |-
+      {{ define "slack.ixo.title" -}}
+      {{ if gt (len .Alerts.Firing) 0 -}}:red_circle:{{ else -}}:large_green_circle:{{ end }} [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ len .Alerts.Firing }}{{ end }}] {{ if .CommonLabels.name }}{{ .CommonLabels.name }}{{ else }}{{ .CommonLabels.alertname }}{{ end }}
+      {{- end }}
+      {{ define "slack.ixo.context" -}}
+      {{ if .Labels.pod -}}{{ .Labels.pod }}{{ if .Labels.kubernetes_namespace }} ({{ .Labels.kubernetes_namespace }}){{ end -}}
+      {{ else if .Labels.instance -}}{{ .Labels.instance -}}
+      {{ else -}}cluster-wide{{ end -}}
+      {{- end }}
+      {{ define "slack.ixo.text" -}}
+      {{ if .Alerts.Firing -}}
+      *Firing:*
+      {{ range .Alerts.Firing -}}
+      • {{ if .Labels.name }}*{{ .Labels.name }}*{{ else }}*{{ .Labels.alertname }}*{{ end }} on {{ template "slack.ixo.context" . }}
+        {{ .Annotations.summary }}
+      {{ end -}}
+      {{ end -}}
+      {{ if .Alerts.Resolved -}}
+      *Resolved:*
+      {{ range .Alerts.Resolved -}}
+      • {{ if .Labels.name }}{{ .Labels.name }}{{ else }}{{ .Labels.alertname }}{{ end }} on {{ template "slack.ixo.context" . }}
+      {{ end -}}
+      {{ end -}}
+      {{- end }}
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'kubernetes_namespace', 'severity']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: slack-notifications
+      routes:
+        - matchers:
+            - severity = critical
+          repeat_interval: 1h
+    receivers:
+      - name: slack-notifications
+        slack_configs:
+          - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/webhook-url
+            title: '{{ template "slack.ixo.title" . }}'
+            text: '{{ template "slack.ixo.text" . }}'
+            send_resolved: true
+    templates:
+      - /etc/alertmanager/config/*.tmpl
 defaultRules:
   rules:
     alertmanager: false
@@ -182,6 +232,14 @@ prometheus:
               selectors:
                 - role: pod
                   label: app.kubernetes.io/component=crunchy-alertmanager
+        - kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - prometheus
+              selectors:
+                - role: pod
+                  label: app.kubernetes.io/name=alertmanager
 grafana:
   sidecar:
     skipTlsVerify: true
@@ -271,3 +329,115 @@ prometheusOperator:
     requests:
       memory: 100Mi
       cpu: 100m
+additionalPrometheusRulesMap:
+  ixo-infrastructure-rules:
+    groups:
+      - name: ixo.postgres
+        rules:
+          - alert: PostgresInstanceDown
+            expr: pg_up == 0
+            for: 1m
+            labels:
+              severity: critical
+              name: PostgresInstanceDown
+            annotations:
+              summary: "{{ $labels.pod }} in {{ $labels.kubernetes_namespace }} is unreachable"
+
+          - alert: PostgresConnectionSaturation
+            # pg_stat_database_numbackends is per-database; sum to get total per instance
+            expr: |
+              sum by (instance, pod, kubernetes_namespace, pg_cluster, role) (pg_stat_database_numbackends)
+              / on (instance, pod, kubernetes_namespace, pg_cluster, role)
+              pg_settings_max_connections > 0.80
+            for: 5m
+            labels:
+              severity: warning
+              name: PostgresConnectionSaturation
+            annotations:
+              summary: "{{ $labels.pod }} ({{ $labels.pg_cluster }}) connections at {{ $value | humanizePercentage }}"
+
+          - alert: PostgresLongRunningTransaction
+            # Excludes system databases; fires if any transaction has been open > 5 minutes
+            expr: |
+              pg_stat_activity_max_tx_duration{datname!~"template.*|postgres"} > 300
+            for: 2m
+            labels:
+              severity: warning
+              name: PostgresLongRunningTransaction
+            annotations:
+              summary: "{{ $labels.pod }} in {{ $labels.kubernetes_namespace }} has a transaction open for {{ $value | humanizeDuration }}"
+
+          - alert: PostgresReplicationLag
+            # Fires only on replicas; alert if replica is > 5 minutes behind primary
+            expr: pg_replication_lag_seconds{role="replica"} > 300
+            for: 5m
+            labels:
+              severity: warning
+              name: PostgresReplicationLag
+            annotations:
+              summary: "{{ $labels.pod }} ({{ $labels.pg_cluster }}) replica is {{ $value | humanizeDuration }} behind primary"
+
+      - name: ixo.node
+        rules:
+          - alert: NodeMemoryPressure
+            # Fires when less than 10% of RAM is available on a node
+            expr: |
+              node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10
+            for: 5m
+            labels:
+              severity: critical
+              name: NodeMemoryPressure
+            annotations:
+              summary: "{{ $labels.instance }} has {{ $value | humanizePercentage }} memory available"
+
+          - alert: NodeCPUSaturation
+            # Fires when CPU has been > 90% busy for 10 minutes
+            expr: |
+              avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) < 0.10
+            for: 10m
+            labels:
+              severity: warning
+              name: NodeCPUSaturation
+            annotations:
+              summary: "{{ $labels.instance }} CPU is {{ $value | humanizePercentage }} idle"
+
+          - alert: NodeInodeExhaustion
+            # Inode exhaustion is independent of disk space — writes fail when inodes run out
+            # Excludes tmpfs/overlay/squashfs which are virtual and have fixed counts
+            expr: |
+              node_filesystem_files_free{fstype!~"tmpfs|overlay|squashfs"}
+              / node_filesystem_files{fstype!~"tmpfs|overlay|squashfs"} < 0.10
+            for: 5m
+            labels:
+              severity: warning
+              name: NodeInodeExhaustion
+            annotations:
+              summary: "{{ $labels.instance }} {{ $labels.mountpoint }} has {{ $value | humanizePercentage }} inodes free"
+
+      - name: ixo.loki
+        rules:
+          - alert: LokiIngestionDropped
+            # Loki discarding samples means gaps in log observability
+            expr: |
+              sum by (reason) (rate(loki_discarded_samples_total[5m])) > 0
+            for: 5m
+            labels:
+              severity: warning
+              name: LokiIngestionDropped
+            annotations:
+              summary: "Loki dropping {{ $value | humanize }} samples/s (reason: {{ $labels.reason }})"
+
+          - alert: LokiQueryLatencyHigh
+            # p99 query latency > 30s means Grafana dashboards hang during incidents
+            expr: |
+              histogram_quantile(0.99,
+                sum by (le) (
+                  rate(loki_request_duration_seconds_bucket{route=~"loki_api_v1_query_range|loki_api_v1_query"}[5m])
+                )
+              ) > 30
+            for: 5m
+            labels:
+              severity: warning
+              name: LokiQueryLatencyHigh
+            annotations:
+              summary: "Loki query p99 latency is {{ $value | humanizeDuration }}"

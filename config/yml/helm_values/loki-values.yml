@@ -35,9 +35,9 @@ loki:
   schemaConfig:
     configs:
       - from: "2025-01-01"
-        store: "tsdb"
-        object_store: "filesystem"
-        schema: "v13"
+        object_store: filesystem
+        store: tsdb
+        schema: v13
         index:
           prefix: "index_"
           period: 24h
@@ -49,8 +49,10 @@ compactor:
 singleBinary:
   replicas: 1
   persistence:
+    enableStatefulSetAutoDeletePVC: false
+    enableStatefulSetRecreationForSizeChange: true
     storageClass: ${storage_class}
-    size: 40Gi
+    size: 80Gi
   resources:
     requests:
       memory: 1.8Gi

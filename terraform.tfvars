@@ -36,7 +36,7 @@ versions = {
   prometheus-stack             = "82.1.0" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
   external-dns                 = "1.20.0" # https://artifacthub.io/packages/helm/external-dns/external-dns
   vault                        = "0.32.0" # https://artifacthub.io/packages/helm/hashicorp/vault
-  loki                         = "6.53.0" # https://artifacthub.io/packages/helm/grafana/loki
+  loki                         = "6.55.0" # https://github.com/grafana/loki/blob/main/production/helm/loki/Chart.yaml
   prometheus-blackbox-exporter = "11.8.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
   dex                          = "0.24.0" # https://artifacthub.io/packages/helm/dex/dex
   tailscale                    = "1.94.2" # https://pkgs.tailscale.com/helmcharts/index.yaml
@@ -1348,7 +1348,7 @@ environments = {
       ixo_kyc_oracle = {
         enabled = true
         domain = "ixoworld"
-        dns_prefix = "kyc"
+        dns_prefix = "kyc.oracle"
         storage_class = "bulk"
         storage_size = "40Gi"
       }

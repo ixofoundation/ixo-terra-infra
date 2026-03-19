@@ -332,8 +332,8 @@ module "loki" {
     repository      = "https://grafana.github.io/helm-charts"
     values_override = templatefile("${local.helm_values_config_path}/loki-values.yml",
       {
-        gcs_bucket = google_storage_bucket.loki_logs_backups[0].name
         service_account = indent(8, module.gcp_kms_loki.gcp_key_secret_data["key.json"])
+        gcs_bucket   = google_storage_bucket.loki_logs_backups[0].name
         storage_class = var.storage_classes["bulk"]
       }
     )

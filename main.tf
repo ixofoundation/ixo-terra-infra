@@ -593,3 +593,13 @@ resource "kubernetes_secret_v1" "slack_webhook_url_matrix" {
     webhook-url = ""
   }
 }
+
+resource "kubernetes_secret_v1" "alertmanager_slack_webhook" {
+  metadata {
+    name      = "alertmanager-slack-webhook"
+    namespace = kubernetes_namespace_v1.prometheus_stack.metadata[0].name
+  }
+  data = {
+    webhook-url = ""
+  }
+}

@@ -27,11 +27,11 @@ api-server:
     - name: WORKER_PORT
       value: "3005"
     - name: USE_GO_MARKDOWN_PARSER
-      value: "true"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#USE_GO_MARKDOWN_PARSER>"
     - name: ENV
       value: "production"
     - name: USE_DB_AUTHENTICATION
-      value: "false"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#USE_DB_AUTHENTICATION>"
     
     # ===== Service URLs (localhost since same pod) ======
     # - name: PLAYWRIGHT_MICROSERVICE_URL
@@ -39,12 +39,14 @@ api-server:
     - name: NUQ_DATABASE_URL
       value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}?sslmode=require"
     - name: NODE_TLS_REJECT_UNAUTHORIZED
-      value: "0"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#NODE_TLS_REJECT_UNAUTHORIZED>"
     
     # ===== Redis ======
     - name: REDIS_URL
       value: "redis://:<path:${vault_mount}/data/ixo-firecrawl#REDIS_PASSWORD>@${redis_host}:${redis_port}"
     - name: REDIS_RATE_LIMIT_URL
+      value: "redis://:<path:${vault_mount}/data/ixo-firecrawl#REDIS_PASSWORD>@${redis_host}:${redis_port}"
+    - name: REDIS_EVICT_URL
       value: "redis://:<path:${vault_mount}/data/ixo-firecrawl#REDIS_PASSWORD>@${redis_host}:${redis_port}"
     
     # ===== AI Features ======
@@ -53,21 +55,49 @@ api-server:
     - name: OPENAI_API_KEY
       value: "<path:${vault_mount}/data/ixo-firecrawl#OPENAI_API_KEY>"
     - name: LLM_PROVIDER
-      value: "openrouter"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#LLM_PROVIDER>"
     - name: MODEL_NAME
-      value: "qwen/qwen3-235b-a22b-2507"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#MODEL_NAME>"
     - name: OPENAI_BASE_URL
-      value: "https://openrouter.ai/api/v1"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#OPENAI_BASE_URL>"
     - name: VLM_MODEL_NAME
-      value: "qwen/qwen3-vl-235b-a22b-instruct"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#VLM_MODEL_NAME>"
+    - name: MODEL_EMBEDDING_NAME
+      value: "<path:${vault_mount}/data/ixo-firecrawl#MODEL_EMBEDDING_NAME>"
     
     # ===== Embeddings ======
     - name: IXO_API_KEY
-      value: "none"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#IXO_API_KEY>"
     - name: EMBEDDING_PROVIDER
-      value: "ixo"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#EMBEDDING_PROVIDER>"
     - name: IXO_BASE_URL
-      value: "https://nomic.testnet.ixo.earth/v1"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#IXO_BASE_URL>"
+
+    # ===== Performance & Concurrency ======
+    - name: NUM_WORKERS_PER_QUEUE
+      value: "<path:${vault_mount}/data/ixo-firecrawl#NUM_WORKERS_PER_QUEUE>"
+    - name: CRAWL_CONCURRENT_REQUESTS
+      value: "<path:${vault_mount}/data/ixo-firecrawl#CRAWL_CONCURRENT_REQUESTS>"
+    - name: MAX_CONCURRENT_JOBS
+      value: "<path:${vault_mount}/data/ixo-firecrawl#MAX_CONCURRENT_JOBS>"
+    - name: BROWSER_POOL_SIZE
+      value: "<path:${vault_mount}/data/ixo-firecrawl#BROWSER_POOL_SIZE>"
+
+    # ===== Timeouts (tuned for OpenRouter latency) ======
+    - name: JOB_LOCK_EXTEND_INTERVAL
+      value: "<path:${vault_mount}/data/ixo-firecrawl#JOB_LOCK_EXTEND_INTERVAL>"
+    - name: JOB_LOCK_EXTENSION_TIME
+      value: "<path:${vault_mount}/data/ixo-firecrawl#JOB_LOCK_EXTENSION_TIME>"
+    - name: WORKER_LOCK_DURATION
+      value: "<path:${vault_mount}/data/ixo-firecrawl#WORKER_LOCK_DURATION>"
+    - name: WORKER_STALLED_CHECK_INTERVAL
+      value: "<path:${vault_mount}/data/ixo-firecrawl#WORKER_STALLED_CHECK_INTERVAL>"
+
+    # ===== Logging ======
+    - name: LOGGING_LEVEL
+      value: "<path:${vault_mount}/data/ixo-firecrawl#LOGGING_LEVEL>"
+    - name: FIRECRAWL_LOG_TO_FILE
+      value: "<path:${vault_mount}/data/ixo-firecrawl#FIRECRAWL_LOG_TO_FILE>"
     
     # ===== Queue Admin Panel ======
     - name: BULL_AUTH_KEY
