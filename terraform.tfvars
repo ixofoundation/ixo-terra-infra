@@ -471,11 +471,6 @@ environments = {
         storage_class = "fast"
         storage_size = "40Gi"
       }
-      ixo_memory_engine = {
-        enabled = false
-        domain = "ixoearth"
-        dns_prefix = "memory-engine"
-      }
       ixo_memory_engine_graphiti = {
         enabled = true
         domain = "ixoearth"
@@ -911,11 +906,6 @@ environments = {
         storage_class = "fast"
         storage_size = "40Gi"
       }
-      ixo_memory_engine = {
-        enabled = false
-        domain = "ixoearth"
-        dns_prefix = "memory-engine"
-      }
       ixo_memory_engine_graphiti = {
         enabled = true
         domain = "ixoearth"
@@ -1301,6 +1291,7 @@ environments = {
       }
       ixo_matrix_whatsapp = {
         enabled = true
+        dns_endpoint = "whatsapp.bridge.mx.ixo.world"
         domain = "ixoworld"
         storage_class = "bulk"
         storage_size = "40Gi"
@@ -1370,11 +1361,6 @@ environments = {
         dns_prefix = "builder.observable"
         storage_class = "fast"
         storage_size = "40Gi"
-      }
-      ixo_memory_engine = {
-        enabled = false
-        domain = "ixoearth"
-        dns_prefix = "memory-engine"
       }
       ixo_memory_engine_graphiti = {
         enabled = true

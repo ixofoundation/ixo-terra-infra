@@ -10,6 +10,21 @@ homeserver:
   domain: "${matrix_domain}"
 database:
   uri: "${postgres_uri}"
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    acme.cert-manager.io/http01-edit-in-place: "true"
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-matrix-whatsapp-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
 permissions:
   "*": relay
   "${matrix_domain}": user

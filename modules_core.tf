@@ -88,31 +88,6 @@ module "ixo_blocksync_core" {
   vault_mount_path = local.vault_mount_path
 }
 
-module "ixo_memory_engine" {
-  count  = var.environments[terraform.workspace].application_configs["ixo_memory_engine"].enabled ? 1 : 0
-  source = "./modules/argocd_application"
-  application = {
-    name       = "ixo-memory-engine"
-    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/memory-engine"
-    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_memory_engine.yml",
-      {
-        environment = terraform.workspace
-        vault_mount = local.vault_mount_path
-        neo4j_uri = "neo4j://neo4j.neo4j.svc.cluster.local"
-        neo4j_port = "7687"
-        neo4j_user = "neo4j"
-        neo4j_password = random_password.neo4j_password.result
-        host = local.dns_for_environment[terraform.workspace]["ixo_memory_engine"]
-      }
-    )
-  }
-  create_kv        = true
-  argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = local.vault_mount_path
-}
-
 module "ixo_memory_engine_graphiti" {
   count  = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -772,6 +747,7 @@ module "ixo_matrix_whatsapp" {
         storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_whatsapp"]
         as_token = random_password.matrix_whatsapp_as_token.result
         hs_token = random_password.matrix_whatsapp_hs_token.result
+        host = local.dns_for_environment[terraform.workspace]["ixo_matrix_whatsapp"]
       }
     )
   }

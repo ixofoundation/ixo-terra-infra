@@ -427,6 +427,10 @@ customRules:
          proc.cmdline contains "ts-input" or
          proc.cmdline contains "ts-forward" or
          proc.cmdline contains "ts-postrouting" or
+         (k8s.ns.name = "tailscale" and
+          k8s.pod.name startswith "operator-" and
+          container.name = "operator" and
+          proc.name = "operator") or
          (proc.cmdline contains "sh " and proc.cmdline contains "sysctl"))
 
     # ArgoCD Git and deployment operations (including Dex SSO)
