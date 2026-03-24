@@ -90,6 +90,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#NETWORK>"
   - name: "MCP_PORT"
     value: "9000"
+  - name: "MCP_DID_HOSTNAME"
+    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MCP_DID_HOSTNAME>"
 resources:
   requests:
     memory: 100Mi
@@ -140,6 +142,12 @@ matrix-bridge-api:
       value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_ORACLE_ADMIN_PASSWORD>"
     - name: "MATRIX_RECOVERY_PHRASE"
       value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_RECOVERY_PHRASE>"
+    - name: "UCAN_SERVICE_ED25519_MNEMONIC"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#UCAN_SERVICE_ED25519_MNEMONIC>"
+    - name: "UCAN_SERVICE_DID_HOSTNAME"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#UCAN_SERVICE_DID_HOSTNAME>"
+    - name: "NETWORK"
+      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#NETWORK>"
   resources:
     requests:
       cpu: 20m
