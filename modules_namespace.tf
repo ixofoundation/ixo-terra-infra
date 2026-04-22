@@ -129,3 +129,9 @@ resource "kubernetes_namespace_v1" "descheduler" {
     name = "descheduler"
   }
 }
+
+resource "kubernetes_namespace_v1" "searxng" {
+  metadata {
+    name = "searxng"
+  }
+}

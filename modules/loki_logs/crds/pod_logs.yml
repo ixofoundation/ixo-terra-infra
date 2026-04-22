@@ -13,8 +13,10 @@ spec:
       sourceLabels:
         - __meta_kubernetes_pod_node_name
       targetLabel: __host__
+    # Keep a small allowlist of stable Kubernetes identity labels for Loki filtering.
+    # Avoid mapping *all* pod labels (high cardinality; trips max_label_names_per_series).
     - action: labelmap
-      regex: __meta_kubernetes_pod_label_(.+)
+      regex: __meta_kubernetes_pod_label_(app_kubernetes_io_name|app_kubernetes_io_instance|app_kubernetes_io_component|app_kubernetes_io_part_of)
     - action: replace
       replacement: $1
       separator: '-'

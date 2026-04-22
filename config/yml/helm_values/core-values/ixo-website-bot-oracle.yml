@@ -78,6 +78,18 @@ env:
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGSMITH_API_KEY>"
   - name: "LANGSMITH_PROJECT"
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#LANGSMITH_PROJECT>"
+  - name: "SKILLS_CAPSULES_BASE_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#SKILLS_CAPSULES_BASE_URL>"
+  - name: "MATRIX_ACCOUNT_ROOM_ID"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_ACCOUNT_ROOM_ID>"
+  - name: "REDIS_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#REDIS_URL>"
+  - name: "DOMAIN_INDEXER_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#DOMAIN_INDEXER_URL>"
+  - name: "FIRECRAWL_MCP_URL"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#FIRECRAWL_MCP_URL>"
+  - name: "MATRIX_VALUE_PIN"
+    value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_VALUE_PIN>"
   - name: PORT
     value: "3000"
 service:

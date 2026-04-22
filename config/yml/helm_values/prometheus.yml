@@ -380,9 +380,10 @@ additionalPrometheusRulesMap:
       - name: ixo.node
         rules:
           - alert: NodeMemoryPressure
-            # Fires when less than 10% of RAM is available on a node
+            # Scoped to job="node-exporter" to exclude external nodes (e.g. validators) scraped via additional_scrape_metrics
             expr: |
-              node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10
+              node_memory_MemAvailable_bytes{job="node-exporter"}
+              / node_memory_MemTotal_bytes{job="node-exporter"} < 0.10
             for: 5m
             labels:
               severity: critical
@@ -391,9 +392,9 @@ additionalPrometheusRulesMap:
               summary: "{{ $labels.instance }} has {{ $value | humanizePercentage }} memory available"
 
           - alert: NodeCPUSaturation
-            # Fires when CPU has been > 90% busy for 10 minutes
+            # Scoped to job="node-exporter" to exclude external nodes
             expr: |
-              avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) < 0.10
+              avg by (instance) (rate(node_cpu_seconds_total{mode="idle", job="node-exporter"}[5m])) < 0.10
             for: 10m
             labels:
               severity: warning
@@ -402,11 +403,11 @@ additionalPrometheusRulesMap:
               summary: "{{ $labels.instance }} CPU is {{ $value | humanizePercentage }} idle"
 
           - alert: NodeInodeExhaustion
-            # Inode exhaustion is independent of disk space — writes fail when inodes run out
+            # Scoped to job="node-exporter" to exclude external nodes
             # Excludes tmpfs/overlay/squashfs which are virtual and have fixed counts
             expr: |
-              node_filesystem_files_free{fstype!~"tmpfs|overlay|squashfs"}
-              / node_filesystem_files{fstype!~"tmpfs|overlay|squashfs"} < 0.10
+              node_filesystem_files_free{job="node-exporter", fstype!~"tmpfs|overlay|squashfs"}
+              / node_filesystem_files{job="node-exporter", fstype!~"tmpfs|overlay|squashfs"} < 0.10
             for: 5m
             labels:
               severity: warning

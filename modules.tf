@@ -797,6 +797,27 @@ resource "random_password" "matrix_whatsapp_hs_token" {
   upper   = true
 }
 
+module "searxng" {
+  count  = var.environments[terraform.workspace].application_configs["searxng"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "searxng"
+    namespace  = kubernetes_namespace_v1.searxng.metadata[0].name
+    repository = var.ixo_helm_chart_repository # TODO fork and update to our own repository as it is not maintainted.
+    path       = "charts/${terraform.workspace}/ixoworld/searxng"
+    isHelm     = false
+    values_override = templatefile("${local.helm_values_config_path}/searxng-values.yml", {
+      vault_mount = local.vault_mount_path
+    })
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  create_kv        = true
+  kv_defaults = {
+    SECRET_KEY = ""
+  }
+}
+
 module "nomic_embedding" {
   count  = var.environments[terraform.workspace].application_configs["nomic_embedding"].enabled ? 1 : 0
   source = "./modules/nomic_embedding"

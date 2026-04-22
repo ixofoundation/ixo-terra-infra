@@ -3,13 +3,7 @@ image:
 ingress:
   enabled: true
   className: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-staging
-    acme.cert-manager.io/http01-edit-in-place: "true"
-  tls:
-    - hosts:
-        - ${host}
-      secretName: ixo-matrix-appservice-rooms-tls
+  annotations: {}
   hosts:
     - host: ${host}
       paths:
@@ -25,10 +19,10 @@ env:
     value: "8081"
 resources:
   requests:
-    memory: 3000Mi
+    memory: 150Mi
     cpu: "40m"
   limits:
-    memory: 450Mi
+    memory: 300Mi
 autoscaling:
   enabled: true
   minReplicas: 1
@@ -43,3 +37,12 @@ backup:
       memory: 256Mi
   gcs:
     bucket: ${gcs_bucket}
+config:
+  homeserverUrl: https://matrix.supamoto.global
+  homeserverName: matrix.supamoto.global
+  ucan:
+    hostname: rooms.bot.matrix.supamoto.global
+registration:
+  hs_token: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_HS_TOKEN>"
+  as_token: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_AS_TOKEN>"
+  url: http://supamoto-matrix-appservice-rooms.matrix-synapse.svc.cluster.local:9000

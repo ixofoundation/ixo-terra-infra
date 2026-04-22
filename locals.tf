@@ -48,7 +48,9 @@ locals {
     "matrix_admin",
     "matrix_livekit",
     "memory_engine_graphiti",
-    "falco_security"
+    "falco_security",
+    "ixo_matrix_whatsapp",
+    "ixo_sygnal"
   ]
 
   vault_mount_path = var.vault_core_mount

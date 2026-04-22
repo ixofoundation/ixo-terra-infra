@@ -84,6 +84,10 @@ env:
     value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGSMITH_API_KEY>"
   - name: "LANGSMITH_PROJECT"
     value: "<path:${vault_mount}/data/ixo-ecs-oracle#LANGSMITH_PROJECT>"
+  - name: "ECS_MCP_URL"
+    value: "<path:${vault_mount}/data/ixo-ecs-oracle#ECS_MCP_URL>"
+  - name: "ECS_MCP_AUTH_TOKEN"
+    value: "<path:${vault_mount}/data/ixo-ecs-oracle#ECS_MCP_AUTH_TOKEN>"
 service:
   port: 3000
 resources:

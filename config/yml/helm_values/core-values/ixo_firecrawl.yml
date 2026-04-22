@@ -103,6 +103,11 @@ api-server:
     - name: BULL_AUTH_KEY
       value: "<path:${vault_mount}/data/ixo-firecrawl#BULL_AUTH_KEY>"
 
+    - name: "SEARXNG_ENDPOINT"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#SEARXNG_ENDPOINT>"
+    - name: "SEARXNG_ENGINES"
+      value: "<path:${vault_mount}/data/ixo-firecrawl#SEARXNG_ENGINES>"
+
 # MCP Server Configuration
 # CI/CD will update charts/mcp-server/Chart.yaml appVersion
 mcp-server:

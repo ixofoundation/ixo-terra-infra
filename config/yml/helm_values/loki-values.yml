@@ -3,6 +3,30 @@ loki:
   commonConfig:
     replication_factor: 1
   auth_enabled: false
+  memberlistConfig:
+    join_members:
+      - loki-memberlist.loki.svc.cluster.local
+  ingester:
+    lifecycler:
+      ring:
+        kvstore:
+          store: inmemory
+        replication_factor: 1
+  distributor:
+    ring:
+      kvstore:
+        store: inmemory
+  compactor:
+    retention_enabled: true
+    compaction_interval: 10m
+    working_directory: /var/loki/data/retention
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 10
+    delete_request_store: filesystem
+  ruler:
+    ring:
+      kvstore:
+        store: inmemory
   storage:
     type: filesystem
     filesystem:
@@ -15,15 +39,14 @@ loki:
       bucket_name: ${gcs_bucket}
       service_account: |
         ${service_account}
-  compactor:
-    retention_enabled: true
-    compaction_interval: 10m
-    working_directory: /var/loki/data/retention
-    retention_delete_delay: 2h
-    retention_delete_worker_count: 150
-    delete_request_store: gcs
   limits_config:
     max_label_names_per_series: 20
+    # Prevent ingestion drops for occasional huge lines (stack traces, JSON blobs).
+    # Prefer fixing at the source, but truncation is safer than losing the entire line.
+    max_line_size: 262144
+    max_line_size_truncate: true
+    ingestion_rate_mb: 8
+    ingestion_burst_size_mb: 16
     retention_period: 730h
     retention_stream:
       - selector: '{namespace="core"}'
@@ -41,6 +64,9 @@ loki:
         index:
           prefix: "index_"
           period: 24h
+memberlist:
+  service:
+    publishNotReadyAddresses: true
 chunksCache:
   enabled: true
   allocatedMemory: 512
@@ -53,12 +79,16 @@ singleBinary:
     enableStatefulSetRecreationForSizeChange: true
     storageClass: ${storage_class}
     size: 80Gi
+  extraEnv:
+    # Tell Go's GC to start collecting at 3.5Gi so it doesn't get OOMKilled at the 4Gi limit
+    - name: GOMEMLIMIT
+      value: "3758096384" # 3.5Gi in bytes
   resources:
     requests:
-      memory: 1.8Gi
+      memory: 2Gi
       cpu: 100m
     limits:
-      memory: 2Gi
+      memory: 4Gi
 read:
   persistence:
     storageClass: ${storage_class}
@@ -92,6 +122,8 @@ write:
       cpu: 150m
     limits:
       memory: 256Mi
+sidecar:
+  skipTlsVerify: true
 monitoring:
   rules:
     alerting: false
@@ -104,3 +136,17 @@ monitoring:
         requests:
           cpu: 50m
           memory: 100Mi
+    podLogs:
+      additionalPipelineStages:
+        - labelDrop:
+            - filename
+            # Drop high-cardinality/low-value k8s system labels captured by the broad labelmap rule.
+            # These push streams over max_label_names_per_series (20) causing ingestion drops.
+            - controller_revision_hash
+            - statefulset_kubernetes_io_pod_name
+            - apps_kubernetes_io_pod_index
+            - app_kubernetes_io_managed_by
+            - app_kubernetes_io_version
+            - helm_sh_chart
+            - pod_template_hash
+            - pod_template_generation

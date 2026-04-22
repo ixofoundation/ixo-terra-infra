@@ -190,7 +190,7 @@ persistence:
 #  storageClass: "nfs"
   storageClass: ${storage_class}
   accessMode: ReadWriteOnce
-  size: 40Gi
+  size: 100Gi
 
 ## Configuration for the main Synapse service.
 ## To use TLS inside Synapse itself, add an TLS listener, and change the ports

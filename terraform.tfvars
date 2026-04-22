@@ -28,30 +28,31 @@ vault_core_mount = "ixo_core"
 
 # Versioning for all services.
 versions = {
-  kubernetes_cluster           = "v1.35.0+1"
-  argocd                       = "9.4.2"  # https://artifacthub.io/packages/helm/argo/argo-cd
-  cert-manager                 = "1.19.3" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
+  kubernetes_cluster           = "v1.35.2+1"
+  argocd                       = "9.5.0"  # https://artifacthub.io/packages/helm/argo/argo-cd
+  cert-manager                 = "1.20.2" # https://artifacthub.io/packages/helm/cert-manager/cert-manager
   nginx-ingress-controller     = "2.4.4" # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
-  postgres-operator            = "6.0.0"  # https://access.crunchydata.com/documentation/postgres-operator/6.0/installation/helm
-  prometheus-stack             = "82.1.0" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
+  postgres-operator            = "6.0.1"  # https://access.crunchydata.com/documentation/postgres-operator/6.0/installation/helm
+  prometheus-stack             = "83.4.3" # https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
   external-dns                 = "1.20.0" # https://artifacthub.io/packages/helm/external-dns/external-dns
   vault                        = "0.32.0" # https://artifacthub.io/packages/helm/hashicorp/vault
   loki                         = "6.55.0" # https://github.com/grafana/loki/blob/main/production/helm/loki/Chart.yaml
-  prometheus-blackbox-exporter = "11.8.0"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
+  prometheus-blackbox-exporter = "11.9.1"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
   dex                          = "0.24.0" # https://artifacthub.io/packages/helm/dex/dex
-  tailscale                    = "1.94.2" # https://pkgs.tailscale.com/helmcharts/index.yaml
-  matrix                       = "3.12.21" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
+  tailscale                    = "1.96.5" # https://pkgs.tailscale.com/helmcharts/index.yaml
+  matrix                       = "3.12.25" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
   openebs                      = "4.4.0" # https://artifacthub.io/packages/helm/openebs/openebs
   metrics-server               = "3.13.0" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
-  descheduler                  = "0.34.0" # https://artifacthub.io/packages/helm/descheduler/descheduler
+  descheduler                  = "0.35.1" # https://artifacthub.io/packages/helm/descheduler/descheduler
   hummingbot                   = "0.2.0"
   uptime-kuma                  = "4.0.0" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
-  chromadb                     = "0.1.23" # https://github.com/amikos-tech/chromadb-chart
+  chromadb                     = "0.2.2" # https://github.com/amikos-tech/chromadb-chart
   ghost                        = "25.0.4" # https://artifacthub.io/packages/helm/bitnami/ghost
-  neo4j                        = "2026.1.4" # https://artifacthub.io/packages/helm/neo4j-helm-charts/neo4j
-  falco_security               = "8.0.0" # https://artifacthub.io/packages/helm/falcosecurity/falco
-  redis                        = "25.3.0" # https://artifacthub.io/packages/helm/bitnami/redis
+  neo4j                        = "2026.3.1" # https://artifacthub.io/packages/helm/neo4j-helm-charts/neo4j
+  falco_security               = "8.0.2" # https://artifacthub.io/packages/helm/falcosecurity/falco
+  redis                        = "25.3.11" # https://artifacthub.io/packages/helm/bitnami/redis
   surrealdb                    = "0.4.0" # https://artifacthub.io/packages/helm/surrealdb/surrealdb
+  searxng                      = "1.0.1" # https://github.com/searxng/searxng-helm-chart/tree/main/searxng
 }
 
 # Environment base configurations (static values only)
@@ -238,12 +239,20 @@ environments = {
         storage_class = "bulk"
         storage_size = "80Gi"
       }
+      supamoto_matrix_state_bot = {
+        enabled = false
+        domain = "ixoearth"
+      }
       ixo_matrix_appservice_rooms = {
         enabled = true
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.devmx.ixo.earth"
         storage_class = "bulk"
         storage_size = "40Gi"
+      }
+      supamoto_matrix_appservice_rooms = {
+        enabled = false
+        domain = "ixoearth"
       }
       claims_credentials_ecs = {
         enabled = true
@@ -376,6 +385,10 @@ environments = {
         storage_class = "bulk"
         storage_size = "40Gi"
       }
+      supamoto_matrix_bids_bot = {
+        enabled = false
+        domain = "ixoearth"
+      }
       ixo_matrix_supamoto_bot = {
         enabled = true
         domain = "ixoearth"
@@ -450,6 +463,11 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }
+      ixo_flow_manager_oracle = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "flow-manager"
+      }
       ixo_kyc_oracle = {
         enabled = false
         domain = "ixoearth"
@@ -484,6 +502,11 @@ environments = {
       ixo_sygnal = {
         enabled = false
         domain = "ixoearth"
+      }
+      searxng = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "searxng"
       }
     }
   }
@@ -675,6 +698,10 @@ environments = {
         storage_class = "bulk"
         storage_size = "40Gi"
       }
+      supamoto_matrix_appservice_rooms = {
+        enabled = false
+        domain = "ixoearth"
+      }
       claims_credentials_ecs = {
         enabled = true
         domain = "ixoearth"
@@ -807,6 +834,10 @@ environments = {
         storage_class = "bulk"
         storage_size = "40Gi"
       }
+      supamoto_matrix_bids_bot = {
+        enabled = false
+        domain = "ixoearth"
+      }
       ixo_matrix_supamoto_bot = {
         enabled = true
         domain = "ixoearth"
@@ -881,6 +912,11 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }
+      ixo_flow_manager_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "flow-manager"
+      }
       ixo_kyc_oracle = {
         enabled = true
         domain = "ixoworld"
@@ -919,6 +955,11 @@ environments = {
       ixo_sygnal = {
         enabled = false
         domain = "ixoearth"
+      }
+      searxng = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "searxng"
       }
     }
   }
@@ -1111,10 +1152,28 @@ environments = {
         storage_class = "bulk"
         storage_size = "40Gi"
       }
+      supamoto_matrix_state_bot = {
+        enabled = false
+        domain = "ixoearth"
+      }
       ixo_matrix_appservice_rooms = {
         enabled = true
         domain = "ixoworld"
         dns_endpoint = "rooms.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      supamoto_matrix_state_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "supamoto.state.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      supamoto_matrix_appservice_rooms = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "rooms.bot.matrix.supamoto.global"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
@@ -1242,17 +1301,24 @@ environments = {
         dns_endpoint = "api.emerging.eco"
       }
       ixo_agent_images_slack = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
       }
       ixo_aws_iam = {
-        enabled = true
+        enabled = false
         domain = "ixoearth"
       }
       ixo_matrix_bids_bot = {
         enabled = true
         domain = "ixoworld"
         dns_endpoint = "bid.bot.mx.ixo.earth"
+        storage_class = "bulk"
+        storage_size = "40Gi"
+      }
+      supamoto_matrix_bids_bot = {
+        enabled = true
+        domain = "ixoearth"
+        dns_endpoint = "bid.bot.matrix.supamoto.global"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
@@ -1336,6 +1402,11 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }
+      ixo_flow_manager_oracle = {
+        enabled = false
+        domain = "ixoearth"
+        dns_prefix = "flow-manager"
+      }
       ixo_kyc_oracle = {
         enabled = true
         domain = "ixoworld"
@@ -1377,6 +1448,11 @@ environments = {
         domain = "ixoworld"
         dns_prefix = "sygnal"
       }
+      searxng = {
+        enabled = true
+        domain = "ixoearth"
+        dns_prefix = "searxng"
+      }
     }
   }
 }
@@ -1412,7 +1488,8 @@ additional_manual_synthetic_monitoring_endpoints = {
     "https://mx.ixo.earth/health",
     "https://ipfs.gateway.ixo.world/health",
     "https://archive.impacthub.ixo.earth/rpc/",
-    "https://livekit-jwt.mx.ixo.earth/healthz"
+    "https://livekit-jwt.mx.ixo.earth/healthz",
+    "https://sygnal.ixo.world/health"
   ]
 }
 

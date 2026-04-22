@@ -63,6 +63,28 @@ module "ixo_matrix_state_bot" {
   vault_mount_path = local.vault_mount_path
 }
 
+module "supamoto_matrix_state_bot" {
+  count      = var.environments[terraform.workspace].application_configs["supamoto_matrix_state_bot"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "supamoto-matrix-state-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-state-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/supamoto_matrix_state_bot.yml",
+      {
+        host       = local.dns_for_environment[terraform.workspace]["supamoto_matrix_state_bot"]
+        gcs_bucket = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-state"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["supamoto_matrix_state_bot"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_state_bot"]
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
 module "ixo_blocksync_core" {
   count  = var.environments[terraform.workspace].application_configs["ixo_blocksync_core"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -514,6 +536,30 @@ module "ixo_matrix_appservice_rooms" {
   vault_mount_path = local.vault_mount_path
 }
 
+module "supamoto_matrix_appservice_rooms" {
+  count  = var.environments[terraform.workspace].application_configs["supamoto_matrix_appservice_rooms"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "supamoto-matrix-appservice-rooms"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-appservice-rooms"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/supamoto_matrix_appservice_rooms.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["supamoto_matrix_appservice_rooms"]
+        vault_mount = local.vault_mount_path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-rooms"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["supamoto_matrix_appservice_rooms"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_appservice_rooms"]
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
 module "ixo_matrix_bids_bot" {
   count  = var.environments[terraform.workspace].application_configs["ixo_matrix_bids_bot"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -530,6 +576,30 @@ module "ixo_matrix_bids_bot" {
         gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/bids"
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
         storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
+      }
+    )
+  }
+  create_kv        = false
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "supamoto_matrix_bids_bot" {
+  count  = var.environments[terraform.workspace].application_configs["supamoto_matrix_bids_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "supamoto-matrix-bids-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-bids-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/supamoto_matrix_bids_bot.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["supamoto_matrix_bids_bot"]
+        vault_mount = local.vault_mount_path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-bids"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["supamoto_matrix_bids_bot"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_bids_bot"]
       }
     )
   }
@@ -998,6 +1068,27 @@ module "ixo_giza_oracle" {
     ORACLE_ENTITY_DID                = ""
     ORACLE_PROTOCOL_CLAIM_DID        = ""
   }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_flow_manager_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_flow_manager_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-flow-manager-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/flow-manager-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_flow_manager_oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
+        vault_mount = local.vault_mount_path
+      }
+    )
+  }
+  create_kv = true
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }

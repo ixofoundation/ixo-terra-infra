@@ -49,6 +49,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-domain-indexer#OPENAI_API_KEY>"
   - name: "AI_MODEL"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#AI_MODEL>"
+  - name: "OPENAI_API_KEY_EMBEDDINGS"
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#OPENAI_API_KEY_EMBEDDINGS>"
   - name: "AI_EMBEDDING_DIMENSION"
     value: "768"
   
@@ -60,7 +62,7 @@ env:
   - name: "FIRECRAWL_API_KEY"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#FIRECRAWL_API_KEY>"
   - name: "FIRECRAWL_API_URL"
-    value: ${firecrawl_api_url}
+    value: "<path:${vault_mount}/data/ixo-domain-indexer#FIRECRAWL_API_URL>"
   - name: "FIRECRAWL_TIMEOUT"
     value: "30000"
   

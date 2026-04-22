@@ -8,6 +8,12 @@ spec:
     - kind: Secret
       jsonPointers:
         - /data
+    # cert-manager http01-edit-in-place temporarily modifies spec.rules to serve the ACME challenge.
+    # RespectIgnoreDifferences=true below ensures ArgoCD does not overwrite these during sync.
+    - group: networking.k8s.io
+      kind: Ingress
+      jqPathExpressions:
+        - '.spec.rules'
   destination:
     namespace: ${namespace}
     server: https://kubernetes.default.svc
@@ -25,6 +31,7 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
     automated:
       prune: true
       selfHeal: true
