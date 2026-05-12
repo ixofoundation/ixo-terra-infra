@@ -10,6 +10,7 @@ spec:
   service:
     metadata:
       annotations:
+        tailscale.com/hostname: "ixo-postgres-${environment}"
         tailscale.com/expose: "true"
   monitoring:
     pgmonitor:
@@ -51,6 +52,7 @@ spec:
           cron.database_name: '${pg_cron_database}'
 %{ endif ~}
           log_checkpoints: 'on'
+          max_connections: '200'
           log_statement: 'mod'
           log_line_prefix: '%t [%p]: host=%h user=%u,db=%d '
           log_lock_waits: 'on'

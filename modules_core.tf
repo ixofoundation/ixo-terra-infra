@@ -36,7 +36,7 @@ module "ixo_cellnode" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_cellnode"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -58,7 +58,7 @@ module "ixo_matrix_state_bot" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_state_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -80,7 +80,7 @@ module "supamoto_matrix_state_bot" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["supamoto_matrix_state_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -102,7 +102,7 @@ module "ixo_blocksync_core" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_blocksync_core"].create_kv
   kv_defaults = {
     "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[2].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[2].username])}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[2].username}"
   }
@@ -130,7 +130,7 @@ module "ixo_memory_engine_graphiti" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -152,7 +152,7 @@ module "ixo_companion" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_companion"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -179,7 +179,7 @@ module "ixo_blocksync" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_blocksync"].create_kv
   kv_defaults = {
     "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[3].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[3].username])}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
   }
@@ -204,7 +204,7 @@ module "credentials_prospect" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_prospect"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -227,7 +227,7 @@ module "ecs" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_ecs"].create_kv
   kv_defaults = {
     "REMOTE_CONTEXTS" = "[ \"https://w3id.org/ixo/context/v1\" ]" # TODO this can be moved to an application config in future.
   }
@@ -253,7 +253,7 @@ module "carbon" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_carbon"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -276,7 +276,7 @@ module "claimformprotocol" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_claimformprotocol"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -298,7 +298,7 @@ module "umuzi" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_umuzi"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -321,7 +321,7 @@ module "did" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_did"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -340,10 +340,14 @@ module "ixo_feegrant_nest" {
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_feegrant_nest"]
         vault_mount = local.vault_mount_path
+        pgCluster   = var.pg_ixo.pg_cluster_name
+        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername  = var.pg_ixo.pg_users[23].username
+        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[23].username])
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_feegrant_nest"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -369,7 +373,7 @@ module "ixo_payments_nest" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_payments_nest"].create_kv
   kv_defaults = {
     AUTHORIZATION                           = ""
     BLOCKSYNC_URL                           = ""
@@ -408,7 +412,7 @@ module "ixo_did_resolver" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_did_resolver"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -430,7 +434,7 @@ module "ixo_faucet" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_faucet"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -455,7 +459,7 @@ module "ixo_deeplink_server" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_deeplink_server"].create_kv
   kv_defaults = {
     AUTHORIZATION        = ""
     BASE_URL             = ""
@@ -489,7 +493,7 @@ module "ixo_kyc_server" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_kyc_server"].create_kv
   kv_defaults = {
     AUTHORIZATION               = ""
     COMPLYCUBE_API_KEY          = ""
@@ -531,7 +535,7 @@ module "ixo_matrix_appservice_rooms" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_appservice_rooms"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -555,7 +559,7 @@ module "supamoto_matrix_appservice_rooms" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["supamoto_matrix_appservice_rooms"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -579,7 +583,7 @@ module "ixo_matrix_bids_bot" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_bids_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -603,7 +607,7 @@ module "supamoto_matrix_bids_bot" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["supamoto_matrix_bids_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -627,7 +631,7 @@ module "ixo_matrix_supamoto_bot" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -650,7 +654,7 @@ module "ixo_matrix_supamoto_onboarding_server" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_onboarding_server"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -672,7 +676,7 @@ module "ixo_domain_indexer" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_domain_indexer"].create_kv
   kv_defaults = {
     SURREAL_USER       = "admin"
     SURREAL_PASS       = random_password.surrealdb_password.result
@@ -706,7 +710,7 @@ module "ixo_firecrawl" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_firecrawl"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -730,7 +734,7 @@ module "ixo_matrix_supamoto_claims_bot" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_claims_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -751,7 +755,7 @@ module "minerva_oracle" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_minerva_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -772,7 +776,7 @@ module "ixo_minerva_livekit" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_minerva_livekit"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -796,7 +800,7 @@ module "ixo_matrix_claims_bot" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_claims_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -821,7 +825,7 @@ module "ixo_matrix_whatsapp" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_whatsapp"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -846,7 +850,7 @@ module "ixo_faq_assistant" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_faq_assistant"].create_kv
   kv_defaults = {
     OPEN_AI_API_KEY = ""
 
@@ -896,7 +900,7 @@ module "ixo_guru" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_guru"].create_kv
   kv_defaults = {
     SLACK_SIGNING_SECRET  = ""
     SLACK_BOT_TOKEN       = ""
@@ -956,7 +960,7 @@ module "ixo_guru_temp" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_guru"].create_kv
   kv_defaults = {
     SLACK_SIGNING_SECRET  = ""
     SLACK_BOT_TOKEN       = ""
@@ -1017,7 +1021,7 @@ module "ixo_giza_oracle" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_giza"].create_kv
   kv_defaults = {
     SLACK_SIGNING_SECRET  = ""
     SLACK_BOT_TOKEN       = ""
@@ -1088,7 +1092,7 @@ module "ixo_flow_manager_oracle" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_flow_manager_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1114,7 +1118,7 @@ module "ixo_trading_bot_server" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_trading_bot_server"].create_kv
   kv_defaults = {
     POOL_ADDRESSES        = ""
     MNEMONICS             = ""
@@ -1140,7 +1144,51 @@ module "ixo_domain_creator_oracle" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_domain_creator_oracle"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_qi_agents_builder" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_qi_agents_builder"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-qi-agents-builder"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/qi-agents-builder-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_qi_agents_builder.yml",
+      {
+        environment = terraform.workspace
+        vault_mount = local.vault_mount_path
+        host        = local.dns_for_environment[terraform.workspace]["ixo_qi_agents_builder"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_qi_agents_builder"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_matrix_recording_bot" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_recording_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-matrix-recording-bot"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-recording-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_recording_bot.yml",
+      {
+        environment = terraform.workspace
+        vault_mount = local.vault_mount_path
+        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_recording_bot"]
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_recording_bot"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_recording_bot"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_recording_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1161,7 +1209,7 @@ module "ixo_kyc_oracle" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_kyc_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1182,7 +1230,7 @@ module "ixo_yellowcard_oracle" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_yellowcard_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1208,7 +1256,7 @@ module "ixo_subscriptions_oracle" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle"].create_kv
   kv_defaults = {
     STRIPE_API_KEY        = ""
     CHAIN_NETWORK             = ""
@@ -1253,7 +1301,7 @@ module "ixo_subscriptions_oracle_bot" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1278,7 +1326,7 @@ module "ixo_pathgen_oracle" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_pathgen_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1299,7 +1347,7 @@ module "ixo_website_bot_oracle" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_website_bot_oracle"].create_kv
   kv_defaults = {
     ORACLE_NAME = "website-bot-oracle"
     MATRIX_BASE_URL = ""
@@ -1338,11 +1386,11 @@ module "ixo_jokes_oracle" {
         pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[17].username]
       }
     )
-    create_kv = true
+    create_kv        = var.environments[terraform.workspace].application_configs["ixo_jokes_oracle"].create_kv
     argo_namespace = module.argocd.argo_namespace
     vault_mount_path = local.vault_mount_path
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_jokes_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1362,11 +1410,11 @@ module "ixo_ecs_oracle" {
         vault_mount = local.vault_mount_path
       }
     )
-    create_kv = true
+    create_kv        = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].create_kv
     argo_namespace = module.argocd.argo_namespace
     vault_mount_path = local.vault_mount_path
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1391,7 +1439,7 @@ module "ixo_whizz" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_whizz"].create_kv
   kv_defaults = {
     OPEN_AI_API_KEY = ""
 
@@ -1447,7 +1495,7 @@ module "ixo_coin_server" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_coin_server"].create_kv
   kv_defaults = {
     AUTHORIZATION     = ""
     COINGECKO_API_KEY = ""
@@ -1473,7 +1521,7 @@ module "ixo_stake_reward_claimer" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_stake_reward_claimer"].create_kv
   kv_defaults = {
     AUTHORIZATION = ""
     SENTRYDSN     = ""
@@ -1500,7 +1548,7 @@ module "ixo_offset_auto_approve" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["auto_approve_offset"].create_kv
   kv_defaults = {
     AUTHORIZATION              = ""
     BLOCKSYNC_GRAPHQL          = ""
@@ -1537,7 +1585,7 @@ module "ixo_iot_data" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_iot_data"].create_kv
   kv_defaults = {
     AUTHORIZATION = ""
   }
@@ -1565,7 +1613,7 @@ module "ixo_message_relayer" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_message_relayer"].create_kv
   kv_defaults = {
     AUTHORIZATION = ""
   }
@@ -1593,7 +1641,7 @@ module "ixo_notification_server" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_notification_server"].create_kv
   kv_defaults = {
     AUTHORIZATION                   = ""
     AIRTABLE_API_KEY                = ""
@@ -1621,7 +1669,7 @@ module "hermes" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["hermes"].create_kv
   kv_defaults = {
     CHAIN_A_RPC_ADDR  = ""
     CHAIN_A_GRPC_ADDR = ""
@@ -1651,7 +1699,7 @@ module "ixo_cvms_exporter" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_cvms_exporter"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1674,7 +1722,7 @@ module "ixo_dmrv_registry_server" {
       }
     )
   }
-  create_kv        = false
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_registry_server"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1701,7 +1749,7 @@ module "ixo_observable_framework_builder" {
       }
     )
   }
-  create_kv        = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_observable_framework_builder"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1768,7 +1816,7 @@ module "ixo_ussd_supamoto" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_ussd_supamoto"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
@@ -1793,7 +1841,7 @@ module "ixo_sygnal" {
       }
     )
   }
-  create_kv = true
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_sygnal"].create_kv
   kv_defaults = {
     APNS_P8_KEY                  = "" # base64-encoded content of AuthKey_G73NBYKQL3.p8
     FIREBASE_SERVICE_ACCOUNT_JSON = "" # base64-encoded content of ixomobile-6a4b0-firebase-adminsdk-551h8-090e05f791.json

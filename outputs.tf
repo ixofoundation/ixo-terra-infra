@@ -11,3 +11,8 @@ output "ixo_postgres_user_passwords" {
   value = module.postgres-operator[0].database_password
   sensitive = true
 }
+
+output "supamoto_tunnel_token" {
+  value = module.cloudflare_supamoto_tunnel[0].supamoto_tunnel_token
+  sensitive = true
+}

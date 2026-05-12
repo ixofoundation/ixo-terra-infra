@@ -77,96 +77,123 @@ environments = {
       # Core Infrastructure Services
       cert_manager = {
         enabled = true # For initial setups, cert-manager must be disabled.
+        create_kv = false
         domain = "ixoearth"
       }
       ingress_nginx = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       surrealdb = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       postgres_operator_crunchydata = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         storage_size = "210Gi"
       }
       prometheus_stack = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "devnetkb.ixo.earth"  # Main monitoring/grafana host
       }
       external_dns = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       dex = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "dex"
       }
       vault = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "vault"
       }
+      vault_argocd_watcher = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+        dns_prefix = "vault-watcher"
+      }
       loki = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       prometheus_blackbox_exporter = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       tailscale = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       matrix = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "devmx.ixo.earth"
       }
       matrix_admin = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "admin.devmx.ixo.earth"
       }
       matrix_livekit = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "livekit-jwt.devmx.ixo.earth"
       }
       metrics_server = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       descheduler = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       hermes = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       hyperlane_validator = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       aws_vpc = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       uptime_kuma = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "status.devnet.ixo.earth"
       }
       chromadb = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       ghost = {
@@ -175,11 +202,13 @@ environments = {
       }
       neo4j = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "neo4j"
       }
       falco_security = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "falco"
         storage_class = "bulk"
@@ -187,11 +216,13 @@ environments = {
       }
       nomic_embedding = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "nomic"
       }
       redis = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
@@ -199,41 +230,61 @@ environments = {
       # IXO Services
       ixo_cellnode = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "devnet-cellnode.ixo.earth"
       }
       ixo_blocksync = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "devnet-blocksync-graphql.ixo.earth"
       }
       ixo_blocksync_core = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.devnetkb.ixo.earth"
       }
       ixo_domain_indexer = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "domain-indexer"
       }
+      ixo_qi_agents_builder = {
+        enabled = true
+        create_kv = true
+        domain = "ixoearth"
+        dns_prefix = "qi-agents-builder"
+      }
+      ixo_matrix_recording_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_prefix = "matrix-recording-bot"
+      }
       ixo_feegrant_nest = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "feegrant"
       }
       ixo_did_resolver = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "resolver"
       }
       ixo_faucet = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "faucet"
       }
       ixo_matrix_state_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "state.bot.devmx.ixo.earth"
         storage_class = "bulk"
@@ -241,10 +292,12 @@ environments = {
       }
       supamoto_matrix_state_bot = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.devmx.ixo.earth"
         storage_class = "bulk"
@@ -252,134 +305,164 @@ environments = {
       }
       supamoto_matrix_appservice_rooms = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       claims_credentials_ecs = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "ecs.credentials.devnet.ixo.earth"
       }
       claims_credentials_prospect = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "prospect.credentials.devnet.ixo.earth"
       }
       claims_credentials_carbon = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "carbon.credentials.devnet.ixo.earth"
       }
       claims_credentials_umuzi = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "umuzi.credentials.devnet.ixo.earth"
       }
       claims_credentials_claimformprotocol = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       claims_credentials_did = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "didoracle.credentials.devnet.ixo.earth"
       }
       ixo_deeplink_server = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "deeplink"
       }
       ixo_kyc_server = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "kyc"
       }
       ixo_faq_assistant = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_coin_server = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_stake_reward_claimer = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_ussd = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_ussd_supamoto = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "ussd-supamoto"
       }
       ixo_whizz = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       auto_approve_offset = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_iot_data = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_notification_server = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_guru = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_trading_bot_server = {
-        enabled = false
+        enabled = false  
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_ai_oracles_guru = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_ai_oracles_giza = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "giza.devnet.ixo.earth"
       }
       ixo_payments_nest = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_message_relayer = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "signx.devnet.ixo.earth"
       }
       ixo_cvms_exporter = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_registry_server = {
         enabled = true
+        create_kv = false
         domain = "ixoearth" # Domain 1 
         dns_endpoint = "dev.api.emerging.eco" # Domain 2
       }
       ixo_agent_images_slack = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_aws_iam = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_firecrawl = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "firecrawl"
       }
       ixo_matrix_bids_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "bid.bot.devmx.ixo.earth"
         storage_class = "bulk"
@@ -387,10 +470,12 @@ environments = {
       }
       supamoto_matrix_bids_bot = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_matrix_supamoto_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto.bot.devmx.ixo.earth"
         storage_class = "bulk"
@@ -398,6 +483,7 @@ environments = {
       }
       ixo_matrix_supamoto_onboarding_server = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto-onboarding.devmx.ixo.earth"
         storage_class = "bulk"
@@ -405,6 +491,7 @@ environments = {
       }
       ixo_matrix_supamoto_claims_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto.claims.bot.devmx.ixo.earth"
         storage_class = "bulk"
@@ -412,6 +499,7 @@ environments = {
       }
       ixo_matrix_claims_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "claim.bot.devmx.ixo.earth"
         storage_class = "bulk"
@@ -419,94 +507,117 @@ environments = {
       }
       ixo_matrix_whatsapp = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       ixo_subscriptions_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "subscriptions.oracle.devnet.ixo.earth"
       }
       ixo_subscriptions_oracle_bot = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "subscriptions.bot.devnet.ixo.earth"
       }
       ixo_pathgen_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "pathgen.oracle"
       }
       ixo_minerva_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "minerva"
       }
       ixo_minerva_livekit = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "minerva-livekit"
       }
       ixo_website_bot_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "website.bot"
       }
       ixo_jokes_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "jokes.oracle.devnet.ixo.earth"
       }
       ixo_domain_creator_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }
       ixo_flow_manager_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "flow-manager"
       }
       ixo_kyc_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "kyc"
       }
       ixo_yellowcard_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "yellowcard"
       }
       ixo_ecs_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "ecs-oracle"
       }
       ixo_observable_framework_builder = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         storage_class = "fast"
         storage_size = "40Gi"
       }
       ixo_memory_engine_graphiti = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "companion"
       }
       ixo_sygnal = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       searxng = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "searxng"
+      }
+      oracles_cert_sync = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
       }
     }
   }
@@ -530,108 +641,138 @@ environments = {
       # Core Infrastructure Services
       cert_manager = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       ingress_nginx = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       surrealdb = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       postgres_operator_crunchydata = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         storage_size = "210Gi"
       }
       prometheus_stack = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "testnetkb.ixo.earth"  # Main monitoring/grafana host
       }
       external_dns = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       dex = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "dex"
       }
       vault = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "vault"
       }
+      vault_argocd_watcher = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+        dns_prefix = "vault-watcher"
+      }
       loki = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       prometheus_blackbox_exporter = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       tailscale = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       matrix = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "testmx.ixo.earth"
       }
       matrix_admin = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "admin.testmx.ixo.earth"
       }
       matrix_livekit = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "livekit-jwt.testmx.ixo.earth"
       }
       metrics_server = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       descheduler = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       hermes = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       hyperlane_validator = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       aws_vpc = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       uptime_kuma = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       chromadb = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ghost = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       neo4j = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "neo4j"
       }
       falco_security = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "falco"
         storage_class = "bulk"
@@ -639,11 +780,13 @@ environments = {
       }
       nomic_embedding = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "nomic"
       }
       redis = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
@@ -651,41 +794,61 @@ environments = {
       # IXO Services
       ixo_cellnode = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "testnet-cellnode.ixo.earth"
       }
       ixo_blocksync = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "testnet-blocksync-graphql.ixo.earth"
       }
       ixo_blocksync_core = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.testnetkb.ixo.earth"
       }
       ixo_domain_indexer = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "domain-indexer"
       }
+      ixo_qi_agents_builder = {
+        enabled = false
+        create_kv = true
+        domain = "ixoearth"
+        dns_prefix = "qi-agents-builder"
+      }
+      ixo_matrix_recording_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_prefix = "matrix-recording-bot"
+      }
       ixo_feegrant_nest = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "feegrant"
       }
       ixo_did_resolver = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "resolver"
       }
       ixo_faucet = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "faucet"
       }
       ixo_matrix_state_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "state.bot.testmx.ixo.earth"
         storage_class = "bulk"
@@ -693,6 +856,7 @@ environments = {
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.testmx.ixo.earth"
         storage_class = "bulk"
@@ -700,135 +864,165 @@ environments = {
       }
       supamoto_matrix_appservice_rooms = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       claims_credentials_ecs = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "ecs.credentials.testnet.ixo.earth"
       }
       claims_credentials_prospect = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "prospect.credentials.testnet.ixo.earth"
       }
       claims_credentials_carbon = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "carbon.credentials.testnet.ixo.earth"
       }
       claims_credentials_umuzi = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       claims_credentials_claimformprotocol = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       claims_credentials_did = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "didoracle.credentials.testnet.ixo.earth"
       }
       ixo_deeplink_server = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "deeplink"
       }
       ixo_kyc_server = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "kyc"
       }
       ixo_faq_assistant = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_coin_server = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_stake_reward_claimer = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_ussd = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_ussd_supamoto = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "ussd-supamoto"
       }
       ixo_whizz = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       auto_approve_offset = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "offset.auto-approve.testnet.ixo.earth"
       }
       ixo_iot_data = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_notification_server = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_guru = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_trading_bot_server = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_ai_oracles_guru = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       ixo_ai_oracles_giza = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "gizatest.ixo.earth"
       }
       ixo_payments_nest = {
         enabled = true
+        create_kv = true
         domain = "emerging"
         dns_endpoint = "payments.testnet.emerging.eco"
       }
       ixo_message_relayer = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "signx.testnet.ixo.earth"
       }
       ixo_cvms_exporter = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_registry_server = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "stage.api.emerging.eco"
       }
       ixo_agent_images_slack = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_aws_iam = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_firecrawl = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "firecrawl"
       }
       ixo_matrix_bids_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "bid.bot.testmx.ixo.earth"
         storage_class = "bulk"
@@ -836,10 +1030,12 @@ environments = {
       }
       supamoto_matrix_bids_bot = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_matrix_supamoto_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto.bot.testmx.ixo.earth"
         storage_class = "bulk"
@@ -847,6 +1043,7 @@ environments = {
       }
       ixo_matrix_supamoto_onboarding_server = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto-onboarding.testmx.ixo.earth"
         storage_class = "bulk"
@@ -854,6 +1051,7 @@ environments = {
       }
       ixo_matrix_supamoto_claims_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto.claims.bot.testmx.ixo.earth"
         storage_class = "bulk"
@@ -861,6 +1059,7 @@ environments = {
       }
       ixo_matrix_claims_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "claim.bot.testmx.ixo.earth"
         storage_class = "bulk"
@@ -868,57 +1067,68 @@ environments = {
       }
       ixo_matrix_whatsapp = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       ixo_subscriptions_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "subscriptions.oracle.testnet.ixo.earth"
       }
       ixo_subscriptions_oracle_bot = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "subscriptions.bot.testnet.ixo.earth"
       }
       ixo_pathgen_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "pathgen.oracle"
       }
       ixo_minerva_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "minerva"
       }
       ixo_minerva_livekit = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "minerva-livekit"
       }
       ixo_website_bot_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "website.bot"
       }
       ixo_jokes_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "jokes.oracle.testnet.ixo.earth"
       }
       ixo_domain_creator_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }
       ixo_flow_manager_oracle = {
-        enabled = false
+        enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "flow-manager"
       }
       ixo_kyc_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_prefix = "kyc"
         storage_class = "bulk"
@@ -926,6 +1136,7 @@ environments = {
       }
       ixo_yellowcard_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_prefix = "yellowcard"
         storage_class = "bulk"
@@ -933,33 +1144,44 @@ environments = {
       }
       ixo_ecs_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "ecs-oracle"
       }
       ixo_observable_framework_builder = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         storage_class = "fast"
         storage_size = "40Gi"
       }
       ixo_memory_engine_graphiti = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "companion"
       }
       ixo_sygnal = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
       }
       searxng = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "searxng"
+      }
+      oracles_cert_sync = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
       }
     }
   }
@@ -990,121 +1212,153 @@ environments = {
       # Core Infrastructure Services
       cert_manager = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       ingress_nginx = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       surrealdb = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       postgres_operator_crunchydata = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         storage_size = "300Gi"
       }
       prometheus_stack = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_endpoint = "mainnetkb.ixo.earth"  # Main monitoring/grafana host
       }
       external_dns = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       dex = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "dex.mainnet.ixo.earth"
       }
       vault = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "vault.mainnet.ixo.earth"
       }
+      vault_argocd_watcher = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_prefix = "vault-watcher"
+      }
       loki = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       prometheus_blackbox_exporter = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       tailscale = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       matrix = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_endpoint = "mx.ixo.earth"
       }
       matrix_admin = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "admin.mx.ixo.earth"
       }
       matrix_livekit = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "livekit-jwt.mx.ixo.earth"
       }
       metrics_server = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       descheduler = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       hermes = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "hermes.ixo.earth"
       }
       hyperlane_validator = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
       }
       aws_vpc = {
         enabled = false
+        create_kv = false
         domain = "ixoworld"
       }
       uptime_kuma = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_endpoint = "status.mainnet.ixo.world"
       }
       chromadb = {
         enabled = false
+        create_kv = false
         domain = "ixoworld"
       }
       ghost = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_prefix = "impacts"
       }
       neo4j = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "neo4j"
       }
       falco_security = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "falco"
       }
       nomic_embedding = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
         dns_prefix = "nomic"
       }
       redis = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         storage_class = "bulk"
         storage_size = "40Gi"
@@ -1112,41 +1366,63 @@ environments = {
       # IXO Services
       ixo_cellnode = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_endpoint = "cellnode.ixo.world"
       }
       ixo_blocksync = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "blocksync-graphql.ixo.earth"
       }
       ixo_blocksync_core = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.mainnetkb.ixo.earth"
       }
       ixo_domain_indexer = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "domain-indexer"
       }
+      ixo_qi_agents_builder = {
+        enabled = false
+        create_kv = true
+        domain = "ixoearth"
+        dns_prefix = "qi-agents-builder"
+      }
+      ixo_matrix_recording_bot = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "recording.bot.mx.ixo.earth"
+        storage_class = "fast"
+        storage_size = "100Gi"
+      }
       ixo_feegrant_nest = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_prefix = "feegrant"
       }
       ixo_did_resolver = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_prefix = "resolver"
       }
       ixo_faucet = {
         enabled = false
+        create_kv = true
         domain = "ixoworld"
         dns_endpoint = "faucet2.mainnetkb.ixo.earth"
       }
       ixo_matrix_state_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_endpoint = "state.bot.mx.ixo.earth"
         storage_class = "bulk"
@@ -1154,10 +1430,12 @@ environments = {
       }
       supamoto_matrix_state_bot = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_endpoint = "rooms.bot.mx.ixo.earth"
         storage_class = "bulk"
@@ -1165,13 +1443,15 @@ environments = {
       }
       supamoto_matrix_state_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
-        dns_endpoint = "supamoto.state.bot.mx.ixo.earth"
+        dns_endpoint = "state.bot.matrix.supamoto.global"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       supamoto_matrix_appservice_rooms = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.matrix.supamoto.global"
         storage_class = "bulk"
@@ -1179,137 +1459,165 @@ environments = {
       }
       claims_credentials_ecs = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_endpoint = "ecs.credentials.ixo.world"
       }
       claims_credentials_prospect = {
         enabled = false
+        create_kv = true
         domain = "ixoworld"
         dns_endpoint = "prospect.credentials2.mainnet.ixo.world"
       }
       claims_credentials_carbon = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_endpoint = "carbon.credentials.ixo.world"
       }
       claims_credentials_umuzi = {
         enabled = false
+        create_kv = true
         domain = "ixoworld"
         dns_endpoint = "umuzi.credentials2.mainnet.ixo.world"
       }
       claims_credentials_claimformprotocol = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_endpoint = "claimformobjects.credentials.ixo.world"
       }
       claims_credentials_did = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "didoracle.credentials.ixo.earth"
       }
       ixo_deeplink_server = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "x.ixo.earth"
       }
       ixo_kyc_server = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "kyc.oracle.ixo.earth"
       }
       ixo_faq_assistant = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "faq.assistant.ixo.earth"
       }
       ixo_coin_server = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "coincache.ixo.earth"
       }
       ixo_stake_reward_claimer = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "reclaim.ixo.earth"
       }
       ixo_ussd = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_ussd_supamoto = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "ussd-supamoto"
       }
       ixo_whizz = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "whizz.assistant.ixo.earth"
       }
       auto_approve_offset = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "offset.auto-approve.ixo.earth"
       }
       ixo_iot_data = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "iot-data"
       }
       ixo_notification_server = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "notifications.ixo.earth"
       }
       ixo_guru = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "guru.ixo.earth"
       }
       ixo_trading_bot_server = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "trading.bot.ixo.earth"
       }
       ixo_ai_oracles_guru = {
-        enabled = true
+        enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "guru2.ixo.earth"
       }
       ixo_ai_oracles_giza = {
-        enabled = true
+        enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "giza.ixo.earth"
       }
       ixo_payments_nest = {
         enabled = true
+        create_kv = true
         domain = "emerging"
         dns_endpoint = "payments.emerging.eco"
       }
       ixo_message_relayer = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "signx.ixo.earth"
       }
       ixo_cvms_exporter = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_registry_server = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "api.emerging.eco"
       }
       ixo_agent_images_slack = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_aws_iam = {
         enabled = false
+        create_kv = false
         domain = "ixoearth"
       }
       ixo_matrix_bids_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_endpoint = "bid.bot.mx.ixo.earth"
         storage_class = "bulk"
@@ -1317,6 +1625,7 @@ environments = {
       }
       supamoto_matrix_bids_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
         dns_endpoint = "bid.bot.matrix.supamoto.global"
         storage_class = "bulk"
@@ -1324,32 +1633,37 @@ environments = {
       }
       ixo_firecrawl = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "firecrawl"
       }
       ixo_matrix_supamoto_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
-        dns_endpoint = "supamoto.bot.mx.ixo.earth"
+        dns_endpoint = "bot.matrix.supamoto.global"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       ixo_matrix_supamoto_onboarding_server = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
-        dns_prefix = "supamoto-onboarding"
+        dns_endpoint = "onboarding.matrix.supamoto.global"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       ixo_matrix_supamoto_claims_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoearth"
-        dns_endpoint = "supamoto.claims.bot.mx.ixo.earth"
+        dns_endpoint = "claims.bot.matrix.supamoto.global"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
       ixo_matrix_claims_bot = {
         enabled = true
+        create_kv = false
         domain = "ixoworld"
         dns_endpoint = "claim.bot.mx.ixo.earth"
         storage_class = "bulk"
@@ -1357,6 +1671,7 @@ environments = {
       }
       ixo_matrix_whatsapp = {
         enabled = true
+        create_kv = false
         dns_endpoint = "whatsapp.bridge.mx.ixo.world"
         domain = "ixoworld"
         storage_class = "bulk"
@@ -1364,51 +1679,61 @@ environments = {
       }
       ixo_subscriptions_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "subscriptions.oracle.ixo.earth"
       }
       ixo_subscriptions_oracle_bot = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "subscriptions.bot.ixo.earth"
       }
       ixo_pathgen_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "pathgen.oracle"
       }
       ixo_minerva_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "minerva"
       }
       ixo_minerva_livekit = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "minerva-livekit"
       }
       ixo_website_bot_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "website.bot"
       }
       ixo_jokes_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_endpoint = "jokes.oracle.ixo.earth"
       }
       ixo_domain_creator_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "domain-creator"
       }
       ixo_flow_manager_oracle = {
-        enabled = false
+        enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "flow-manager"
       }
       ixo_kyc_oracle = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_prefix = "kyc.oracle"
         storage_class = "bulk"
@@ -1416,6 +1741,7 @@ environments = {
       }
       ixo_yellowcard_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "yellowcard"
         storage_class = "bulk"
@@ -1423,11 +1749,13 @@ environments = {
       }
       ixo_ecs_oracle = {
         enabled = false
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "ecs-oracle"
       }
       ixo_observable_framework_builder = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "builder.observable"
         storage_class = "fast"
@@ -1435,23 +1763,32 @@ environments = {
       }
       ixo_memory_engine_graphiti = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "companion"
       }
       ixo_sygnal = {
         enabled = true
+        create_kv = true
         domain = "ixoworld"
         dns_prefix = "sygnal"
       }
       searxng = {
         enabled = true
+        create_kv = true
         domain = "ixoearth"
         dns_prefix = "searxng"
+      }
+      oracles_cert_sync = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
       }
     }
   }
@@ -1612,6 +1949,10 @@ pg_ixo = {
     { // 22
       username  = "sygnal"
       databases = ["sygnal"]
+    },
+    { // 23
+      username = "feegrant-nest"
+      databases = ["feegrant-nest"]
     }
   ]
   pg_version             = 15

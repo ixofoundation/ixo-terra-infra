@@ -1,5 +1,11 @@
 useDeploy: true
 
+livenessProbe:
+  enabled: true # Disable for initial DB setup
+
+readinessProbe:
+  enabled: true # Disable for initial DB setup
+
 ingress:
   enabled: true
   className: nginx

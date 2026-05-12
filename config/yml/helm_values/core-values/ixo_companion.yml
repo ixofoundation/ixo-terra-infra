@@ -98,10 +98,10 @@ env:
     value: "<path:${vault_mount}/data/ixo-companion#LANGSMITH_PROJECT>"
 resources:
   requests:
-    memory: 1024Mi
+    memory: 1350Mi
     cpu: "40m"
   limits:
-    memory: 1100Mi
+    memory: 1500Mi
 autoscaling:
   enabled: true
   minReplicas: 1

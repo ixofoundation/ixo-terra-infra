@@ -3,45 +3,36 @@ image:
 ingress:
   enabled: true
   className: nginx
-%{ if environment != "mainnet" ~}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     acme.cert-manager.io/http01-edit-in-place: "true"
   tls:
     - hosts:
         - ${host}
-      secretName: ixo-matrix-supamoto-bot-tls
-%{ endif ~}
+      secretName: ixo-matrix-recording-bot-tls
   hosts:
     - host: ${host}
       paths:
         - path: /
-          pathType: Prefix  
-persistentVolume:
-  storageClass: ${storage_class}
-  size: ${storage_size}
-service:
-  port: 8084
+          pathType: Prefix
 env:
-  - name: "PORT"
-    value: "8083"
+  - name: NODE_ENV
+    value: "production"
+  - name: PORT
+    value: "8087"
+service:
+  port: 8087
 resources:
   requests:
-    memory: 100Mi
-    cpu: "40m"
+    memory: 2Gi
+    cpu: "50m"
   limits:
-    memory: 650Mi
+    memory: 2.5Gi
 autoscaling:
   enabled: true
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
-backup:
-  resources:
-    requests:
-      cpu: 10m
-      memory: 128Mi
-    limits:
-      memory: 256Mi
-  gcs:
-    bucket: ${gcs_bucket}
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}

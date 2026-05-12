@@ -57,6 +57,21 @@ resource "vault_kubernetes_auth_backend_role" "vault_argocd_role" {
   token_policies                   = ["argocd"]
 }
 
+# vault-argocd-watcher: subscribes to Vault KV v2 events and triggers ArgoCD hard refresh
+resource "vault_policy" "vault_watcher" {
+  name   = "vault-watcher"
+  policy = file("${path.root}/config/vault/vault_watcher_policy.hcl")
+}
+
+resource "vault_kubernetes_auth_backend_role" "vault_watcher_role" {
+  bound_service_account_names      = ["vault-argocd-watcher"]
+  bound_service_account_namespaces = ["vault-argocd-watcher"]
+  role_name                        = "vault-watcher"
+  token_policies                   = [vault_policy.vault_watcher.name]
+  token_ttl                        = 3600
+  token_max_ttl                    = 86400
+}
+
 # Vault -> Dex OIDC
 resource "vault_jwt_auth_backend" "oidc" {
   depends_on         = [vault_kubernetes_auth_backend_role.vault_argocd_role]

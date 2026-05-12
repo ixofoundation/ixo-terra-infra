@@ -1,0 +1,14 @@
+vault:
+  mount: "${vault_mount}"
+
+image:
+  repository: "ghcr.io/ixoworld/vault-argocd-watcher"
+  tag: "sha-01787fd"
+
+argocd:
+  namespace: "${argo_namespace}"
+
+watchedApps:
+%{ for app in watched_apps ~}
+  - ${app}
+%{ endfor ~}

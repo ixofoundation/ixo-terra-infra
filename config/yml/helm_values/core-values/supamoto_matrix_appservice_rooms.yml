@@ -40,9 +40,23 @@ backup:
 config:
   homeserverUrl: https://matrix.supamoto.global
   homeserverName: matrix.supamoto.global
+  userCreation:
+    registrationToken: "<path:${vault_mount}/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_USER_CREATION_REGISTRATION_TOKEN>"
   ucan:
     hostname: rooms.bot.matrix.supamoto.global
 registration:
-  hs_token: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_HS_TOKEN>"
-  as_token: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_AS_TOKEN>"
-  url: http://supamoto-matrix-appservice-rooms.matrix-synapse.svc.cluster.local:9000
+  hs_token: "<path:${vault_mount}/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_HS_TOKEN>"
+  as_token: "<path:${vault_mount}/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_AS_TOKEN>"
+  url: https://rooms.bot.matrix.supamoto.global
+  namespaces:
+    aliases:
+      - exclusive: true
+        regex: "#did-ixo-.*"
+      - exclusive: true
+        regex: "#ixo-room-bot-signature-hashes*"
+      - exclusive: true
+        regex: "#ixo.*-pod"
+    users:
+      - exclusive: true
+        regex: "@ixo-room-bot:matrix.supamoto.global"
+    rooms: []

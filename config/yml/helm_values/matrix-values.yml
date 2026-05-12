@@ -124,7 +124,8 @@ extraConfig:
   registration_requires_token: true
   app_service_config_files:
     - /data/appservice/rooms/production.yaml
-    - /data/appservice/whatsapp/registration.yaml
+%{if matrix_whatsapp_enabled}    - /data/appservice/whatsapp/registration.yaml
+%{endif}
   experimental_features:
     msc3202_device_masquerading: true
     msc3202_transaction_extensions: true
@@ -292,18 +293,18 @@ synapse:
     - name: matrix-rooms
       configMap:
         name: ixo-matrix-appservice-rooms-registration
-    - name: matrix-whatsapp
+%{if matrix_whatsapp_enabled}    - name: matrix-whatsapp
       configMap:
         name: ixo-matrix-whatsapp-registration
-    - name: gcp-service-account-key
+%{endif}    - name: gcp-service-account-key
       secret:
         secretName: gcp-key-secret
   extraVolumeMounts:
     - name: matrix-rooms
       mountPath: /data/appservice/rooms
-    - name: matrix-whatsapp
+%{if matrix_whatsapp_enabled}    - name: matrix-whatsapp
       mountPath: /data/appservice/whatsapp
-    - name: gcp-service-account-key
+%{endif}    - name: gcp-service-account-key
       mountPath: /secrets/gcp
   extraCommands: # This is for backing up.
     - 'apt-get update -yqq && apt-get install -yqq apt-transport-https ca-certificates gnupg curl zip'
@@ -317,7 +318,7 @@ synapse:
       memory: 4536Mi
     requests:
       cpu: 50m
-      memory: 800Mi
+      memory: 4536Mi
 workers:
   federation_sender:
     enabled: false

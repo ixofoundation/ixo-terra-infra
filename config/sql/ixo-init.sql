@@ -68,3 +68,6 @@ GRANT CREATE ON SCHEMA "public" to "firecrawl";
 
 \c 'ussd-supamoto'
 GRANT CREATE ON SCHEMA "public" TO "ussd-supamoto";
+
+\c 'feegrant-nest'
+GRANT CREATE ON SCHEMA "public" TO "feegrant-nest";

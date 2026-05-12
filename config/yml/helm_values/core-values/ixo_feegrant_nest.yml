@@ -32,6 +32,14 @@ env:
     value: "<path:${vault_mount}/data/ixo-feegrant-nest#MNEMONIC>"
   - name: "SENTRY_DSN"
     value: "<path:${vault_mount}/data/ixo-feegrant-nest#SENTRY_DSN>"
+  - name: "DATABASE_URL"
+    value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
+  - name: "DATABASE_USE_SSL"
+    value: "1"
+  - name: "MIGRATE_DB_PROGRAMATICALLY"
+    value: "1"
+  - name: "BLOCKSYNC_GRAPHQL_URL"
+    value: "<path:${vault_mount}/data/ixo-feegrant-nest#BLOCKSYNC_GRAPHQL_URL>"
 resources:
   requests:
     memory: 300Mi

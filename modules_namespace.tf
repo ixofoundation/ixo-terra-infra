@@ -135,3 +135,9 @@ resource "kubernetes_namespace_v1" "searxng" {
     name = "searxng"
   }
 }
+
+resource "kubernetes_namespace_v1" "vault_argocd_watcher" {
+  metadata {
+    name = "vault-argocd-watcher"
+  }
+}

@@ -50,7 +50,32 @@ locals {
     "memory_engine_graphiti",
     "falco_security",
     "ixo_matrix_whatsapp",
-    "ixo_sygnal"
+    "ixo_sygnal",
+    "ixo_matrix_supamoto_bot",
+    "ixo_matrix_supamoto_onboarding_server",
+    "ixo_matrix_supamoto_claims_bot",
+    "supamoto_matrix_bids_bot",
+    "supamoto_matrix_state_bot",
+    "supamoto_matrix_appservice_rooms"
+  ]
+
+  # Vault ArgoCD Watcher - derived from application_configs where create_kv = true and enabled.
+  # Add entries to additional_manual_vault_watched_apps (per workspace) for apps that use vault
+  # path syntax in their upstream helm chart but have create_kv = false.
+  # Add entries to excluded_vault_watched_apps for apps that have create_kv = true but should not be watched.
+  vault_watched_apps = sort(concat(
+    compact([
+      for key, config in var.environments[terraform.workspace].application_configs :
+      config.enabled && config.create_kv && !contains(local.excluded_vault_watched_apps, replace(key, "_", "-"))
+        ? replace(key, "_", "-")
+        : null
+    ]),
+    lookup(var.additional_manual_vault_watched_apps, terraform.workspace, [])
+  ))
+
+  excluded_vault_watched_apps = [
+    # ArgoCD app names (kebab-case) that have create_kv = true but should not be watched
+    # e.g. "ixo-some-app"
   ]
 
   vault_mount_path = var.vault_core_mount

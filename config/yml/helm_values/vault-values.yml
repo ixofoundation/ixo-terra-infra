@@ -13,6 +13,8 @@ csi:
     limits:
       memory: 128Mi
 server:
+  extraEnvironmentVars:
+    VAULT_ENABLE_EVENT_BROKER: "true"
   ingress:
     enabled: true
     ingressClassName: nginx

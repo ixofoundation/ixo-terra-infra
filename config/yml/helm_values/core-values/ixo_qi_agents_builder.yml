@@ -1,0 +1,93 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    acme.cert-manager.io/http01-edit-in-place: "true"
+  tls:
+    - hosts:
+        - ${host}
+      secretName: ixo-qi-agents-builder-tls
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+env:
+  - name: NODE_ENV
+    value: "production"
+  - name: PORT
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#PORT>"
+  - name: ORACLE_NAME
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#ORACLE_NAME>"
+  - name: NETWORK
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#NETWORK>"
+  - name: RPC_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#RPC_URL>"
+  - name: BLOCKSYNC_GRAPHQL_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#BLOCKSYNC_GRAPHQL_URL>"
+  - name: BLOCKSYNC_URI
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#BLOCKSYNC_URI>"
+  - name: COMPOSIO_BASE_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#COMPOSIO_BASE_URL>"
+  - name: COMPOSIO_API_KEY
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#COMPOSIO_API_KEY>"
+  - name: MATRIX_BASE_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MATRIX_BASE_URL>"
+  - name: MATRIX_ORACLE_ADMIN_ACCESS_TOKEN
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MATRIX_ORACLE_ADMIN_ACCESS_TOKEN>"
+  - name: MATRIX_ORACLE_ADMIN_PASSWORD
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MATRIX_ORACLE_ADMIN_PASSWORD>"
+  - name: MATRIX_ORACLE_ADMIN_USER_ID
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MATRIX_ORACLE_ADMIN_USER_ID>"
+  - name: MATRIX_RECOVERY_PHRASE
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MATRIX_RECOVERY_PHRASE>"
+  - name: MATRIX_VALUE_PIN
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MATRIX_VALUE_PIN>"
+  - name: MATRIX_ACCOUNT_ROOM_ID
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MATRIX_ACCOUNT_ROOM_ID>"
+  - name: SECP_MNEMONIC
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#SECP_MNEMONIC>"
+  - name: ORACLE_ENTITY_DID
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#ORACLE_ENTITY_DID>"
+  - name: OPEN_ROUTER_API_KEY
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#OPEN_ROUTER_API_KEY>"
+  - name: MEMORY_MCP_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MEMORY_MCP_URL>"
+  - name: MEMORY_ENGINE_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#MEMORY_ENGINE_URL>"
+  - name: DOMAIN_INDEXER_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#DOMAIN_INDEXER_URL>"
+  - name: SANDBOX_MCP_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#SANDBOX_MCP_URL>"
+  - name: LANGSMITH_TRACING
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#LANGSMITH_TRACING>"
+  - name: LANGSMITH_PROJECT
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#LANGSMITH_PROJECT>"
+  - name: LANGSMITH_ENDPOINT
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#LANGSMITH_ENDPOINT>"
+  - name: LANGSMITH_API_KEY
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#LANGSMITH_API_KEY>"
+  - name: DISABLE_CREDITS
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#DISABLE_CREDITS>"
+  - name: CORS_ORIGIN
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#CORS_ORIGIN>"
+  - name: SUBSCRIPTION_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#SUBSCRIPTION_URL>"
+  - name: SKILLS_CAPSULES_BASE_URL
+    value: "<path:${vault_mount}/data/ixo-qi-agents-builder#SKILLS_CAPSULES_BASE_URL>"
+service:
+  port: 5678
+resources:
+  requests:
+    memory: 350Mi
+    cpu: "50m"
+  limits:
+    memory: 450Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"

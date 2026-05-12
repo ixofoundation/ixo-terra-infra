@@ -22,7 +22,24 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
+}
+
+provider "cloudflare" {
+  api_token = var.cloudlfare_supamoto_ecs_tunnel
+}
+
+provider "cloudflare" {
+  alias     = "dns"
+  api_token = var.cloudflare_api_token
 }
 
 provider "kubernetes" {
@@ -157,8 +174,8 @@ resource "kubernetes_pod_v1" "filebrowser" {
       name  = "filebrowser"
       image = "filebrowser/filebrowser:latest"
 
-      args = ["--port", "8080" ]
-      
+      args = ["--port", "8080"]
+
       port {
         container_port = 8080
         name           = "http"
@@ -209,8 +226,8 @@ resource "kubernetes_pod_v1" "filebrowser_matrix" {
       name  = "filebrowser-matrix"
       image = "filebrowser/filebrowser:latest"
 
-      args = ["--port", "8080" ]
-      
+      args = ["--port", "8080"]
+
       port {
         container_port = 8080
         name           = "http"
@@ -264,7 +281,7 @@ resource "kubernetes_namespace_v1" "external_dns_cloudflare" {
 
 resource "aws_iam_openid_connect_provider" "github_oidc" {
   count = terraform.workspace == "mainnet" ? 1 : 0
-  url = "https://token.actions.githubusercontent.com"
+  url   = "https://token.actions.githubusercontent.com"
 
   client_id_list = ["sts.amazonaws.com"]
 
@@ -273,11 +290,11 @@ resource "aws_iam_openid_connect_provider" "github_oidc" {
 
 resource "google_storage_bucket" "postgres_backups" {
   lifecycle {
-    ignore_changes = [ lifecycle_rule ]
+    ignore_changes = [lifecycle_rule]
   }
-  count = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enabled ? 1 : 0
-  location = "US"
-  name     = "${var.org}-${terraform.workspace}-core-postgres"
+  count         = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enabled ? 1 : 0
+  location      = "US"
+  name          = "${var.org}-${terraform.workspace}-core-postgres"
   storage_class = "COLDLINE"
   versioning {
     enabled = true
@@ -304,9 +321,9 @@ resource "google_storage_bucket" "postgres_backups" {
 }
 
 resource "google_storage_bucket" "matrix_backups" {
-  count = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
-  location = "US"
-  name     = "${var.org}-${terraform.workspace}-matrix"
+  count         = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
+  location      = "US"
+  name          = "${var.org}-${terraform.workspace}-matrix"
   storage_class = "COLDLINE"
   versioning {
     enabled = true
@@ -332,12 +349,12 @@ resource "google_storage_bucket" "matrix_backups" {
   }
 
   lifecycle {
-    ignore_changes = [ lifecycle_rule ]
+    ignore_changes = [lifecycle_rule]
   }
 }
 
 resource "google_storage_bucket" "loki_logs_backups" {
-  count = var.environments[terraform.workspace].application_configs["loki"].enabled ? 1 : 0
+  count    = var.environments[terraform.workspace].application_configs["loki"].enabled ? 1 : 0
   location = "US"
   name     = "${var.org}-${terraform.workspace}-loki-logs"
   versioning {
@@ -366,9 +383,9 @@ resource "google_storage_bucket" "loki_logs_backups" {
 
 resource "kubernetes_secret_v1" "redis_secret" {
   depends_on = [module.argocd]
-  count = var.environments[terraform.workspace].application_configs["redis"].enabled ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["redis"].enabled ? 1 : 0
   metadata {
-    name = "redis-secret"
+    name      = "redis-secret"
     namespace = kubernetes_namespace_v1.redis.metadata[0].name
   }
   data = {
@@ -408,12 +425,12 @@ resource "random_password" "surrealdb_password" {
 
 resource "kubernetes_secret_v1" "ghost_mysql_secret" {
   metadata {
-    name = "ghost-mysql-secret"
+    name      = "ghost-mysql-secret"
     namespace = kubernetes_namespace_v1.ghost.metadata[0].name
   }
   data = {
     mysql-root-password = random_password.ghost_db_root_password.result
-    mysql-password = random_password.ghost_db_user_password.result
+    mysql-password      = random_password.ghost_db_user_password.result
   }
 }
 
@@ -424,12 +441,12 @@ resource "kubernetes_ingress_v1" "neo4j" {
     name      = "neo4j"
     namespace = kubernetes_namespace_v1.neo4j.metadata[0].name
     annotations = {
-      "cert-manager.io/cluster-issuer"           = "letsencrypt-staging"
+      "cert-manager.io/cluster-issuer"            = "letsencrypt-staging"
       "acme.cert-manager.io/http01-edit-in-place" = "true"
-      "nginx.org/proxy-read-timeout"             = "3600"
-      "nginx.org/proxy-send-timeout"             = "3600"
-      "nginx.org/proxy-connect-timeout"          = "3600"
-      "nginx.org/websocket-services"             = "neo4j"
+      "nginx.org/proxy-read-timeout"              = "3600"
+      "nginx.org/proxy-send-timeout"              = "3600"
+      "nginx.org/proxy-connect-timeout"           = "3600"
+      "nginx.org/websocket-services"              = "neo4j"
     }
   }
   spec {
@@ -576,7 +593,7 @@ resource "kubectl_manifest" "grafana_virtual_server_route" {
 # SLACK WEBHOOK URL SECRETS
 resource "kubernetes_secret_v1" "slack_webhook_url" {
   metadata {
-    name = "slack-webhook-url"
+    name      = "slack-webhook-url"
     namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
   }
   data = {
@@ -586,7 +603,7 @@ resource "kubernetes_secret_v1" "slack_webhook_url" {
 
 resource "kubernetes_secret_v1" "slack_webhook_url_matrix" {
   metadata {
-    name = "slack-webhook-url-matrix"
+    name      = "slack-webhook-url-matrix"
     namespace = kubernetes_namespace_v1.matrix.metadata[0].name
   }
   data = {

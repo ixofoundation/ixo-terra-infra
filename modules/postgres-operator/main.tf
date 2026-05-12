@@ -83,6 +83,7 @@ resource "kubectl_manifest" "cluster" {
       pgmonitoring_image_tag = each.value.pgmonitoring_image_tag != null ? each.value.pgmonitoring_image_tag : ""
       enable_pg_cron         = each.value.enable_pg_cron != null ? each.value.enable_pg_cron : false
       pg_cron_database       = each.value.pg_cron_database != null ? each.value.pg_cron_database : "postgres"
+      environment            = terraform.workspace
     }
   )
 }
