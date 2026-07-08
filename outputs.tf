@@ -13,6 +13,11 @@ output "ixo_postgres_user_passwords" {
 }
 
 output "supamoto_tunnel_token" {
-  value = module.cloudflare_supamoto_tunnel[0].supamoto_tunnel_token
+  value     = module.cloudflare_supamoto_tunnel[0].tunnel_token
+  sensitive = true
+}
+
+output "digihub_tunnel_token" {
+  value     = module.cloudflare_digihub_tunnel[0].tunnel_token
   sensitive = true
 }

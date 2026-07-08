@@ -23,8 +23,9 @@ terraform {
       version = "~> 5.0"
     }
     cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
+      source                = "cloudflare/cloudflare"
+      version               = "~> 4.0"
+      configuration_aliases = [cloudflare.dns]
     }
     random = {
       source  = "hashicorp/random"
