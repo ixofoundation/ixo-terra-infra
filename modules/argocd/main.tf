@@ -76,6 +76,61 @@ resource "kubernetes_secret_v1" "repository" {
   }
 }
 
+resource "vault_kv_secret_v2" "image_updater" {
+  count = var.image_updater_enabled ? 1 : 0
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+  mount               = var.vault_mount_path
+  name                = "argocd-image-updater"
+  cas                 = 1
+  delete_all_versions = true
+  data_json = jsonencode({
+    credentials             = ""
+    githubAppID             = ""
+    githubAppInstallationID = ""
+    githubAppPrivateKey     = ""
+  })
+  custom_metadata {
+    max_versions = 5
+  }
+}
+
+data "vault_kv_secret_v2" "image_updater" {
+  count      = var.image_updater_enabled ? 1 : 0
+  depends_on = [vault_kv_secret_v2.image_updater]
+  mount      = var.vault_mount_path
+  name       = "argocd-image-updater"
+}
+
+# argocd-image-updater GHCR polling credentials (read:packages PAT, sourced from Vault)
+resource "kubernetes_secret_v1" "image_updater_ghcr_creds" {
+  count      = var.image_updater_enabled ? 1 : 0
+  depends_on = [time_sleep.wait_for_argocd]
+  metadata {
+    name      = "argocd-image-updater-ghcr-creds"
+    namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
+  }
+  data = {
+    credentials = data.vault_kv_secret_v2.image_updater[0].data["credentials"]
+  }
+}
+
+# argocd-image-updater git write-back credentials (GitHub App, sourced from Vault)
+resource "kubernetes_secret_v1" "image_updater_git_creds" {
+  count      = var.image_updater_enabled ? 1 : 0
+  depends_on = [time_sleep.wait_for_argocd]
+  metadata {
+    name      = "argocd-image-updater-git-creds"
+    namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
+  }
+  data = {
+    githubAppID             = data.vault_kv_secret_v2.image_updater[0].data["githubAppID"]
+    githubAppInstallationID = data.vault_kv_secret_v2.image_updater[0].data["githubAppInstallationID"]
+    githubAppPrivateKey     = data.vault_kv_secret_v2.image_updater[0].data["githubAppPrivateKey"]
+  }
+}
+
 # Git Applications Create Namespaces
 resource "kubernetes_namespace_v1" "application" {
   for_each = { for app in var.applications : app.name => app }

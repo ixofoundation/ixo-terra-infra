@@ -48,3 +48,14 @@ variable "argo_namespace" {
 variable "vault_mount_path" {
   type = string
 }
+
+variable "image_updater" {
+  description = "Optional: configure argocd-image-updater for this application. Omit to disable (e.g. when image.tag is hardcoded)."
+  type = object({
+    image               = string
+    strategy            = optional(string, "semver")
+    constraint          = optional(string, "")
+    allow_tags_override = optional(string, null)
+  })
+  default = null
+}

@@ -1,0 +1,22 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: ${name}
+  namespace: ${argo_namespace}
+spec:
+  applicationRefs:
+    - namePattern: "${name}"
+      images:
+        - alias: app
+          imageName: "${image}"
+          commonUpdateSettings:
+            updateStrategy: ${strategy}
+            allowTags: '${allow_tags}'
+          manifestTargets:
+            helm:
+              name: image.repository
+              tag: image.tag
+      writeBackConfig:
+        method: "git:secret:${argo_namespace}/argocd-image-updater-git-creds"
+        gitConfig:
+          writeBackTarget: "helmvalues:values.yaml"

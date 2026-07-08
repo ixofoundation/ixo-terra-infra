@@ -51,16 +51,16 @@ resource "kubectl_manifest" "application" {
   
   yaml_body = local.isHelm == true ? templatefile("${path.module}/crds/argo-application-helm.yml",
     {
-      name           = var.application.name
-      namespace      = var.application.namespace
-      argo_namespace = var.argo_namespace
-      workspace      = terraform.workspace
-      isOci          = var.application.helm.isOci
-      chart          = var.application.helm.chart
-      revision       = var.application.helm.revision
+      name              = var.application.name
+      namespace         = var.application.namespace
+      argo_namespace    = var.argo_namespace
+      workspace         = terraform.workspace
+      isOci             = var.application.helm.isOci
+      chart             = var.application.helm.chart
+      revision          = var.application.helm.revision
       ignoreDifferences = var.application.helm.ignoreDifferences != null ? var.application.helm.ignoreDifferences : "[]"
-      repository     = var.application.repository
-      helm_values    = var.application.values_override != null ? var.application.values_override : ""
+      repository        = var.application.repository
+      helm_values       = var.application.values_override != null ? var.application.values_override : ""
     }
     ) : templatefile("${path.module}/crds/argo-application.yml",
     {
@@ -73,4 +73,15 @@ resource "kubectl_manifest" "application" {
       path           = var.application.path
     }
   )
+}
+
+resource "kubectl_manifest" "image_updater" {
+  count = local.image_updater_enabled ? 1 : 0
+  yaml_body = templatefile("${path.module}/crds/image-updater.yml", {
+    name           = var.application.name
+    argo_namespace = var.argo_namespace
+    image          = var.image_updater.image
+    strategy       = var.image_updater.strategy
+    allow_tags     = local._allow_tags
+  })
 }

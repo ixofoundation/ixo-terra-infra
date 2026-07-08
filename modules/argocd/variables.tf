@@ -68,3 +68,14 @@ variable "org" {
 variable "cert_manager_enabled" {
   type = bool
 }
+
+variable "vault_mount_path" {
+  description = "Vault KV mount path — used to read argocd-image-updater credentials stored in Vault."
+  type        = string
+}
+
+variable "image_updater_enabled" {
+  description = "When false, all argocd-image-updater Vault and Kubernetes credential resources are skipped. Set to false on first apply of a new cluster before Vault is running."
+  type        = bool
+  default     = false
+}

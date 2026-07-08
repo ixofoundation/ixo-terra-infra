@@ -1,0 +1,27 @@
+config:
+  registries:
+    - name: GHCR
+      prefix: ghcr.io
+      api_url: https://ghcr.io
+      credentials: secret:app-argocd/argocd-image-updater-ghcr-creds#credentials
+      credsexpire: 10h
+
+authScripts:
+  enabled: false
+
+gitCommitUser: "ArgoCD Image Updater"
+gitCommitEmail: "argocd-image-updater@ixo.world"
+
+logLevel: info
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
