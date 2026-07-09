@@ -1,0 +1,46 @@
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: ${host}
+      paths:
+        - path: /
+          pathType: Prefix
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}
+service:
+  port: 8083
+env:
+  - name: "PORT"
+    value: "8083"
+resources:
+  requests:
+    memory: 400Mi
+    cpu: "40m"
+  limits:
+    memory: 600Mi
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetMemoryUtilizationPercentage: "30"
+backup:
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 10m
+    limits:
+      memory: 600Mi
+  gcs:
+    bucket: ${gcs_bucket}
+config:
+  homeserverUrl: https://matrix.supamoto.global
+  homeserverName: matrix.supamoto.global
+  accessToken: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_IXO_CLAIMS_BOT_ACCESS_TOKEN>"
+  ucan:
+    hostname: ${host}
+    mnemonic: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_IXO_CLAIMS_BOT_MNEMONIC>"

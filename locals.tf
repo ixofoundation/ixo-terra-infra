@@ -56,7 +56,9 @@ locals {
     "ixo_matrix_supamoto_claims_bot",
     "supamoto_matrix_bids_bot",
     "supamoto_matrix_state_bot",
-    "supamoto_matrix_appservice_rooms"
+    "supamoto_matrix_appservice_rooms",
+    "nomic_embedding",
+    "vault_argocd_watcher"
   ]
 
   # Vault ArgoCD Watcher - derived from application_configs where create_kv = true and enabled.

@@ -318,6 +318,7 @@ variable "ixo_helm_chart_repository" {
   default     = "https://github.com/ixofoundation/ixo-helm-charts"
 }
 
+
 variable "ixo_terra_infra_repository" {
   description = "Git repository URL for IXO Terraform infrastructure"
   type        = string

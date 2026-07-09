@@ -40,7 +40,7 @@ versions = {
   prometheus-blackbox-exporter = "11.9.1"  # https://artifacthub.io/packages/helm/prometheus-community/prometheus-blackbox-exporter
   dex                          = "0.24.0" # https://artifacthub.io/packages/helm/dex/dex
   tailscale                    = "1.96.5" # https://pkgs.tailscale.com/helmcharts/index.yaml
-  matrix                       = "3.12.25" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
+  matrix                       = "3.12.28" # https://artifacthub.io/packages/helm/ananace-charts/matrix-synapse
   openebs                      = "4.4.0" # https://artifacthub.io/packages/helm/openebs/openebs
   metrics-server               = "3.13.0" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
   descheduler                  = "0.35.1" # https://artifacthub.io/packages/helm/descheduler/descheduler
@@ -89,7 +89,7 @@ environments = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
-        storage_class = "bulk"
+        storage_class = "fast"
         storage_size = "40Gi"
       }
       postgres_operator_crunchydata = {
@@ -126,6 +126,10 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_prefix = "vault-watcher"
+      }
+      argocd_image_updater = {
+        enabled = true
+        create_kv = false
       }
       loki = {
         enabled = true
@@ -287,26 +291,66 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "state.bot.devmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "80Gi"
+        storage_class = "fast"
+        storage_size = "20Gi"
       }
       supamoto_matrix_state_bot = {
         enabled = false
         create_kv = false
         domain = "ixoearth"
       }
+      supamoto_ixo_matrix_claims_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.matrix.supamoto.global"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
       ixo_matrix_appservice_rooms = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.devmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       supamoto_matrix_appservice_rooms = {
         enabled = false
         create_kv = false
         domain = "ixoearth"
+      }
+      digihub_matrix_state_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "state.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_matrix_appservice_rooms = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "rooms.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_matrix_bids_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "bid.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_ixo_matrix_claims_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       claims_credentials_ecs = {
         enabled = true
@@ -465,8 +509,8 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "bid.bot.devmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       supamoto_matrix_bids_bot = {
         enabled = false
@@ -478,32 +522,32 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto.bot.devmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_supamoto_onboarding_server = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto-onboarding.devmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_supamoto_claims_bot = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
-        dns_endpoint = "supamoto.claims.bot.devmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        dns_endpoint = "submission.claim.bot.matrix.supamoto.global"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_claims_bot = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "claim.bot.devmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "200Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_whatsapp = {
         enabled = false
@@ -547,6 +591,8 @@ environments = {
         create_kv = true
         domain = "ixoearth"
         dns_prefix = "website.bot"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_jokes_oracle = {
         enabled = false
@@ -565,6 +611,8 @@ environments = {
         create_kv = true
         domain = "ixoearth"
         dns_prefix = "flow-manager"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_kyc_oracle = {
         enabled = false
@@ -583,6 +631,16 @@ environments = {
         create_kv = true
         domain = "ixoearth"
         dns_prefix = "ecs-oracle"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_yoma_agent_oracle = {
+        enabled = true
+        create_kv = true
+        domain = "ixoearth"
+        dns_prefix = "yoma-agent"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_observable_framework_builder = {
         enabled = false
@@ -653,7 +711,7 @@ environments = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
-        storage_class = "bulk"
+        storage_class = "fast"
         storage_size = "40Gi"
       }
       postgres_operator_crunchydata = {
@@ -690,6 +748,10 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_prefix = "vault-watcher"
+      }
+      argocd_image_updater = {
+        enabled = true
+        create_kv = false
       }
       loki = {
         enabled = true
@@ -851,21 +913,53 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "state.bot.testmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "250Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.testmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       supamoto_matrix_appservice_rooms = {
         enabled = false
         create_kv = false
         domain = "ixoearth"
+      }
+      digihub_matrix_state_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "state.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_matrix_appservice_rooms = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "rooms.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_matrix_bids_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "bid.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_ixo_matrix_claims_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       claims_credentials_ecs = {
         enabled = true
@@ -1025,8 +1119,8 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "bid.bot.testmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       supamoto_matrix_bids_bot = {
         enabled = false
@@ -1038,32 +1132,32 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto.bot.testmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_supamoto_onboarding_server = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "supamoto-onboarding.testmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_supamoto_claims_bot = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
-        dns_endpoint = "supamoto.claims.bot.testmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        dns_endpoint = "submission.claim.bot.matrix.supamoto.global"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_claims_bot = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "claim.bot.testmx.ixo.earth"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_matrix_whatsapp = {
         enabled = false
@@ -1131,22 +1225,32 @@ environments = {
         create_kv = true
         domain = "ixoworld"
         dns_prefix = "kyc"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_yellowcard_oracle = {
         enabled = true
         create_kv = true
         domain = "ixoworld"
         dns_prefix = "yellowcard"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_ecs_oracle = {
         enabled = true
         create_kv = true
         domain = "ixoearth"
         dns_prefix = "ecs-oracle"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_yoma_agent_oracle = {
+        enabled = true
+        create_kv = true
+        domain = "ixoearth"
+        dns_prefix = "yoma-agent"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_observable_framework_builder = {
         enabled = false
@@ -1257,10 +1361,14 @@ environments = {
         dns_endpoint = "vault.mainnet.ixo.earth"
       }
       vault_argocd_watcher = {
-        enabled = false
+        enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_prefix = "vault-watcher"
+      }
+      argocd_image_updater = {
+        enabled = true
+        create_kv = false
       }
       loki = {
         enabled = true
@@ -1433,6 +1541,14 @@ environments = {
         create_kv = false
         domain = "ixoearth"
       }
+      supamoto_ixo_matrix_claims_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.matrix.supamoto.global"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
       ixo_matrix_appservice_rooms = {
         enabled = true
         create_kv = false
@@ -1446,16 +1562,24 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "state.bot.matrix.supamoto.global"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      supamoto_ixo_matrix_claims_bot = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.matrix.supamoto.global"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       supamoto_matrix_appservice_rooms = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.matrix.supamoto.global"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       claims_credentials_ecs = {
         enabled = true
@@ -1628,8 +1752,40 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "bid.bot.matrix.supamoto.global"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_matrix_state_bot = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "state.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_matrix_appservice_rooms = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "rooms.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_matrix_bids_bot = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "bid.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      digihub_ixo_matrix_claims_bot = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.matrix.emediaworkspace.org"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_firecrawl = {
         enabled = true
@@ -1657,7 +1813,7 @@ environments = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
-        dns_endpoint = "claims.bot.matrix.supamoto.global"
+        dns_endpoint = "submission.claim.bot.matrix.supamoto.global"
         storage_class = "bulk"
         storage_size = "40Gi"
       }
@@ -1748,10 +1904,20 @@ environments = {
         storage_size = "40Gi"
       }
       ixo_ecs_oracle = {
-        enabled = false
+        enabled = true
         create_kv = true
         domain = "ixoearth"
         dns_prefix = "ecs-oracle"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_yoma_agent_oracle = {
+        enabled = false
+        create_kv = true
+        domain = "ixoearth"
+        dns_prefix = "yoma-agent"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_observable_framework_builder = {
         enabled = true
@@ -1806,7 +1972,6 @@ additional_manual_synthetic_monitoring_endpoints = {
   ]
   testnet = [
     "https://payments.testnet.emerging.eco",
-    "https://blockscan-pandora.ixo.earth",
     "https://signx.testnet.ixo.earth",
     "https://testnet.ixo.earth/rpc/",
     "https://stage.api.emerging.eco/emerging-platform/v1/hello",

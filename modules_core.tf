@@ -39,6 +39,9 @@ module "ixo_cellnode" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_cellnode"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-cellnode"
+  }
 }
 
 module "ixo_matrix_state_bot" {
@@ -61,6 +64,9 @@ module "ixo_matrix_state_bot" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_state_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-matrix-state-bot"
+  }
 }
 
 module "supamoto_matrix_state_bot" {
@@ -83,6 +89,36 @@ module "supamoto_matrix_state_bot" {
   create_kv        = var.environments[terraform.workspace].application_configs["supamoto_matrix_state_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-matrix-state-bot"
+  }
+}
+
+module "supamoto_ixo_matrix_claims_bot" {
+  count      = var.environments[terraform.workspace].application_configs["supamoto_ixo_matrix_claims_bot"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "supamoto-ixo-matrix-claims-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-claims-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/supamoto_ixo_matrix_claims_bot.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["supamoto_ixo_matrix_claims_bot"]
+        vault_mount = local.vault_mount_path
+        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-ixo-claims"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["supamoto_ixo_matrix_claims_bot"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["supamoto_ixo_matrix_claims_bot"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["supamoto_ixo_matrix_claims_bot"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-matrix-claims-bot"
+  }
 }
 
 module "ixo_blocksync_core" {
@@ -108,6 +144,9 @@ module "ixo_blocksync_core" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-blocksync-core"
+  }
 }
 
 module "ixo_memory_engine_graphiti" {
@@ -133,6 +172,11 @@ module "ixo_memory_engine_graphiti" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image               = "ghcr.io/ixoworld/memory-engine-graphiti-api-server"
+    strategy            = "newest-build"
+    allow_tags_override = "regexp:^main-"
+  }
 }
 
 module "ixo_companion" {
@@ -155,6 +199,9 @@ module "ixo_companion" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_companion"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/companion/app"
+  }
 }
 
 module "ixo_blocksync" {
@@ -185,6 +232,9 @@ module "ixo_blocksync" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-blocksync"
+  }
 }
 
 module "credentials_prospect" {
@@ -207,6 +257,9 @@ module "credentials_prospect" {
   create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_prospect"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/emerging-eco/emerging-claims-credentials"
+  }
 }
 
 module "ecs" {
@@ -233,6 +286,9 @@ module "ecs" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/emerging-eco/emerging-claims-credentials"
+  }
 }
 
 module "carbon" {
@@ -256,6 +312,9 @@ module "carbon" {
   create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_carbon"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/emerging-eco/emerging-claims-credentials"
+  }
 }
 
 module "claimformprotocol" {
@@ -279,6 +338,9 @@ module "claimformprotocol" {
   create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_claimformprotocol"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/emerging-eco/emerging-claims-credentials"
+  }
 }
 
 module "umuzi" {
@@ -301,6 +363,9 @@ module "umuzi" {
   create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_umuzi"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/emerging-eco/emerging-claims-credentials"
+  }
 }
 
 module "did" {
@@ -324,6 +389,9 @@ module "did" {
   create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_did"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/emerging-eco/emerging-claims-credentials"
+  }
 }
 
 module "ixo_feegrant_nest" {
@@ -350,6 +418,9 @@ module "ixo_feegrant_nest" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_feegrant_nest"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-feegrant-nest"
+  }
 }
 
 module "ixo_payments_nest" {
@@ -415,6 +486,9 @@ module "ixo_did_resolver" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_did_resolver"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-did-resolver"
+  }
 }
 
 module "ixo_faucet" {
@@ -437,6 +511,9 @@ module "ixo_faucet" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_faucet"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-faucet"
+  }
 }
 
 module "ixo_deeplink_server" {
@@ -470,6 +547,9 @@ module "ixo_deeplink_server" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-deeplink-server"
+  }
 }
 
 module "ixo_kyc_server" {
@@ -509,6 +589,9 @@ module "ixo_kyc_server" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-kyc-server"
+  }
 }
 
 module "ixo_redirects" {
@@ -538,6 +621,9 @@ module "ixo_matrix_appservice_rooms" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_appservice_rooms"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-matrix-appservice-rooms"
+  }
 }
 
 module "supamoto_matrix_appservice_rooms" {
@@ -562,6 +648,9 @@ module "supamoto_matrix_appservice_rooms" {
   create_kv        = var.environments[terraform.workspace].application_configs["supamoto_matrix_appservice_rooms"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-matrix-appservice-rooms"
+  }
 }
 
 module "ixo_matrix_bids_bot" {
@@ -586,6 +675,9 @@ module "ixo_matrix_bids_bot" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_bids_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-matrix-bids-bot"
+  }
 }
 
 module "supamoto_matrix_bids_bot" {
@@ -610,6 +702,115 @@ module "supamoto_matrix_bids_bot" {
   create_kv        = var.environments[terraform.workspace].application_configs["supamoto_matrix_bids_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-matrix-bids-bot"
+  }
+}
+
+module "digihub_matrix_state_bot" {
+  count      = var.environments[terraform.workspace].application_configs["digihub_matrix_state_bot"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "digihub-matrix-state-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-state-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/digihub_matrix_state_bot.yml",
+      {
+        host          = local.dns_for_environment[terraform.workspace]["digihub_matrix_state_bot"]
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/digihub-state"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["digihub_matrix_state_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["digihub_matrix_state_bot"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["digihub_matrix_state_bot"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-matrix-state-bot"
+  }
+}
+
+module "digihub_matrix_appservice_rooms" {
+  count  = var.environments[terraform.workspace].application_configs["digihub_matrix_appservice_rooms"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "digihub-matrix-appservice-rooms"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-appservice-rooms"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/digihub_matrix_appservice_rooms.yml",
+      {
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["digihub_matrix_appservice_rooms"]
+        vault_mount   = local.vault_mount_path
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/digihub-rooms"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["digihub_matrix_appservice_rooms"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["digihub_matrix_appservice_rooms"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["digihub_matrix_appservice_rooms"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-matrix-appservice-rooms"
+  }
+}
+
+module "digihub_matrix_bids_bot" {
+  count  = var.environments[terraform.workspace].application_configs["digihub_matrix_bids_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "digihub-matrix-bids-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-bids-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/digihub_matrix_bids_bot.yml",
+      {
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["digihub_matrix_bids_bot"]
+        vault_mount   = local.vault_mount_path
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/digihub-bids"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["digihub_matrix_bids_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["digihub_matrix_bids_bot"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["digihub_matrix_bids_bot"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-matrix-bids-bot"
+  }
+}
+
+module "digihub_ixo_matrix_claims_bot" {
+  count      = var.environments[terraform.workspace].application_configs["digihub_ixo_matrix_claims_bot"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "digihub-ixo-matrix-claims-bot"
+    namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-claims-bot"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/digihub_ixo_matrix_claims_bot.yml",
+      {
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["digihub_ixo_matrix_claims_bot"]
+        vault_mount   = local.vault_mount_path
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/digihub-ixo-claims"
+        storage_class = local.storage_class_for_environment[terraform.workspace]["digihub_ixo_matrix_claims_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["digihub_ixo_matrix_claims_bot"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["digihub_ixo_matrix_claims_bot"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-matrix-claims-bot"
+  }
 }
 
 module "ixo_matrix_supamoto_bot" {
@@ -634,6 +835,9 @@ module "ixo_matrix_supamoto_bot" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-matrix-supamoto-bot"
+  }
 }
 
 module "ixo_matrix_supamoto_onboarding_server" {
@@ -657,6 +861,9 @@ module "ixo_matrix_supamoto_onboarding_server" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_onboarding_server"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-supamoto-onboarding-server"
+  }
 }
 
 module "ixo_domain_indexer" {
@@ -686,6 +893,9 @@ module "ixo_domain_indexer" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/domain-indexer"
+  }
 }
 
 module "ixo_firecrawl" {
@@ -737,6 +947,9 @@ module "ixo_matrix_supamoto_claims_bot" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_claims_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-matrix-supamoto-claims-bot"
+  }
 }
 
 module "minerva_oracle" {
@@ -752,12 +965,17 @@ module "minerva_oracle" {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_minerva_oracle"]
         vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_minerva_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_minerva_oracle"]
       }
     )
   }
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_minerva_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/minerva/app"
+  }
 }
 
 module "ixo_minerva_livekit" {
@@ -779,6 +997,9 @@ module "ixo_minerva_livekit" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_minerva_livekit"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/minerva-livekit"
+  }
 }
 
 module "ixo_matrix_claims_bot" {
@@ -803,6 +1024,9 @@ module "ixo_matrix_claims_bot" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_matrix_claims_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-matrix-claims-bot"
+  }
 }
 
 module "ixo_matrix_whatsapp" {
@@ -1003,6 +1227,9 @@ module "ixo_guru_temp" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-ai-oracles/guru"
+  }
 }
 
 module "ixo_giza_oracle" {
@@ -1074,6 +1301,9 @@ module "ixo_giza_oracle" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-ai-oracles/giza"
+  }
 }
 
 module "ixo_flow_manager_oracle" {
@@ -1089,12 +1319,17 @@ module "ixo_flow_manager_oracle" {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
         vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
       }
     )
   }
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_flow_manager_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/flow-manager-oracle/app"
+  }
 }
 
 module "ixo_trading_bot_server" {
@@ -1147,6 +1382,9 @@ module "ixo_domain_creator_oracle" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_domain_creator_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/domain-creator-oracle/app"
+  }
 }
 
 module "ixo_qi_agents_builder" {
@@ -1168,6 +1406,9 @@ module "ixo_qi_agents_builder" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_qi_agents_builder"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/qi-agents-builder/app"
+  }
 }
 
 module "ixo_matrix_recording_bot" {
@@ -1206,6 +1447,8 @@ module "ixo_kyc_oracle" {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_oracle"]
         vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_kyc_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_kyc_oracle"]
       }
     )
   }
@@ -1279,6 +1522,9 @@ module "ixo_subscriptions_oracle" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/subscriptions-oracle"
+  }
 }
 
 module "ixo_subscriptions_oracle_bot" {
@@ -1304,6 +1550,9 @@ module "ixo_subscriptions_oracle_bot" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle_bot"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/subscription-oracle-bot/app"
+  }
 }
 
 module "ixo_pathgen_oracle" {
@@ -1329,6 +1578,9 @@ module "ixo_pathgen_oracle" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_pathgen_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/pathgen-oracle/app"
+  }
 }
 
 module "ixo_website_bot_oracle" {
@@ -1344,6 +1596,8 @@ module "ixo_website_bot_oracle" {
         environment = terraform.workspace
         vault_mount = local.vault_mount_path
         host        = local.dns_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
       }
     )
   }
@@ -1365,6 +1619,9 @@ module "ixo_website_bot_oracle" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/website-bot-oracle/app"
+  }
 }
 
 module "ixo_jokes_oracle" {
@@ -1393,6 +1650,9 @@ module "ixo_jokes_oracle" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_jokes_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/jokes-oracle/app"
+  }
 }
 
 module "ixo_ecs_oracle" {
@@ -1408,6 +1668,8 @@ module "ixo_ecs_oracle" {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_ecs_oracle"]
         vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_ecs_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_ecs_oracle"]
       }
     )
     create_kv        = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].create_kv
@@ -1417,6 +1679,32 @@ module "ixo_ecs_oracle" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+}
+
+module "ixo_yoma_agent_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_yoma_agent_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-yoma-agent-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/yoma-agent"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_yoma_agent_oracle.yml",
+      {
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
+        vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_yoma_agent_oracle"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/yoma-agent"
+  }
 }
 
 module "ixo_whizz" {
@@ -1502,6 +1790,9 @@ module "ixo_coin_server" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-coin-server"
+  }
 }
 
 module "ixo_stake_reward_claimer" {
@@ -1529,6 +1820,9 @@ module "ixo_stake_reward_claimer" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-stake-reward-claimer"
+  }
 }
 
 module "ixo_offset_auto_approve" {
@@ -1619,6 +1913,9 @@ module "ixo_message_relayer" {
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-message-relayer"
+  }
 }
 
 module "ixo_notification_server" {
@@ -1725,6 +2022,9 @@ module "ixo_dmrv_registry_server" {
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_registry_server"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-registry-server"
+  }
 }
 
 module "ixo_observable_framework_builder" {

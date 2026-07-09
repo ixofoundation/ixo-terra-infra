@@ -1,14 +1,37 @@
-# Cloudflare private network tunnel — connects ixo's K8s cluster to Supamoto's
-# Postgres DB in South Africa via Cloudflare Zero Trust, with no inbound ports
-# or VPN required. Mainnet only.
+# Cloudflare private network tunnels — connect ixo's K8s cluster to partner
+# Postgres DBs via Cloudflare Zero Trust, with no inbound ports or VPN required.
+# Mainnet only.
 module "cloudflare_supamoto_tunnel" {
   count  = terraform.workspace == "mainnet" ? 1 : 0
-  source = "./modules/cloudflare-supamoto-tunnel"
+  source = "./modules/cloudflare-partner-tunnel"
 
-  cloudflare_account_id = var.cloudflare_account_id
-  cloudflare_api_token  = var.cloudlfare_supamoto_ecs_tunnel
-  cloudflare_zone_id    = var.cloudflare_ixo_earth_zone_id
-  environment           = terraform.workspace
+  cloudflare_account_id   = var.cloudflare_account_id
+  cloudflare_api_token    = var.cloudlfare_supamoto_ecs_tunnel
+  cloudflare_zone_id      = var.cloudflare_ixo_earth_zone_id
+  environment             = terraform.workspace
+  partner_name            = "supamoto"
+  pg_cname                = "supamoto-pg"
+  docker_postgres_service = "matrix_postgres"
+  namespace               = "supamoto-tunnel"
+
+  providers = {
+    cloudflare     = cloudflare
+    cloudflare.dns = cloudflare.dns
+  }
+}
+
+module "cloudflare_digihub_tunnel" {
+  count  = terraform.workspace == "mainnet" ? 1 : 0
+  source = "./modules/cloudflare-partner-tunnel"
+
+  cloudflare_account_id   = var.cloudflare_account_id
+  cloudflare_api_token    = var.cloudlfare_supamoto_ecs_tunnel
+  cloudflare_zone_id      = var.cloudflare_ixo_earth_zone_id
+  environment             = terraform.workspace
+  partner_name            = "digihub"
+  pg_cname                = "digihub-pg"
+  docker_postgres_service = "matrix_postgres"
+  namespace               = "digihub-tunnel"
 
   providers = {
     cloudflare     = cloudflare
@@ -64,7 +87,7 @@ module "kubernetes_cluster" {
     node_instance_types     = ["t3.medium"]
     node_ami_type           = "AL2023_x86_64_STANDARD"
     node_capacity_type      = "ON_DEMAND"
-    node_disk_size          = var.environments[terraform.workspace].is_development != true ? 800 : 600
+    node_disk_size          = 50
     node_desired_capacity   = var.environments[terraform.workspace].is_development != true ? 3 : 3
     node_max_capacity       = var.environments[terraform.workspace].is_development != true ? 10 : 5
     node_min_capacity       = var.environments[terraform.workspace].is_development != true ? 3 : 1
@@ -79,11 +102,13 @@ module "argocd" {
   hostnames = {
     (terraform.workspace) = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
   }
-  github_client_id     = var.oidc_argo.clientId
-  github_client_secret = var.oidc_argo.clientSecret
-  argo_version         = var.versions["argocd"]
-  org                  = var.org
-  cert_manager_enabled = var.environments[terraform.workspace].application_configs["cert_manager"].enabled
+  github_client_id         = var.oidc_argo.clientId
+  github_client_secret     = var.oidc_argo.clientSecret
+  argo_version             = var.versions["argocd"]
+  org                      = var.org
+  cert_manager_enabled  = var.environments[terraform.workspace].application_configs["cert_manager"].enabled
+  vault_mount_path      = local.vault_mount_path
+  image_updater_enabled = var.environments[terraform.workspace].application_configs["argocd_image_updater"].enabled
   git_repositories = [
     {
       name       = "ixofoundation"
@@ -92,6 +117,25 @@ module "argocd" {
   ]
   applications_helm = [
   ]
+}
+
+module "argocd_image_updater" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].application_configs["argocd_image_updater"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name      = "argocd-image-updater"
+    namespace = module.argocd.argo_namespace
+    helm = {
+      isOci    = false
+      chart    = "argocd-image-updater"
+      revision = "1.2.4"
+    }
+    repository      = "https://argoproj.github.io/argo-helm"
+    values_override = file("${local.helm_values_config_path}/argocd-image-updater-values.yml")
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
 }
 
 module "chromadb" {
@@ -605,6 +649,7 @@ module "postgres-operator" { # Sets up Cluster Instances
       pgmonitoring_image     = var.pg_matrix.pgmonitoring_image
       pgmonitoring_image_tag = var.pg_matrix.pgmonitoring_image_tag
       initSql                = file("${path.root}/config/sql/matrix-init.sql")
+      enable_pgbouncer       = false # Synapse manages its own connection pooling
     },
     {
       # IXO Cluster
@@ -630,6 +675,7 @@ module "postgres-operator" { # Sets up Cluster Instances
       initSql                = file("${path.root}/config/sql/ixo-init.sql")
       enable_pg_cron         = true
       pg_cron_database       = "firecrawl"
+      enable_pgbouncer       = true
     }
   ]
   gcs_key = file("${path.root}/credentials.json")
@@ -664,29 +710,33 @@ module "ixo_loki_logs" {
 }
 
 module "gcp_kms_vault" {
-  source    = "./modules/gcp_kms"
-  name      = "vault-${terraform.workspace}"
-  namespace = "vault"
+  source          = "./modules/gcp_kms"
+  name            = "vault-${terraform.workspace}"
+  namespace       = "vault"
+  rotation_period = terraform.workspace == "mainnet" ? "7776000s" : "15552000s"
 }
 
 module "gcp_kms_matrix" {
-  depends_on = [module.matrix]
-  source     = "./modules/gcp_kms"
-  name       = "matrix-${terraform.workspace}"
-  namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
+  depends_on      = [module.matrix]
+  source          = "./modules/gcp_kms"
+  name            = "matrix-${terraform.workspace}"
+  namespace       = kubernetes_namespace_v1.matrix.metadata[0].name
+  rotation_period = terraform.workspace == "mainnet" ? "7776000s" : "15552000s"
 }
 
 module "gcp_kms_loki" {
-  source    = "./modules/gcp_kms"
-  name      = "loki-${terraform.workspace}"
-  namespace = kubernetes_namespace_v1.loki.metadata[0].name
+  source          = "./modules/gcp_kms"
+  name            = "loki-${terraform.workspace}"
+  namespace       = kubernetes_namespace_v1.loki.metadata[0].name
+  rotation_period = terraform.workspace == "mainnet" ? "7776000s" : "15552000s"
 }
 
 module "gcp_kms_core" {
-  depends_on = [module.argocd]
-  source     = "./modules/gcp_kms"
-  name       = "core-${terraform.workspace}"
-  namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+  depends_on      = [module.argocd]
+  source          = "./modules/gcp_kms"
+  name            = "core-${terraform.workspace}"
+  namespace       = kubernetes_namespace_v1.ixo_core.metadata[0].name
+  rotation_period = terraform.workspace == "mainnet" ? "7776000s" : "15552000s"
 }
 
 module "vault_init" {
@@ -757,8 +807,8 @@ module "neo4j" { # TODO move to its own sub-module as it requires a Ingress reso
       revision = var.versions["neo4j"]
     }
     values_override = templatefile("${local.helm_values_config_path}/neo4j.yml", {
-      storage_class = var.storage_classes["bulk"]
-      storage_size  = "100Gi"
+      storage_class = var.storage_classes["fast"]
+      storage_size  = "20Gi"
       org           = var.org
       password      = random_password.neo4j_password.result
     })
@@ -785,7 +835,7 @@ module "external_dns_cloudflare" {
     )
   }
   argo_namespace   = module.argocd.argo_namespace
-  create_kv        = var.environments[terraform.workspace].application_configs["external_dns_cloudflare"].create_kv
+  create_kv        = var.environments[terraform.workspace].application_configs["external_dns"].create_kv
   vault_mount_path = null
 }
 
