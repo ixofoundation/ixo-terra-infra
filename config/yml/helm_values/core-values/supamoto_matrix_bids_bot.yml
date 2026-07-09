@@ -42,4 +42,5 @@ config:
   homeserverName: matrix.supamoto.global
   accessToken: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_BIDS_BOT_ACCESS_TOKEN>"
   ucan:
-    hostname: bids.bot.matrix.supamoto.global
+    hostname: ${host}
+    mnemonic: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_BIDS_BOT_MNEMONIC>"

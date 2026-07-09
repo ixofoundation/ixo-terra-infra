@@ -50,12 +50,10 @@ deschedulerPolicy:
         - name: LowNodeUtilization
           args:
             thresholds:
-              cpu: 55
-              memory: 55
+              memory: 50
               pods: 100  # Set to 100% to disable pod count-based balancing
             targetThresholds:
-              cpu: 80
-              memory: 75
+              memory: 73
               pods: 100  # Set to 100% to disable pod count-based balancing
       plugins:
         balance:

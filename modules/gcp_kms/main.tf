@@ -6,7 +6,7 @@ resource "google_kms_key_ring" "this" {
 resource "google_kms_crypto_key" "this" {
   name            = "${var.name}-crypto-key"
   key_ring        = google_kms_key_ring.this.id
-  rotation_period = "100000s"
+  rotation_period = var.rotation_period
   purpose         = "ENCRYPT_DECRYPT"
 }
 

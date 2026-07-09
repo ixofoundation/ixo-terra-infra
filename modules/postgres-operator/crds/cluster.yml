@@ -10,7 +10,7 @@ spec:
   service:
     metadata:
       annotations:
-        tailscale.com/hostname: "ixo-postgres-${environment}"
+        tailscale.com/hostname: "${pg_cluster_name}-db-${environment}"
         tailscale.com/expose: "true"
   monitoring:
     pgmonitor:
@@ -61,3 +61,21 @@ spec:
         initdb:
           - locale: C
           - encoding: C
+%{ if enable_pgbouncer ~}
+  proxy:
+    pgBouncer:
+      replicas: 2
+      config:
+        global:
+          pool_mode: transaction
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  postgres-operator.crunchydata.com/cluster: ${pg_cluster_name}
+                  postgres-operator.crunchydata.com/role: pgbouncer
+%{ endif ~}

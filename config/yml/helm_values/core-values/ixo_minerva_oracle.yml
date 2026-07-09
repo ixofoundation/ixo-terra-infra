@@ -80,6 +80,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-minerva-oracle#LANGSMITH_API_KEY>"
   - name: "LANGSMITH_PROJECT"
     value: "<path:${vault_mount}/data/ixo-minerva-oracle#LANGSMITH_PROJECT>"
+  - name: "MATRIX_ACCOUNT_ROOM_ID"
+    value: "<path:${vault_mount}/data/ixo-minerva-oracle#MATRIX_ACCOUNT_ROOM_ID>"
 service:
   port: 4563
 resources:

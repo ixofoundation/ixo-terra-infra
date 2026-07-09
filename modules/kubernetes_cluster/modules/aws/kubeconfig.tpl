@@ -17,7 +17,7 @@ users:
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
-      command: aws
+      command: /usr/local/bin/aws
       args:
         - "eks"
         - "get-token"

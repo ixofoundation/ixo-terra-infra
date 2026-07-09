@@ -38,8 +38,8 @@ backup:
   gcs:
     bucket: ${gcs_bucket}
 config:
-  homeserverUrl: https://matrix.supamoto.global
-  accessToken: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_STATE_BOT_ACCESS_TOKEN>"
+  homeserverUrl: https://matrix.emediaworkspace.org
+  accessToken: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_STATE_BOT_ACCESS_TOKEN>"
   ucan:
-    hostname: state.bot.matrix.supamoto.global
-    mnemonic: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_STATE_BOT_MNEMONIC>"
+    hostname: state.bot.matrix.emediaworkspace.org
+    mnemonic: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_STATE_BOT_MNEMONIC>"

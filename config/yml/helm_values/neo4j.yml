@@ -4,7 +4,7 @@ neo4j:
   acceptLicenseAgreement: "yes"
   resources:
     cpu: 500m
-    memory: 2Gi
+    memory: 1.5Gi
 
 # SSL/TLS configuration for Bolt protocol
 ssl:

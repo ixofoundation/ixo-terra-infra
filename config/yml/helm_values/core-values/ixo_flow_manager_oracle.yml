@@ -80,6 +80,14 @@ env:
     value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#SUBSCRIPTION_URL>"
   - name: SKILLS_CAPSULES_BASE_URL
     value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#SKILLS_CAPSULES_BASE_URL>"
+  - name: FLOW_AGENT_REQUIRE_ROOM_OPT_IN
+    value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#FLOW_AGENT_REQUIRE_ROOM_OPT_IN>"
+  - name: FLOW_DASHBOARD_OPERATORS
+    value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#FLOW_DASHBOARD_OPERATORS>"
+  - name: FLOW_DASHBOARD_SESSION_SECRET
+    value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#FLOW_DASHBOARD_SESSION_SECRET>"
+  - name: FLOW_DASHBOARD_SESSION_TTL_MS
+    value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#FLOW_DASHBOARD_SESSION_TTL_MS>"
 service:
   port: 4000
 resources:
@@ -93,3 +101,6 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}

@@ -1,5 +1,6 @@
 image:
   allowReset: true
+  persistDirectory: /index-data
   repository: chromadb/chroma
   apiVersion: "latest"
   base: ""
@@ -7,8 +8,10 @@ image:
 chromadb:
   auth:
     enabled: false
-  dataVolumeSize: 40Gi
-  dataVolumeStorageClass: ${storage_class}
+  data:
+    volumeSize: 40Gi
+    storageClass: ${storage_class}
+    retentionPolicyOnDelete: Retain
 
 resources:
   requests:

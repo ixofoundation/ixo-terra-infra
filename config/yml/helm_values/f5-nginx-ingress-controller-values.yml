@@ -175,7 +175,7 @@ controller:
             rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/testnet-ixo/block/$1 redirect;
             rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/testnet-ixo/gov/$1 redirect;
             rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/testnet-ixo/account/$1 redirect;
-            rewrite ^/(.*)$ https://explorer.ixo.earth/testnet-ixo redirect;
+            rewrite "^/(?!\.well-known/)(.+)$" https://explorer.ixo.earth/testnet-ixo redirect;
         }
         if ($host = "blockscan.ixo.world") {
             rewrite ^/$ https://staking-explorer.com/explorer/impacthub redirect;
@@ -184,9 +184,9 @@ controller:
             rewrite ^/ixo/blocks/(.*)$ https://staking-explorer.com/block.php?chain=impacthub&height=$1 redirect;
             rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/ixo/gov/$1 redirect;
             rewrite ^/ixo/accounts/(.*)$ https://staking-explorer.com/account.php?chain=impacthub&addr=$1 redirect;
-            rewrite ^/(.*)$ https://staking-explorer.com/explorer/impacthub redirect;
+            rewrite "^/(?!\.well-known/)(.+)$" https://staking-explorer.com/explorer/impacthub redirect;
         }
         if ($host = "chronicle.impacts.network") {
             rewrite ^/$ https://impacts.ixo.world redirect;
-            rewrite ^/(.*)$ https://impacts.ixo.world/$1 redirect;
+            rewrite "^/(?!\.well-known/)(.+)$" https://impacts.ixo.world/$1 redirect;
         }

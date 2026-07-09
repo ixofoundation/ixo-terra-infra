@@ -165,6 +165,10 @@ resource "aws_security_group" "cluster" {
     Environment = var.environment
     Project     = var.project_name
   }
+
+  lifecycle {
+    ignore_changes = [ingress]
+  }
 }
 
 # Security Group for EKS Node Group
@@ -202,6 +206,10 @@ resource "aws_security_group" "node_group" {
     Name        = "${var.cluster_name}-node-group-sg"
     Environment = var.environment
     Project     = var.project_name
+  }
+
+  lifecycle {
+    ignore_changes = [ingress]
   }
 }
 
@@ -307,6 +315,10 @@ resource "aws_eks_node_group" "main" {
     aws_iam_role_policy_attachment.node_group_cni_policy,
     aws_iam_role_policy_attachment.node_group_registry_policy,
   ]
+
+  lifecycle {
+    ignore_changes = [scaling_config[0].desired_size]
+  }
 }
 
 # IAM Role for EBS CSI Driver
@@ -477,11 +489,6 @@ resource "helm_release" "cluster_autoscaler" {
   set {
     name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = aws_iam_role.cluster_autoscaler.arn
-  }
-
-  set {
-    name  = "image.tag"
-    value = "v${var.cluster_version}.0"
   }
 
   set {

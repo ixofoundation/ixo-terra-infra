@@ -38,8 +38,6 @@ env:
     value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#OPEN_ROUTER_API_KEY>"
   - name: NETWORK
     value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#NETWORK>"
-  - name: REDIS_URL
-    value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#REDIS_URL>"
   - name: RPC_URL
     value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#RPC_URL>"
   - name: BLOCKSYNC_GRAPHQL_URL

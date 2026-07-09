@@ -96,6 +96,8 @@ env:
     value: "<path:${vault_mount}/data/ixo-companion#LANGSMITH_API_KEY>"
   - name: "LANGSMITH_PROJECT"
     value: "<path:${vault_mount}/data/ixo-companion#LANGSMITH_PROJECT>"
+  - name: "ORACLE_DID"
+    value: "<path:${vault_mount}/data/ixo-companion#ORACLE_DID>"
 resources:
   requests:
     memory: 1350Mi

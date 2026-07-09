@@ -63,28 +63,65 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# NAT Instance (for dev)
+# NAT Instance (used when nat_gateway_enabled = false, e.g. dev to save cost)
+# AL2023 Nitro instances use ens5 not eth0 — interface is detected dynamically.
 resource "aws_instance" "nat" {
-  count = var.is_development == true || var.environment == "devnet" ? 1 : 0
-  ami           = data.aws_ami.nat_instance.id
+  count         = var.env_config.nat_gateway_enabled ? 0 : 1
+  ami           = data.aws_ami.nat_instance[0].id
   instance_type = "t3.nano"
   subnet_id     = aws_subnet.public[0].id
 
-  source_dest_check = false
+  source_dest_check           = false
+  vpc_security_group_ids      = [aws_security_group.nat_instance[0].id]
+  user_data_replace_on_change = true
 
-  vpc_security_group_ids = [aws_security_group.nat_instance[0].id]
+  user_data = <<-EOF
+    #!/bin/bash
+    exec > /var/log/nat-setup.log 2>&1
+    set -ex
+
+    # Detect primary interface dynamically (ens5 on Nitro, not eth0)
+    ETH0=$(ip -4 route show default | awk '{print $5; exit}')
+    echo "Configuring NAT on interface: $ETH0"
+
+    # Enable IP forwarding persistently
+    echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/90-nat.conf
+    sysctl --system
+
+    # Install iptables-services
+    dnf install -y iptables-services
+
+    # Enable service without starting it - starting would restore saved rules
+    # and wipe the rules we're about to set
+    systemctl enable iptables
+
+    # Configure NAT masquerade
+    iptables -F
+    iptables -t nat -F
+    iptables -t nat -A POSTROUTING -o $ETH0 -j MASQUERADE
+    iptables -A FORWARD -j ACCEPT
+
+    # Save rules now - iptables service will load these on reboot
+    service iptables save
+
+    echo "NAT setup complete on $ETH0"
+  EOF
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-nat-instance"
     Environment = var.environment
     Project     = var.project_name
   }
+
+  lifecycle {
+    ignore_changes = [ami]
+  }
 }
 
 # Security Group for NAT Instance
 resource "aws_security_group" "nat_instance" {
-  count = var.is_development == true || var.environment == "devnet" ? 1 : 0
-  name  = "${var.project_name}-${var.environment}-nat-instance-sg"
+  count  = var.env_config.nat_gateway_enabled ? 0 : 1
+  name   = "${var.project_name}-${var.environment}-nat-instance-sg"
   vpc_id = aws_vpc.main.id
 
   ingress {
@@ -162,7 +199,7 @@ resource "aws_route_table" "private" {
   }
 
   dynamic "route" {
-    for_each = var.is_development == true || var.environment == "devnet" ? [1] : []
+    for_each = var.env_config.nat_gateway_enabled ? [] : [1]
     content {
       cidr_block           = "0.0.0.0/0"
       network_interface_id = aws_instance.nat[0].primary_network_interface_id
@@ -271,14 +308,17 @@ resource "aws_iam_role_policy" "vpc_flow_logs" {
   })
 }
 
-# Data source for NAT Instance AMI
+# Only queried when nat_gateway_enabled = false (NAT instance path).
+# The old amzn-ami-vpc-nat-* AMIs were retired by AWS; using AL2023 instead
+# with user data to configure iptables MASQUERADE (see aws_instance.nat).
 data "aws_ami" "nat_instance" {
+  count       = var.env_config.nat_gateway_enabled ? 0 : 1
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn-ami-vpc-nat-*"]
+    values = ["al2023-ami-*-x86_64"]
   }
 
   filter {

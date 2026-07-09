@@ -39,6 +39,8 @@ extraConfig:
   enable_authenticated_media: false
   max_event_delay_duration: 24h
   max_upload_size: 100M
+  user_directory:
+    search_all_users: true
   media_retention:
     local_media_lifetime: null
     remote_media_lifetime: 14d
@@ -315,21 +317,40 @@ synapse:
     - 'nohup sh -c "while true; do cd /synapse && zip -r data.zip data && gsutil cp data.zip ${gcs_bucket_url}/matrix/$(date +\%Y\%m\%d)/ && rm -f data.zip; sleep 86400; done" &' # Every 24 hours.
   resources:
     limits:
-      memory: 4536Mi
+      memory: 2536Mi
     requests:
       cpu: 50m
-      memory: 4536Mi
+      memory: 2536Mi
 workers:
   federation_sender:
     enabled: false
   federation_reader:
     enabled: false
+  generic_worker:
+    enabled: true
+    replicaCount: 2
+  appservice:
+    enabled: true
   default:
     resources:
       limits:
-        memory: 150Mi
+        memory: 512Mi
       requests:
-        cpu: 30m
-        memory: 50Mi
+        cpu: 250m
+        memory: 384Mi
+    volumes:
+      - name: matrix-rooms
+        configMap:
+          name: ixo-matrix-appservice-rooms-registration
+%{if matrix_whatsapp_enabled}      - name: matrix-whatsapp
+        configMap:
+          name: ixo-matrix-whatsapp-registration
+%{endif}    volumeMounts:
+      - name: matrix-rooms
+        mountPath: /data/appservice/rooms
+%{if matrix_whatsapp_enabled}      - name: matrix-whatsapp
+        mountPath: /data/appservice/whatsapp
+%{endif}    extraCommands:
+      - "python3 -c \"import os,glob; c=''.join(open(f).read() for f in glob.glob('/synapse/secrets/*.yaml')); c=c.replace('@@POSTGRES_PASSWORD@@',os.environ.get('POSTGRES_PASSWORD','')).replace('@@REDIS_PASSWORD@@',os.environ.get('REDIS_PASSWORD','')); open('/synapse/config/conf.d/secrets.yaml','w').write(c)\""
 serviceAccount:
   create: true

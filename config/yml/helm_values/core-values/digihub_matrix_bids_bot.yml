@@ -13,16 +13,16 @@ persistentVolume:
   storageClass: ${storage_class}
   size: ${storage_size}
 service:
-  port: 8080
+  port: 8083
 env:
   - name: "PORT"
-    value: "8080"
+    value: "8083"
 resources:
   requests:
-    memory: 200Mi
+    memory: 100Mi
     cpu: "40m"
   limits:
-    memory: 350Mi
+    memory: 200Mi
 autoscaling:
   enabled: true
   minReplicas: 1
@@ -32,14 +32,15 @@ backup:
   resources:
     requests:
       cpu: 10m
-      memory: 350Mi
+      memory: 128Mi
     limits:
-      memory: 550Mi
+      memory: 256Mi
   gcs:
     bucket: ${gcs_bucket}
 config:
-  homeserverUrl: https://matrix.supamoto.global
-  accessToken: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_STATE_BOT_ACCESS_TOKEN>"
+  homeserverUrl: https://matrix.emediaworkspace.org
+  homeserverName: matrix.emediaworkspace.org
+  accessToken: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_BIDS_BOT_ACCESS_TOKEN>"
   ucan:
-    hostname: state.bot.matrix.supamoto.global
-    mnemonic: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_STATE_BOT_MNEMONIC>"
+    hostname: ${host}
+    mnemonic: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_BIDS_BOT_MNEMONIC>"

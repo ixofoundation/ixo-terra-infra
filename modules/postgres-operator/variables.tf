@@ -17,6 +17,7 @@ variable "clusters" {
       initSql                = optional(string)
       enable_pg_cron         = optional(bool, false)
       pg_cron_database       = optional(string, "postgres")
+      enable_pgbouncer       = optional(bool, false)
     }
     )
   )

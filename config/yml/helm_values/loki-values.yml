@@ -130,6 +130,7 @@ monitoring:
   selfMonitoring:
     enabled: true
     grafanaAgent:
+      installOperator: true
       resources:
         limits:
           memory: 200Mi
@@ -137,16 +138,4 @@ monitoring:
           cpu: 50m
           memory: 100Mi
     podLogs:
-      additionalPipelineStages:
-        - labelDrop:
-            - filename
-            # Drop high-cardinality/low-value k8s system labels captured by the broad labelmap rule.
-            # These push streams over max_label_names_per_series (20) causing ingestion drops.
-            - controller_revision_hash
-            - statefulset_kubernetes_io_pod_name
-            - apps_kubernetes_io_pod_index
-            - app_kubernetes_io_managed_by
-            - app_kubernetes_io_version
-            - helm_sh_chart
-            - pod_template_hash
-            - pod_template_generation
+      additionalPipelineStages: []

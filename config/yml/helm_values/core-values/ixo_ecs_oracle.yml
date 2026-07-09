@@ -99,3 +99,6 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}
