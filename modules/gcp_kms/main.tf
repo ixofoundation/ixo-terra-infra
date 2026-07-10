@@ -6,7 +6,7 @@ resource "google_kms_key_ring" "this" {
 resource "google_kms_crypto_key" "this" {
   name            = "${var.name}-crypto-key"
   key_ring        = google_kms_key_ring.this.id
-  rotation_period = "100000s"
+  rotation_period = "7776000s" # 90 days; was 100000s (~28h) which minted ~1 version/day — see IXO-3199
   purpose         = "ENCRYPT_DECRYPT"
 }
 
