@@ -49,6 +49,7 @@ registration:
   hs_token: "<path:${vault_mount}/data/matrix#MATRIX_DIGIHUB_APPSERVICE_ROOMS_HS_TOKEN>"
   as_token: "<path:${vault_mount}/data/matrix#MATRIX_DIGIHUB_APPSERVICE_ROOMS_AS_TOKEN>"
   url: https://rooms.bot.matrix.emediaworkspace.org
+  recoveryKey: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_APPSERVICE_ROOMS_RECOVERY_KEY>"
   namespaces:
     aliases:
       - exclusive: true

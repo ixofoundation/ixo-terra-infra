@@ -15,9 +15,15 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-minerva-livekit
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
+%{ if !eso_enabled ~}
   - name: OPENAI_API_KEY
     value: "<path:${vault_mount}/data/ixo-minerva-livekit#OPENAI_API_KEY>"
   - name: GOOGLE_API_KEY
@@ -44,6 +50,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-minerva-livekit#ORACLE_SERVER_URL>"
   - name: MEMORY_MCP_URL
     value: "<path:${vault_mount}/data/ixo-minerva-livekit#MEMORY_MCP_URL>"
+%{ endif ~}
 service:
   port: 8081
 resources:

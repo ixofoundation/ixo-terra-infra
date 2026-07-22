@@ -18,35 +18,48 @@ ingress:
           pathType: Prefix
 service:
   port: 3000
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: auto-approve-offset
+%{ endif ~}
 env:
   - name: "PORT"
     value: "3000"
+%{ if !eso_enabled ~}
   - name: "AUTHORIZATION"
     value: "<path:${vault_mount}/data/auto-approve-offset#AUTHORIZATION>"
   - name: "BLOCKSYNC_GRAPHQL"
     value: "<path:${vault_mount}/data/auto-approve-offset#BLOCKSYNC_GRAPHQL>"
+%{ endif ~}
   - name: "RPC_URL"
     value: "${rpc_url}"
+%{ if !eso_enabled ~}
   - name: "MNEMONIC_DELEGATE"
     value: "<path:${vault_mount}/data/auto-approve-offset#MNEMONIC_DELEGATE>"
   - name: "MNEMONIC_OWNER"
     value: "<path:${vault_mount}/data/auto-approve-offset#MNEMONIC_OWNER>"
+%{ endif ~}
   - name: "NETWORK"
     value: "${environment}"
+%{ if !eso_enabled ~}
   - name: "COLLECTION_IDS"
     value: "<path:${vault_mount}/data/auto-approve-offset#COLLECTION_IDS>"
   - name: "QUOTAS_PER_COLLECTION"
     value: "<path:${vault_mount}/data/auto-approve-offset#QUOTAS_PER_COLLECTION>"
   - name: "EXPIRATION_PER_COLLECTION"
     value: "<path:${vault_mount}/data/auto-approve-offset#EXPIRATION_PER_COLLECTION>"
+%{ endif ~}
   - name: "NOTIFICATIONS_WORKER_URL"
     value: "https://notifications.ixo.earth"
+%{ if !eso_enabled ~}
   - name: "NOTIFICATIONS_WORKER_AUTH"
     value: "<path:${vault_mount}/data/auto-approve-offset#NOTIFICATIONS_WORKER_AUTH>"
   - name: "NOTIFICATIONS_TEMPLATE_ID"
     value: "<path:${vault_mount}/data/auto-approve-offset#NOTIFICATIONS_TEMPLATE_ID>"
   - name: "NOTIFICATIONS_TEMPLATE_IDS"
     value: "<path:${vault_mount}/data/auto-approve-offset#NOTIFICATIONS_TEMPLATE_IDS>"
+%{ endif ~}
 resources:
   requests:
     memory: 200Mi

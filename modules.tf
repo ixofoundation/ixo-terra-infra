@@ -39,6 +39,29 @@ module "cloudflare_digihub_tunnel" {
   }
 }
 
+# Reverse direction of the partner tunnels: cloudflared runs in our cluster and
+# exposes ixo-postgres (via pgbouncer) at workers-pg.ixo.earth so Cloudflare
+# Workers can connect through Hyperdrive, authenticated with an Access service
+# token. Currently used by the supamoto-bot worker (supamoto-bot db/user).
+# Deployed on all environments; hostname is workers-pg.ixo.earth on mainnet and
+# workers-pg-<env>.ixo.earth elsewhere.
+module "cloudflare_workers_db_tunnel" {
+  source = "./modules/cloudflare-workers-db-tunnel"
+
+  cloudflare_account_id = var.cloudflare_account_id
+  cloudflare_zone_id    = var.cloudflare_ixo_earth_zone_id
+  environment           = terraform.workspace
+  name                  = "workers"
+  pg_cname              = terraform.workspace == "mainnet" ? "workers-pg" : "workers-pg-${terraform.workspace}"
+  namespace             = "workers-db-tunnel"
+  postgres_service_host = "${var.pg_ixo.pg_cluster_name}-pgbouncer.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local"
+
+  providers = {
+    cloudflare     = cloudflare
+    cloudflare.dns = cloudflare.dns
+  }
+}
+
 # AWS VPC module (only created when using AWS)
 module "aws_vpc" {
   count  = var.cloud_provider == "aws" ? 1 : 0
@@ -179,6 +202,57 @@ module "cert_manager" {
   vault_mount_path = local.vault_mount_path
 }
 
+# IXO-3541: resolve this workspace's VKE VPC subnet for set-real-ip-from
+data "vultr_instances" "vke_nodes" {
+  filter {
+    name   = "region"
+    values = [local.region_ids["Amsterdam"]]
+  }
+}
+
+data "vultr_vpc" "vke_network" {
+  count = length(try(local.vke_node_probe.vpc_ids, [])) > 0 ? 1 : 0
+  filter {
+    name   = "id"
+    values = [local.vke_node_probe.vpc_ids[0]]
+  }
+}
+
+# IXO-3541: resolve the ingress LB's public IP. The Service status stops exposing the IP once
+# the vultr-loadbalancer-hostname annotation is set, so we look the LB up at Vultr directly.
+# The CCM names LBs with Kubernetes' default LB name: "a" + Service UID (dashes stripped),
+# truncated to 32 chars. Requires the ingress Service to already exist in the environment —
+# only add an env to proxy_protocol_environments after its ingress controller is deployed.
+data "kubernetes_service_v1" "ingress_nginx_lb" {
+  count = local.enable_proxy_protocol ? 1 : 0
+  metadata {
+    name      = "nginx-ingress-controller"
+    namespace = "ingress-nginx"
+  }
+}
+
+data "vultr_load_balancer" "ingress" {
+  count = local.enable_proxy_protocol ? 1 : 0
+  filter {
+    name   = "label"
+    values = [substr("a${replace(data.kubernetes_service_v1.ingress_nginx_lb[0].metadata[0].uid, "-", "")}", 0, 32)]
+  }
+}
+
+# IXO-3541: A record for the vultr-loadbalancer-hostname annotation. Must exist and resolve
+# BEFORE the ingress Service flips to PROXY protocol, otherwise in-cluster clients cannot
+# reach the ingress at all. DNS-only (not proxied) — Cloudflare must not terminate this.
+resource "cloudflare_record" "ingress_lb" {
+  count    = local.enable_proxy_protocol ? 1 : 0
+  provider = cloudflare.dns
+  zone_id  = var.cloudflare_ixo_earth_zone_id
+  name     = trimsuffix(local.ingress_lb_hostname, ".ixo.earth")
+  content  = data.vultr_load_balancer.ingress[0].ipv4
+  type     = "A"
+  proxied  = false
+  ttl      = 300
+}
+
 module "ingress_nginx" {
   depends_on = [module.argocd]
   count      = var.environments[terraform.workspace].application_configs["ingress_nginx"].enabled ? 1 : 0
@@ -195,7 +269,10 @@ module "ingress_nginx" {
     repository = "ghcr.io/nginx/charts"
     values_override = templatefile("${local.helm_values_config_path}/f5-nginx-ingress-controller-values.yml",
       {
-        host = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
+        host                  = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
+        enable_proxy_protocol = local.enable_proxy_protocol # IXO-3541
+        lb_hostname           = local.ingress_lb_hostname
+        set_real_ip_from      = local.vke_private_subnet
       }
     )
   }
@@ -560,6 +637,73 @@ module "descheduler" {
       revision = var.versions["descheduler"]
     }
     values_override = templatefile("${local.helm_values_config_path}/descheduler-values.yml", {})
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "external_secrets" {
+  depends_on = [module.argocd, module.vault_init]
+  count      = var.environments[terraform.workspace].application_configs["external_secrets"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "external-secrets"
+    namespace  = kubernetes_namespace_v1.external_secrets.metadata[0].name
+    repository = "https://charts.external-secrets.io"
+    helm = {
+      isOci    = false
+      chart    = "external-secrets"
+      revision = var.versions["external-secrets"]
+    }
+    values_override = templatefile("${local.helm_values_config_path}/external-secrets-values.yml",
+      {
+        vault_mount = local.vault_mount_path
+      }
+    )
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "reloader" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].application_configs["reloader"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "reloader"
+    namespace  = kubernetes_namespace_v1.reloader.metadata[0].name
+    repository = "https://stakater.github.io/stakater-charts"
+    helm = {
+      isOci    = false
+      chart    = "reloader"
+      revision = var.versions["reloader"]
+    }
+  }
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+}
+
+module "vpa_crds" {
+  depends_on = [module.argocd]
+  count      = var.environments[terraform.workspace].application_configs["vpa"].enabled ? 1 : 0
+  source     = "./modules/vpa"
+}
+
+module "vpa" {
+  depends_on = [module.argocd, module.vpa_crds]
+  count      = var.environments[terraform.workspace].application_configs["vpa"].enabled ? 1 : 0
+  source     = "./modules/argocd_application"
+  application = {
+    name       = "vpa"
+    namespace  = kubernetes_namespace_v1.vpa.metadata[0].name
+    repository = "https://charts.fairwinds.com/stable"
+    helm = {
+      isOci    = false
+      chart    = "vpa"
+      revision = var.versions["vpa"]
+      skipCrds = true
+    }
+    values_override = templatefile("${local.helm_values_config_path}/vpa-values.yml", {})
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path

@@ -59,6 +59,7 @@ resource "kubectl_manifest" "application" {
       chart             = var.application.helm.chart
       revision          = var.application.helm.revision
       ignoreDifferences = var.application.helm.ignoreDifferences != null ? var.application.helm.ignoreDifferences : "[]"
+      skipCrds          = var.application.helm.skipCrds
       repository        = var.application.repository
       helm_values       = var.application.values_override != null ? var.application.values_override : ""
     }
@@ -82,6 +83,9 @@ resource "kubectl_manifest" "image_updater" {
     argo_namespace = var.argo_namespace
     image          = var.image_updater.image
     strategy       = var.image_updater.strategy
-    allow_tags     = local._allow_tags
+    # placeholder value — this resource has count = 0 when _allow_tags is null,
+    # but templatefile() is still evaluated during plan and errors on null
+    # (coalesce() rejects "" too, so use a ternary with a non-empty placeholder)
+    allow_tags = local._allow_tags != null ? local._allow_tags : "unused"
   })
 }

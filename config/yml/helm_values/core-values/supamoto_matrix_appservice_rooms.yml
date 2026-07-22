@@ -42,6 +42,7 @@ config:
   homeserverName: matrix.supamoto.global
   userCreation:
     registrationToken: "<path:${vault_mount}/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_USER_CREATION_REGISTRATION_TOKEN>"
+  recoveryKey: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_RECOVERY_KEY>"
   ucan:
     hostname: rooms.bot.matrix.supamoto.global
     mnemonic: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_APPSERVICE_ROOMS_MNEMONIC>"

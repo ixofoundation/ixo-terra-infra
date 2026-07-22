@@ -15,9 +15,15 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-qi-agents-builder
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
+%{ if !eso_enabled ~}
   - name: PORT
     value: "<path:${vault_mount}/data/ixo-qi-agents-builder#PORT>"
   - name: ORACLE_NAME
@@ -78,6 +84,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-qi-agents-builder#SUBSCRIPTION_URL>"
   - name: SKILLS_CAPSULES_BASE_URL
     value: "<path:${vault_mount}/data/ixo-qi-agents-builder#SKILLS_CAPSULES_BASE_URL>"
+%{ endif ~}
 service:
   port: 5678
 resources:

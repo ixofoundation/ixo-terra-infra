@@ -39,6 +39,16 @@ resource "cloudflare_tunnel_config" "supamoto" {
     ingress_rule {
       hostname = "${var.pg_cname}.${var.domain}"
       service  = "tcp://${var.docker_postgres_service}:5432"
+
+      origin_request {
+        tcp_keep_alive         = "60s"
+        tls_timeout            = "30s"
+        connect_timeout        = "60s"
+        keep_alive_connections = "200"
+      }
+    }
+    warp_routing {
+      enabled = false
     }
     # Catch-all
     ingress_rule {

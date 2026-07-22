@@ -15,6 +15,11 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-minerva-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
@@ -22,6 +27,7 @@ env:
     value: "true"
   - name: PORT
     value: "4563"
+%{ if !eso_enabled ~}
   - name: MATRIX_BASE_URL
     value: "<path:${vault_mount}/data/ixo-minerva-oracle#MATRIX_BASE_URL>"
   - name: "MATRIX_ORACLE_ADMIN_ACCESS_TOKEN"
@@ -46,8 +52,10 @@ env:
     value: "<path:${vault_mount}/data/ixo-minerva-oracle#LIVE_AGENT_AUTH_API_KEY>"
   - name: "SECP_MNEMONIC"
     value: "<path:${vault_mount}/data/ixo-minerva-oracle#SECP_MNEMONIC>"
+%{ endif ~}
   - name: "ORACLE_NAME"
     value: "minerva"
+%{ if !eso_enabled ~}
   - name: "ORACLE_ENTITY_DID"
     value: "<path:${vault_mount}/data/ixo-minerva-oracle#ORACLE_ENTITY_DID>"
   - name: "MEMORY_MCP_URL"
@@ -82,6 +90,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-minerva-oracle#LANGSMITH_PROJECT>"
   - name: "MATRIX_ACCOUNT_ROOM_ID"
     value: "<path:${vault_mount}/data/ixo-minerva-oracle#MATRIX_ACCOUNT_ROOM_ID>"
+%{ endif ~}
 service:
   port: 4563
 resources:

@@ -44,6 +44,7 @@ versions = {
   openebs                      = "4.4.0" # https://artifacthub.io/packages/helm/openebs/openebs
   metrics-server               = "3.13.0" # https://artifacthub.io/packages/helm/metrics-server/metrics-server
   descheduler                  = "0.35.1" # https://artifacthub.io/packages/helm/descheduler/descheduler
+  vpa                          = "4.12.3" # https://artifacthub.io/packages/helm/fairwinds-stable/vpa (upstream VPA v1.6.0)
   hummingbot                   = "0.2.0"
   uptime-kuma                  = "4.0.0" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
   chromadb                     = "0.2.2" # https://github.com/amikos-tech/chromadb-chart
@@ -53,6 +54,8 @@ versions = {
   redis                        = "25.3.11" # https://artifacthub.io/packages/helm/bitnami/redis
   surrealdb                    = "0.4.0" # https://artifacthub.io/packages/helm/surrealdb/surrealdb
   searxng                      = "1.0.1" # https://github.com/searxng/searxng-helm-chart/tree/main/searxng
+  external-secrets             = "2.7.0" # https://artifacthub.io/packages/helm/external-secrets-operator/external-secrets
+  reloader                     = "2.2.14" # https://artifacthub.io/packages/helm/stakater/reloader
 }
 
 # Environment base configurations (static values only)
@@ -127,6 +130,16 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "vault-watcher"
       }
+      external_secrets = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+      }
+      reloader = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+      }
       argocd_image_updater = {
         enabled = true
         create_kv = false
@@ -170,6 +183,11 @@ environments = {
         domain = "ixoearth"
       }
       descheduler = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+      }
+      vpa = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
@@ -235,30 +253,42 @@ environments = {
       ixo_cellnode = {
         enabled = true
         create_kv = true
+        use_eso = true # Pilot: env secrets via external-secrets-operator instead of AVP
         domain = "ixoearth"
         dns_endpoint = "devnet-cellnode.ixo.earth"
       }
       ixo_blocksync = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
+        domain = "ixoearth"
+        dns_prefix = "index.blocksync"
+      }
+      ixo_blocksync_api = {
+        enabled = true
+        create_kv = false
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "devnet-blocksync-graphql.ixo.earth"
       }
       ixo_blocksync_core = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.devnetkb.ixo.earth"
       }
       ixo_domain_indexer = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "domain-indexer"
       }
       ixo_qi_agents_builder = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "qi-agents-builder"
       }
@@ -271,6 +301,7 @@ environments = {
       ixo_feegrant_nest = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "feegrant"
       }
@@ -283,6 +314,7 @@ environments = {
       ixo_faucet = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "faucet"
       }
@@ -355,24 +387,28 @@ environments = {
       claims_credentials_ecs = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "ecs.credentials.devnet.ixo.earth"
       }
       claims_credentials_prospect = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "prospect.credentials.devnet.ixo.earth"
       }
       claims_credentials_carbon = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "carbon.credentials.devnet.ixo.earth"
       }
       claims_credentials_umuzi = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "umuzi.credentials.devnet.ixo.earth"
       }
@@ -422,6 +458,7 @@ environments = {
       ixo_ussd_supamoto = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "ussd-supamoto"
       }
@@ -474,6 +511,7 @@ environments = {
       ixo_message_relayer = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "signx.devnet.ixo.earth"
       }
@@ -571,24 +609,30 @@ environments = {
       ixo_pathgen_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "pathgen.oracle"
       }
       ixo_minerva_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "minerva"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_minerva_livekit = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "minerva-livekit"
       }
       ixo_website_bot_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "website.bot"
         storage_class = "fast"
@@ -603,12 +647,16 @@ environments = {
       ixo_domain_creator_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "domain-creator"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_flow_manager_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "flow-manager"
         storage_class = "fast"
@@ -625,6 +673,8 @@ environments = {
         create_kv = true
         domain = "ixoearth"
         dns_prefix = "yellowcard"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_ecs_oracle = {
         enabled = false
@@ -637,6 +687,7 @@ environments = {
       ixo_yoma_agent_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "yoma-agent"
         storage_class = "fast"
@@ -652,12 +703,14 @@ environments = {
       ixo_memory_engine_graphiti = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "companion"
       }
@@ -749,6 +802,16 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "vault-watcher"
       }
+      external_secrets = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+      }
+      reloader = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+      }
       argocd_image_updater = {
         enabled = true
         create_kv = false
@@ -792,6 +855,11 @@ environments = {
         domain = "ixoearth"
       }
       descheduler = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+      }
+      vpa = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
@@ -857,24 +925,35 @@ environments = {
       ixo_cellnode = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "testnet-cellnode.ixo.earth"
       }
       ixo_blocksync = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
+        domain = "ixoearth"
+        dns_prefix = "index.blocksync"
+      }
+      ixo_blocksync_api = {
+        enabled = true
+        create_kv = false
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "testnet-blocksync-graphql.ixo.earth"
       }
       ixo_blocksync_core = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.testnetkb.ixo.earth"
       }
       ixo_domain_indexer = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "domain-indexer"
       }
@@ -893,6 +972,7 @@ environments = {
       ixo_feegrant_nest = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "feegrant"
       }
@@ -905,6 +985,7 @@ environments = {
       ixo_faucet = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "faucet"
       }
@@ -916,11 +997,27 @@ environments = {
         storage_class = "fast"
         storage_size = "10Gi"
       }
+      supamoto_ixo_matrix_claims_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "claim.bot.matrix.supamoto.global"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
       ixo_matrix_appservice_rooms = {
         enabled = true
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "rooms.bot.testmx.ixo.earth"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      supamoto_matrix_state_bot = {
+        enabled = false
+        create_kv = false
+        domain = "ixoearth"
+        dns_endpoint = "state.bot.matrix.supamoto.global"
         storage_class = "fast"
         storage_size = "10Gi"
       }
@@ -964,18 +1061,21 @@ environments = {
       claims_credentials_ecs = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "ecs.credentials.testnet.ixo.earth"
       }
       claims_credentials_prospect = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "prospect.credentials.testnet.ixo.earth"
       }
       claims_credentials_carbon = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "carbon.credentials.testnet.ixo.earth"
       }
@@ -992,6 +1092,7 @@ environments = {
       claims_credentials_did = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "didoracle.credentials.testnet.ixo.earth"
       }
@@ -1004,6 +1105,7 @@ environments = {
       ixo_kyc_server = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "kyc"
       }
@@ -1030,6 +1132,7 @@ environments = {
       ixo_ussd_supamoto = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "ussd-supamoto"
       }
@@ -1041,6 +1144,7 @@ environments = {
       auto_approve_offset = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "offset.auto-approve.testnet.ixo.earth"
       }
@@ -1078,12 +1182,14 @@ environments = {
       ixo_payments_nest = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "emerging"
         dns_endpoint = "payments.testnet.emerging.eco"
       }
       ixo_message_relayer = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "signx.testnet.ixo.earth"
       }
@@ -1199,8 +1305,11 @@ environments = {
       ixo_website_bot_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "website.bot"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_jokes_oracle = {
         enabled = false
@@ -1211,18 +1320,25 @@ environments = {
       ixo_domain_creator_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "domain-creator"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_flow_manager_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "flow-manager"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_kyc_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoworld"
         dns_prefix = "kyc"
         storage_class = "fast"
@@ -1231,6 +1347,7 @@ environments = {
       ixo_yellowcard_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoworld"
         dns_prefix = "yellowcard"
         storage_class = "fast"
@@ -1239,6 +1356,7 @@ environments = {
       ixo_ecs_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "ecs-oracle"
         storage_class = "fast"
@@ -1247,6 +1365,7 @@ environments = {
       ixo_yoma_agent_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "yoma-agent"
         storage_class = "fast"
@@ -1262,12 +1381,14 @@ environments = {
       ixo_memory_engine_graphiti = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "companion"
       }
@@ -1366,6 +1487,16 @@ environments = {
         domain = "ixoearth"
         dns_prefix = "vault-watcher"
       }
+      external_secrets = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+      }
+      reloader = {
+        enabled = true
+        create_kv = false
+        domain = "ixoearth"
+      }
       argocd_image_updater = {
         enabled = true
         create_kv = false
@@ -1409,6 +1540,11 @@ environments = {
         domain = "ixoworld"
       }
       descheduler = {
+        enabled = true
+        create_kv = false
+        domain = "ixoworld"
+      }
+      vpa = {
         enabled = true
         create_kv = false
         domain = "ixoworld"
@@ -1475,24 +1611,35 @@ environments = {
       ixo_cellnode = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoworld"
         dns_endpoint = "cellnode.ixo.world"
       }
       ixo_blocksync = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
+        domain = "ixoearth"
+        dns_prefix = "index.blocksync"
+      }
+      ixo_blocksync_api = {
+        enabled = true
+        create_kv = false
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "blocksync-graphql.ixo.earth"
       }
       ixo_blocksync_core = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "ixo-blocksync-core.mainnetkb.ixo.earth"
       }
       ixo_domain_indexer = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "domain-indexer"
       }
@@ -1513,6 +1660,7 @@ environments = {
       ixo_feegrant_nest = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoworld"
         dns_prefix = "feegrant"
       }
@@ -1535,19 +1683,6 @@ environments = {
         dns_endpoint = "state.bot.mx.ixo.earth"
         storage_class = "bulk"
         storage_size = "40Gi"
-      }
-      supamoto_matrix_state_bot = {
-        enabled = false
-        create_kv = false
-        domain = "ixoearth"
-      }
-      supamoto_ixo_matrix_claims_bot = {
-        enabled = false
-        create_kv = false
-        domain = "ixoearth"
-        dns_endpoint = "claim.bot.matrix.supamoto.global"
-        storage_class = "fast"
-        storage_size = "10Gi"
       }
       ixo_matrix_appservice_rooms = {
         enabled = true
@@ -1584,6 +1719,7 @@ environments = {
       claims_credentials_ecs = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoworld"
         dns_endpoint = "ecs.credentials.ixo.world"
       }
@@ -1596,6 +1732,7 @@ environments = {
       claims_credentials_carbon = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoworld"
         dns_endpoint = "carbon.credentials.ixo.world"
       }
@@ -1608,42 +1745,49 @@ environments = {
       claims_credentials_claimformprotocol = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoworld"
         dns_endpoint = "claimformobjects.credentials.ixo.world"
       }
       claims_credentials_did = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "didoracle.credentials.ixo.earth"
       }
       ixo_deeplink_server = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "x.ixo.earth"
       }
       ixo_kyc_server = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "kyc.oracle.ixo.earth"
       }
       ixo_faq_assistant = {
-        enabled = true
+        enabled = false
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "faq.assistant.ixo.earth"
       }
       ixo_coin_server = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "coincache.ixo.earth"
       }
       ixo_stake_reward_claimer = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "reclaim.ixo.earth"
       }
@@ -1667,18 +1811,21 @@ environments = {
       auto_approve_offset = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "offset.auto-approve.ixo.earth"
       }
       ixo_iot_data = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "iot-data"
       }
       ixo_notification_server = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "notifications.ixo.earth"
       }
@@ -1691,6 +1838,7 @@ environments = {
       ixo_trading_bot_server = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "trading.bot.ixo.earth"
       }
@@ -1709,12 +1857,14 @@ environments = {
       ixo_payments_nest = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "emerging"
         dns_endpoint = "payments.emerging.eco"
       }
       ixo_message_relayer = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_endpoint = "signx.ixo.earth"
       }
@@ -1854,20 +2004,27 @@ environments = {
       ixo_minerva_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "minerva"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_minerva_livekit = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "minerva-livekit"
       }
       ixo_website_bot_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "website.bot"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_jokes_oracle = {
         enabled = false
@@ -1878,34 +2035,42 @@ environments = {
       ixo_domain_creator_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "domain-creator"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_flow_manager_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "flow-manager"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_kyc_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoworld"
         dns_prefix = "kyc.oracle"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_yellowcard_oracle = {
         enabled = false
         create_kv = true
         domain = "ixoearth"
         dns_prefix = "yellowcard"
-        storage_class = "bulk"
-        storage_size = "40Gi"
+        storage_class = "fast"
+        storage_size = "10Gi"
       }
       ixo_ecs_oracle = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "ecs-oracle"
         storage_class = "fast"
@@ -1922,6 +2087,7 @@ environments = {
       ixo_observable_framework_builder = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "builder.observable"
         storage_class = "fast"
@@ -1930,12 +2096,14 @@ environments = {
       ixo_memory_engine_graphiti = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
         enabled = true
         create_kv = true
+        use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
         dns_prefix = "companion"
       }

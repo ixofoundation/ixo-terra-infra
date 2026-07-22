@@ -72,6 +72,21 @@ resource "vault_kubernetes_auth_backend_role" "vault_watcher_role" {
   token_max_ttl                    = 86400
 }
 
+# external-secrets-operator: syncs Vault KV v2 paths into Kubernetes Secrets
+resource "vault_policy" "external_secrets" {
+  name   = "external-secrets"
+  policy = file("${path.root}/config/vault/eso_policy.hcl")
+}
+
+resource "vault_kubernetes_auth_backend_role" "external_secrets_role" {
+  bound_service_account_names      = ["external-secrets"]
+  bound_service_account_namespaces = ["external-secrets"]
+  role_name                        = "external-secrets"
+  token_policies                   = [vault_policy.external_secrets.name]
+  token_ttl                        = 3600
+  token_max_ttl                    = 86400
+}
+
 # Vault -> Dex OIDC
 resource "vault_jwt_auth_backend" "oidc" {
   depends_on         = [vault_kubernetes_auth_backend_role.vault_argocd_role]

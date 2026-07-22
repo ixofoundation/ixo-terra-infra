@@ -15,11 +15,17 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-flow-manager-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
   - name: PORT
     value: "4000"
+%{ if !eso_enabled ~}
   - name: ORACLE_NAME
     value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#ORACLE_NAME>"
   - name: NETWORK
@@ -88,14 +94,19 @@ env:
     value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#FLOW_DASHBOARD_SESSION_SECRET>"
   - name: FLOW_DASHBOARD_SESSION_TTL_MS
     value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#FLOW_DASHBOARD_SESSION_TTL_MS>"
+  - name: FLOW_AGENT_WORKER_ENABLED
+    value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#FLOW_AGENT_WORKER_ENABLED>"
+  - name: FLOW_AGENT_DRY_RUN
+    value: "<path:${vault_mount}/data/ixo-flow-manager-oracle#FLOW_AGENT_DRY_RUN>"
+%{ endif ~}
 service:
   port: 4000
 resources:
   requests:
-    memory: 350Mi
+    memory: 750Mi
     cpu: "50m"
   limits:
-    memory: 450Mi
+    memory: 850Mi
 autoscaling:
   enabled: true
   minReplicas: 1

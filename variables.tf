@@ -94,6 +94,7 @@ variable "environments" {
     application_configs = map(object({
       enabled       = bool
       create_kv     = optional(bool, false)
+      use_eso       = optional(bool, false) # If true, env secrets sync from Vault via external-secrets-operator (envFrom) instead of AVP <path:> placeholders.
       domain        = optional(string)
       dns_endpoint  = optional(string)
       dns_prefix    = optional(string)

@@ -15,9 +15,15 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-subscriptions-oracle
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
+%{ if !eso_enabled ~}
   - name: "STRIPE_API_KEY"
     value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#STRIPE_API_KEY>"
   - name: "CHAIN_NETWORK"
@@ -66,6 +72,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#PORTAL_SUCCESS_URL>"
   - name: "PORTAL_CANCEL_URL"
     value: "<path:${vault_mount}/data/ixo-subscriptions-oracle#PORTAL_CANCEL_URL>"
+%{ endif ~}
 service:
   port: 4200
 resources:

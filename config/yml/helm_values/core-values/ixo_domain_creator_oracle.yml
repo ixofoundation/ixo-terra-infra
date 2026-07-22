@@ -15,9 +15,15 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-domain-creator-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
+%{ if !eso_enabled ~}
   - name: PORT
     value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#PORT>"
   - name: ORACLE_NAME
@@ -72,6 +78,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#LANGSMITH_API_KEY>"
   - name: "LANGSMITH_PROJECT"
     value: "<path:${vault_mount}/data/ixo-domain-creator-oracle#LANGSMITH_PROJECT>"
+%{ endif ~}
 service:
   port: 4200
 resources:
@@ -85,3 +92,6 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}

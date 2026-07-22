@@ -41,6 +41,7 @@ config:
   homeserverUrl: https://matrix.emediaworkspace.org
   homeserverName: matrix.emediaworkspace.org
   accessToken: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_BIDS_BOT_ACCESS_TOKEN>"
+  recoveryKey: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_BID_BOT_RECOVERY_KEY>"
   ucan:
     hostname: ${host}
     mnemonic: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_BIDS_BOT_MNEMONIC>"

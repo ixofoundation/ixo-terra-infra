@@ -29,6 +29,7 @@ module "ixo_cellnode" {
         tls_hosts   = yamlencode(local.cellnode_tls_hostnames)
         rpc_url     = var.environments[terraform.workspace].rpc_url
         vault_mount = local.vault_mount_path
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_cellnode"].use_eso
         pgUsername  = var.pg_ixo.pg_users[1].username
         pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[1].username])
         pgCluster   = var.pg_ixo.pg_cluster_name
@@ -41,6 +42,7 @@ module "ixo_cellnode" {
   vault_mount_path = local.vault_mount_path
   image_updater = {
     image = "ghcr.io/ixofoundation/ixo-cellnode"
+    allow_tags_override = "regexp:-(develop|dev)\\."
   }
 }
 
@@ -66,6 +68,7 @@ module "ixo_matrix_state_bot" {
   vault_mount_path = local.vault_mount_path
   image_updater = {
     image = "ghcr.io/ixofoundation/ixo-matrix-state-bot"
+    strategy = "newest-build"
   }
 }
 
@@ -131,6 +134,7 @@ module "ixo_blocksync_core" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-blocksync-core"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-core.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_blocksync_core"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_blocksync_core"]
@@ -159,6 +163,7 @@ module "ixo_memory_engine_graphiti" {
     path       = "charts/${terraform.workspace}/ixoworld/memory-engine-graphiti"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_memory_engine_graphiti.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].use_eso
         environment = terraform.workspace
         vault_mount = local.vault_mount_path
         neo4j_uri = "neo4j://neo4j.neo4j.svc.cluster.local"
@@ -189,6 +194,7 @@ module "ixo_companion" {
     path       = "charts/${terraform.workspace}/ixoworld/companion-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_companion.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_companion"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_companion"]
         vault_mount = local.vault_mount_path
@@ -214,6 +220,7 @@ module "ixo_blocksync" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-blocksync"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_blocksync"].use_eso
         environment          = terraform.workspace
         vault_mount          = local.vault_mount_path
         rpc_url              = var.environments[terraform.workspace].rpc_url
@@ -237,6 +244,31 @@ module "ixo_blocksync" {
   }
 }
 
+module "ixo_blocksync_api" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_blocksync_api"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-blocksync-api"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixofoundation/ixo-blocksync-api"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-api.yml",
+      {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_blocksync_api"].use_eso
+        host                 = local.dns_for_environment[terraform.workspace]["ixo_blocksync_api"]
+        vault_mount          = local.vault_mount_path
+        ipfs_service_mapping = var.environments[terraform.workspace].ipfs_service_mapping
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_blocksync_api"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixofoundation/ixo-blocksync-api"
+  }
+}
+
 module "credentials_prospect" {
   count  = var.environments[terraform.workspace].application_configs["claims_credentials_prospect"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -247,6 +279,7 @@ module "credentials_prospect" {
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_prospect.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_prospect"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_prospect"]
@@ -272,6 +305,7 @@ module "ecs" {
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_ecs.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_ecs"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_ecs"]
@@ -301,6 +335,7 @@ module "carbon" {
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_carbon.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_carbon"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_carbon"]
@@ -327,6 +362,7 @@ module "claimformprotocol" {
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_claimformprotocol.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_claimformprotocol"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_claimformprotocol"]
@@ -353,6 +389,7 @@ module "umuzi" {
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_umuzi.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_umuzi"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_umuzi"]
@@ -378,6 +415,7 @@ module "did" {
     path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_did.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_did"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_did"]
@@ -404,6 +442,7 @@ module "ixo_feegrant_nest" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-feegrant-nest"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_feegrant_nest.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_feegrant_nest"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_feegrant_nest"]
@@ -433,6 +472,7 @@ module "ixo_payments_nest" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-payments-nest"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_payments_nest.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_payments_nest"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_payments_nest"]
@@ -501,6 +541,7 @@ module "ixo_faucet" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-faucet"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_faucet.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_faucet"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_faucet"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
@@ -513,6 +554,7 @@ module "ixo_faucet" {
   vault_mount_path = local.vault_mount_path
   image_updater = {
     image = "ghcr.io/ixofoundation/ixo-faucet"
+    allow_tags_override = "regexp:-(develop|dev)\\."
   }
 }
 
@@ -526,6 +568,7 @@ module "ixo_deeplink_server" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-deeplink-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_deeplink_server.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_deeplink_server"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_deeplink_server"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = local.vault_mount_path
@@ -562,6 +605,7 @@ module "ixo_kyc_server" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-kyc-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_server.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_kyc_server"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_server"]
@@ -876,6 +920,7 @@ module "ixo_domain_indexer" {
     path       = "charts/${terraform.workspace}/ixoworld/domain-indexer"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_domain_indexer.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_domain_indexer"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_domain_indexer"]
         vault_mount = local.vault_mount_path
@@ -962,6 +1007,7 @@ module "minerva_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/minerva-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_minerva_oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_minerva_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_minerva_oracle"]
         vault_mount = local.vault_mount_path
@@ -988,6 +1034,7 @@ module "ixo_minerva_livekit" {
     path       = "charts/${terraform.workspace}/ixoworld/minerva-livekit"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_minerva_livekit.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_minerva_livekit"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_minerva_livekit"]
         vault_mount = local.vault_mount_path
@@ -1064,6 +1111,7 @@ module "ixo_faq_assistant" {
     path       = "charts/${terraform.workspace}/ixofoundation/faq-assistant"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-faq-assistant.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_faq_assistant"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_faq_assistant"]
         vault_mount = local.vault_mount_path
@@ -1178,6 +1226,7 @@ module "ixo_guru_temp" {
     path       = "charts/${terraform.workspace}/ixoworld/ixo-ai-oracles-guru"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ai-oracles-guru.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_guru"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_ai_oracles_guru"]
         vault_mount = local.vault_mount_path
@@ -1242,6 +1291,7 @@ module "ixo_giza_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/ixo-ai-oracles-giza"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ai-oracles-giza.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_giza"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_ai_oracles_giza"]
         vault_mount = local.vault_mount_path
@@ -1316,6 +1366,7 @@ module "ixo_flow_manager_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/flow-manager-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_flow_manager_oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_flow_manager_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
         vault_mount = local.vault_mount_path
@@ -1342,6 +1393,7 @@ module "ixo_trading_bot_server" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-trading-bot-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-trading-bot-server.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_trading_bot_server"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_trading_bot_server"]
         vault_mount = local.vault_mount_path
@@ -1373,9 +1425,12 @@ module "ixo_domain_creator_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/domain-creator-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_domain_creator_oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_domain_creator_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
         vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
       }
     )
   }
@@ -1397,6 +1452,7 @@ module "ixo_qi_agents_builder" {
     path       = "charts/${terraform.workspace}/ixoworld/qi-agents-builder-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_qi_agents_builder.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_qi_agents_builder"].use_eso
         environment = terraform.workspace
         vault_mount = local.vault_mount_path
         host        = local.dns_for_environment[terraform.workspace]["ixo_qi_agents_builder"]
@@ -1444,6 +1500,7 @@ module "ixo_kyc_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/kyc-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_kyc_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_oracle"]
         vault_mount = local.vault_mount_path
@@ -1467,9 +1524,12 @@ module "ixo_yellowcard_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/ixo-yellowcard-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_yellowcard_oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_yellowcard_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
         vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
       }
     )
   }
@@ -1488,6 +1548,7 @@ module "ixo_subscriptions_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/subscriptions-oracle"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-subscriptions-oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_subscriptions_oracle"]
         vault_mount = local.vault_mount_path
@@ -1537,6 +1598,7 @@ module "ixo_subscriptions_oracle_bot" {
     path       = "charts/${terraform.workspace}/ixoworld/subscription-oracle-bot-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-subscriptions-oracle-bot.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle_bot"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_subscriptions_oracle_bot"]
         vault_mount = local.vault_mount_path
@@ -1565,6 +1627,7 @@ module "ixo_pathgen_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/pathgen-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-pathgen-oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_pathgen_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_pathgen_oracle"]
         vault_mount = local.vault_mount_path
@@ -1593,6 +1656,7 @@ module "ixo_website_bot_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/website-bot-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-website-bot-oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_website_bot_oracle"].use_eso
         environment = terraform.workspace
         vault_mount = local.vault_mount_path
         host        = local.dns_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
@@ -1634,6 +1698,7 @@ module "ixo_jokes_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/jokes-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-jokes-oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_jokes_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_jokes_oracle"]
         vault_mount = local.vault_mount_path
@@ -1665,6 +1730,7 @@ module "ixo_ecs_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/ecs-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_ecs_oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_ecs_oracle"]
         vault_mount = local.vault_mount_path
@@ -1691,6 +1757,7 @@ module "ixo_yoma_agent_oracle" {
     path       = "charts/${terraform.workspace}/ixoworld/yoma-agent"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_yoma_agent_oracle.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_yoma_agent_oracle"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
         vault_mount = local.vault_mount_path
@@ -1704,6 +1771,7 @@ module "ixo_yoma_agent_oracle" {
   vault_mount_path = local.vault_mount_path
   image_updater = {
     image = "ghcr.io/ixoworld/yoma-agent"
+    allow_tags_override = "regexp:-(develop|dev)\\."
   }
 }
 
@@ -1717,6 +1785,7 @@ module "ixo_whizz" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-whizz"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-whizz.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_whizz"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_whizz"]
         vault_mount = local.vault_mount_path
@@ -1773,6 +1842,7 @@ module "ixo_coin_server" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-coin-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-coin-server.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_coin_server"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_coin_server"]
         vault_mount = local.vault_mount_path
@@ -1805,6 +1875,7 @@ module "ixo_stake_reward_claimer" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-stake-reward-claimer"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-stake-reward-claimer.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_stake_reward_claimer"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_stake_reward_claimer"]
         vault_mount = local.vault_mount_path
@@ -1835,6 +1906,7 @@ module "ixo_offset_auto_approve" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-auto-approve-agent"
     values_override = templatefile("${local.helm_values_config_path}/core-values/auto_approve_offset.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["auto_approve_offset"].use_eso
         environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["auto_approve_offset"]
@@ -1869,6 +1941,7 @@ module "ixo_iot_data" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-iot-data"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-iot-data.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_iot_data"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_iot_data"]
         vault_mount = local.vault_mount_path
@@ -1897,6 +1970,7 @@ module "ixo_message_relayer" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-message-relayer"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-message-relayer.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_message_relayer"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_message_relayer"]
         vault_mount = local.vault_mount_path
@@ -1928,6 +2002,7 @@ module "ixo_notification_server" {
     path       = "charts/${terraform.workspace}/ixofoundation/ixo-notification-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-notification-server.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_notification_server"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_notification_server"]
         vault_mount = local.vault_mount_path
@@ -2037,6 +2112,7 @@ module "ixo_observable_framework_builder" {
     path       = "charts/${terraform.workspace}/ixoworld/observable-framework-builder"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_observable_framework_builder.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_observable_framework_builder"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
         vault_mount = local.vault_mount_path
@@ -2106,6 +2182,7 @@ module "ixo_ussd_supamoto" {
     path       = "charts/${terraform.workspace}/emerging-eco/ixo-ussd-supamoto"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_ussd_supamoto.yml",
       {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_ussd_supamoto"].use_eso
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_ussd_supamoto"]
         vault_mount = local.vault_mount_path

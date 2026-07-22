@@ -15,6 +15,11 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-jokes-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
@@ -22,6 +27,7 @@ env:
     value: "3000"
   - name: "CORS_ORIGIN"
     value: "*"
+%{ if !eso_enabled ~}
   - name: ORACLE_NAME
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#ORACLE_NAME>"
   - name: MATRIX_BASE_URL
@@ -68,12 +74,15 @@ env:
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#BLOCKSYNC_GRAPHQL_URL>"
   - name: DENOM
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#DENOM>"
+%{ endif ~}
   - name: CHROMA_URL
     value: "http://chromadb.chromadb.svc.cluster.local:8000"
+%{ if !eso_enabled ~}
   - name: PATHGEN_API_URL
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#PATHGEN_API_URL>"
   - name: PATHGEN_API_KEY
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#PATHGEN_API_KEY>"
+%{ endif ~}
   - name: DATABASE_USE_SSL
     value: "true"
   - name: "POSTGRES_USER"
@@ -86,12 +95,14 @@ env:
     value: "${pgCluster}-primary.${pgNamespace}.svc.cluster.local"
   - name: "POSTGRES_PORT"
     value: "5432"
+%{ if !eso_enabled ~}
   - name: "OPEN_ROUTER_API_KEY"
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#OPEN_ROUTER_API_KEY>"
   - name: "MEMORY_MCP_URL"
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#MEMORY_MCP_URL>"
   - name: "MEMORY_MCP_API"
     value: "<path:${vault_mount}/data/ixo-jokes-oracle#MEMORY_MCP_API>"
+%{ endif ~}
 service:
   port: 3000
 resources:

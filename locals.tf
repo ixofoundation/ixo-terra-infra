@@ -213,6 +213,27 @@ locals {
   # Vultr
   region_ids = { for city, id in var.region_ids : id => city }
 
+  # IXO-3541: match a VKE node by its label prefix (VKE doesn't tag nodes) to find its VPC subnet
+  vke_node_label_prefix = terraform.workspace == "mainnet" ? "ixo-main" : "ixo-${terraform.workspace}"
+  vke_nodes_matched = [
+    for i in data.vultr_instances.vke_nodes.instances :
+    i if startswith(i.label, "${local.vke_node_label_prefix}-")
+  ]
+  vke_node_probe = length(local.vke_nodes_matched) > 0 ? local.vke_nodes_matched[0] : null
+  vke_private_subnet = length(data.vultr_vpc.vke_network) > 0 ? (
+    "${data.vultr_vpc.vke_network[0].v4_subnet}/${data.vultr_vpc.vke_network[0].v4_subnet_mask}"
+  ) : "0.0.0.0/0" # fallback if the lookup ever comes back empty; narrow this manually if it fires
+
+  # IXO-3541: PROXY protocol rollout gate — devnet first, then testnet, then mainnet.
+  proxy_protocol_environments = ["devnet", "testnet", "mainnet"]
+  enable_proxy_protocol       = contains(local.proxy_protocol_environments, terraform.workspace)
+  # Published in the ingress Service status INSTEAD of the LB IP (vultr-loadbalancer-hostname
+  # annotation) so kube-proxy stops short-circuiting in-cluster traffic to the nginx pods;
+  # hairpin traffic must egress via the real LB to get a PROXY protocol header prepended.
+  ingress_lb_hostname = terraform.workspace == "mainnet" ? "lb.ixo.earth" : "lb.${terraform.workspace}.ixo.earth"
+  # The LB IP itself is looked up via data.vultr_load_balancer.ingress (see modules.tf) — the
+  # Service status stops exposing it once the hostname annotation is set.
+
   # Helm
   helm_values_config_path = "${path.root}/config/yml/helm_values"
 

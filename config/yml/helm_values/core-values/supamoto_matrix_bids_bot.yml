@@ -41,6 +41,7 @@ config:
   homeserverUrl: https://matrix.supamoto.global
   homeserverName: matrix.supamoto.global
   accessToken: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_BIDS_BOT_ACCESS_TOKEN>"
+  recoveryKey: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_BID_BOT_RECOVERY_KEY>"
   ucan:
     hostname: ${host}
     mnemonic: "<path:ixo_core/data/matrix#MATRIX_SUPAMOTO_BIDS_BOT_MNEMONIC>"

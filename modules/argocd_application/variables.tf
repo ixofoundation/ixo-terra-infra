@@ -9,6 +9,7 @@ variable "application" {
         chart             = string
         revision          = string
         ignoreDifferences = optional(string)
+        skipCrds          = optional(bool, false)
       }))
       path            = optional(string)
       values_override = optional(string)

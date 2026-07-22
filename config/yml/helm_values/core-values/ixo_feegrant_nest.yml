@@ -17,6 +17,11 @@ ingress:
           pathType: Prefix
 service:
   port: 3000
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-feegrant-nest
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
@@ -24,6 +29,7 @@ env:
     value: "${rpc_url}"
   - name: "PORT"
     value: "3000"
+%{ if !eso_enabled ~}
   - name: "AUTHORIZATION"
     value: "<path:${vault_mount}/data/ixo-feegrant-nest#AUTHORIZATION>"
   - name: "JAMBO_AUTHORIZATION"
@@ -32,14 +38,17 @@ env:
     value: "<path:${vault_mount}/data/ixo-feegrant-nest#MNEMONIC>"
   - name: "SENTRY_DSN"
     value: "<path:${vault_mount}/data/ixo-feegrant-nest#SENTRY_DSN>"
+%{ endif ~}
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
   - name: "DATABASE_USE_SSL"
     value: "1"
   - name: "MIGRATE_DB_PROGRAMATICALLY"
     value: "1"
+%{ if !eso_enabled ~}
   - name: "BLOCKSYNC_GRAPHQL_URL"
     value: "<path:${vault_mount}/data/ixo-feegrant-nest#BLOCKSYNC_GRAPHQL_URL>"
+%{ endif ~}
 resources:
   requests:
     memory: 300Mi

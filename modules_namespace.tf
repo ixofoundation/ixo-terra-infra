@@ -82,6 +82,12 @@ resource "kubernetes_namespace_v1" "metrics_server" {
   }
 }
 
+resource "kubernetes_namespace_v1" "vpa" {
+  metadata {
+    name = "vpa"
+  }
+}
+
 resource "kubernetes_namespace_v1" "uptime_kuma" {
   metadata {
     name = "uptime-kuma"
@@ -139,5 +145,17 @@ resource "kubernetes_namespace_v1" "searxng" {
 resource "kubernetes_namespace_v1" "vault_argocd_watcher" {
   metadata {
     name = "vault-argocd-watcher"
+  }
+}
+
+resource "kubernetes_namespace_v1" "external_secrets" {
+  metadata {
+    name = "external-secrets"
+  }
+}
+
+resource "kubernetes_namespace_v1" "reloader" {
+  metadata {
+    name = "reloader"
   }
 }

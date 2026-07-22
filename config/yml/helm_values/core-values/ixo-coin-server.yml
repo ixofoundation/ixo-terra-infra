@@ -15,17 +15,26 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-coin-server
+%{ endif ~}
 env:
   - name: "PORT"
     value: "3000"
+%{ if !eso_enabled ~}
   - name: "AUTHORIZATION"
     value: "<path:${vault_mount}/data/ixo-coin-server#AUTHORIZATION>"
+%{ endif ~}
   - name: "MIGRATE_DB_PROGRAMATICALLY"
     value: "1"
   - name: "DATABASE_USE_SSL"
     value: "1"
+%{ if !eso_enabled ~}
   - name: "COINGECKO_API_KEY"
     value: "<path:${vault_mount}/data/ixo-coin-server#COINGECKO_API_KEY>"
+%{ endif ~}
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
 service:

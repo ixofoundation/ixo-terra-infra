@@ -40,6 +40,7 @@ backup:
 config:
   homeserverUrl: https://matrix.emediaworkspace.org
   accessToken: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_STATE_BOT_ACCESS_TOKEN>"
+  recoveryKey: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_STATE_BOT_RECOVERY_KEY>"
   ucan:
     hostname: state.bot.matrix.emediaworkspace.org
     mnemonic: "<path:ixo_core/data/matrix#MATRIX_DIGIHUB_STATE_BOT_MNEMONIC>"

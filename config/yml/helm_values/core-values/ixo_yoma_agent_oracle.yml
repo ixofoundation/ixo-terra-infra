@@ -15,11 +15,17 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-yoma-agent-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
   - name: PORT
     value: "3000"
+%{ if !eso_enabled ~}
   - name: CORS_ORIGIN
     value: "<path:${vault_mount}/data/ixo-yoma-agent-oracle#CORS_ORIGIN>"
   - name: ORACLE_NAME
@@ -82,6 +88,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-yoma-agent-oracle#SKILLS_CAPSULES_BASE_URL>"
   - name: COMPOSIO_BASE_URL
     value: "<path:${vault_mount}/data/ixo-yoma-agent-oracle#COMPOSIO_BASE_URL>"
+%{ endif ~}
 service:
   port: 3000
 resources:

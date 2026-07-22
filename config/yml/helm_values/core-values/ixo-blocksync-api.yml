@@ -9,14 +9,14 @@ ingress:
   tls:
     - hosts:
         - ${host}
-      secretName: ixo-blocksync-tls
+      secretName: ixo-blocksync-api-tls
   hosts:
     - host: ${host}
       paths:
         - path: /
           pathType: Prefix
 service:
-  port: 8082
+  port: 8081
 %{ if eso_enabled ~}
 externalSecret:
   enabled: true
@@ -24,37 +24,33 @@ externalSecret:
 %{ endif ~}
 env:
   - name: "PORT"
-    value: "8082"
+    value: "8081"
   - name: "NODE_ENV"
     value: "production"
 %{ if !eso_enabled ~}
   - name: "RPC"
     value: "<path:${vault_mount}/data/ixo-blocksync#RPC>"
 %{ endif ~}
-  - name: "MIGRATE_DB_PROGRAMATICALLY"
-    value: "1"
   - name: "DATABASE_USE_SSL"
     value: "1"
+%{ if !eso_enabled ~}
+  - name: "DATABASE_URL"
+    value: "<path:${vault_mount}/data/ixo-blocksync#DATABASE_URL>"
+  - name: "BLOCK_CACHE_LISTEN_DATABASE_URL"
+    value: "<path:${vault_mount}/data/ixo-blocksync#BLOCK_CACHE_LISTEN_DATABASE_URL>"
+%{ endif ~}
   - name: "IPFS_SERVICE_MAPPING"
     value: "${ipfs_service_mapping}"
 %{ if !eso_enabled ~}
-  - name: "DATABASE_URL_CORE"
-    value: "<path:${vault_mount}/data/ixo-blocksync#DATABASE_URL_CORE>"
-  - name: "DATABASE_URL"
-    value: "<path:${vault_mount}/data/ixo-blocksync#DATABASE_URL>"
-  - name: "ENTITY_MODULE_CONTRACT_ADDRESS"
-    value: "<path:${vault_mount}/data/ixo-blocksync#ENTITY_MODULE_CONTRACT_ADDRESS>"
-  - name: "IXO_ARCHIVE_NODE_REST_API"
-    value: "<path:${vault_mount}/data/ixo-blocksync#IXO_ARCHIVE_NODE_REST_API>"
-  - name: "NETWORK"
-    value: "<path:${vault_mount}/data/ixo-blocksync#NETWORK>"
+  - name: "CORE_DATABASE_URL"
+    value: "<path:${vault_mount}/data/ixo-blocksync#CORE_DATABASE_URL>"
 %{ endif ~}
 resources:
   requests:
-    memory: 650Mi
-    cpu: "50m"
+    memory: 1.8Gi
+    cpu: "500m"
   limits:
-    memory: 750Mi
+    memory: 2Gi
 autoscaling:
   enabled: true
   minReplicas: 1
@@ -62,3 +58,4 @@ autoscaling:
   targetMemoryUtilizationPercentage: "30"
 verticalPodAutoscaler:
   enabled: true
+  updateMode: "Off"

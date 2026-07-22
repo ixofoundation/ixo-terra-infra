@@ -15,6 +15,11 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-whizz
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
@@ -30,6 +35,7 @@ env:
     value: "5432"
   - name: "DATABASE_USE_SSL"
     value: "1"
+%{ if !eso_enabled ~}
   - name: "OPEN_AI_API_KEY"
     value: "<path:${vault_mount}/data/ixo-whizz#OPEN_AI_API_KEY>"
   - name: "AIRTABLE_API_KEY"
@@ -76,6 +82,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-whizz#QUEUE_CALLBACK_Root_Path>"
   - name: "IXO_GURU_API_URL"
     value: "<path:${vault_mount}/data/ixo-whizz#IXO_GURU_API_URL>"
+%{ endif ~}
 service:
   port: 8080
 resources:

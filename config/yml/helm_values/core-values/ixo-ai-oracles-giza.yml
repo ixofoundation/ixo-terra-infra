@@ -15,7 +15,13 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-ai-oracles-giza
+%{ endif ~}
 env:
+%{ if !eso_enabled ~}
   - name: "NODE_ENV"
     value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#NODE_ENV>"
   - name: "SLACK_SIGNING_SECRET"
@@ -102,6 +108,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#ORACLE_PROTOCOL_CLAIM_DID>"
   - name: "PUBLIC_API_KEY"
     value: "<path:${vault_mount}/data/ixo-ai-oracles-giza#PUBLIC_API_KEY>"
+%{ endif ~}
 service:
   port: 3000
 resources:

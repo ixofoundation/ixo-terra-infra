@@ -15,9 +15,15 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-website-bot-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
+%{ if !eso_enabled ~}
   - name: ORACLE_NAME
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#ORACLE_NAME>"
   - name: MATRIX_BASE_URL
@@ -32,8 +38,10 @@ env:
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_RECOVERY_PHRASE>"
   - name: OPEN_ROUTER_API_KEY
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#OPEN_ROUTER_API_KEY>"
+%{ endif ~}
   - name: DATABASE_USE_SSL
     value: "true"
+%{ if !eso_enabled ~}
   - name: NETWORK
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#NETWORK>"
   - name: MATRIX_USER_DID
@@ -90,6 +98,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#FIRECRAWL_MCP_URL>"
   - name: "MATRIX_VALUE_PIN"
     value: "<path:${vault_mount}/data/ixo-website-bot-oracle#MATRIX_VALUE_PIN>"
+%{ endif ~}
   - name: PORT
     value: "3000"
 service:

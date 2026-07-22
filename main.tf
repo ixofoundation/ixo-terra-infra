@@ -354,6 +354,39 @@ resource "google_storage_bucket" "matrix_backups" {
   }
 }
 
+resource "google_storage_bucket" "supamoto_backups" {
+  count         = terraform.workspace == "mainnet" ? 1 : 0
+  location      = "US"
+  name          = "${var.org}-${terraform.workspace}-supamoto-backups"
+  storage_class = "COLDLINE"
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      age = 365 # Objects older than 365 days will be deleted
+    }
+  }
+
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "ARCHIVE"
+    }
+    condition {
+      age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [lifecycle_rule]
+  }
+}
+
 resource "google_storage_bucket" "loki_logs_backups" {
   count    = var.environments[terraform.workspace].application_configs["loki"].enabled ? 1 : 0
   location = "US"

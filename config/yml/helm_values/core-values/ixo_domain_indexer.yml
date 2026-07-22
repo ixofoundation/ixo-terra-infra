@@ -17,6 +17,11 @@ ingress:
           pathType: Prefix
 service:
   port: 8080
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-domain-indexer
+%{ endif ~}
 env:
   # Server Configuration
   - name: "NODE_ENV"
@@ -39,38 +44,48 @@ env:
     value: "domain-indexer"
   - name: "DB_NAME"
     value: "domain-indexer"
+%{ if !eso_enabled ~}
   - name: "SURREAL_USER"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#SURREAL_USER>"
   - name: "SURREAL_PASS"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#SURREAL_PASS>"
+%{ endif ~}
   
   # AI Configuration
+%{ if !eso_enabled ~}
   - name: "OPENAI_API_KEY"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#OPENAI_API_KEY>"
   - name: "AI_MODEL"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#AI_MODEL>"
   - name: "OPENAI_API_KEY_EMBEDDINGS"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#OPENAI_API_KEY_EMBEDDINGS>"
+%{ endif ~}
   - name: "AI_EMBEDDING_DIMENSION"
     value: "768"
   
   # Google Maps API
+%{ if !eso_enabled ~}
   - name: "MAPS_API_KEY"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#MAPS_API_KEY>"
+%{ endif ~}
   
   # Firecrawl Configuration
+%{ if !eso_enabled ~}
   - name: "FIRECRAWL_API_KEY"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#FIRECRAWL_API_KEY>"
   - name: "FIRECRAWL_API_URL"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#FIRECRAWL_API_URL>"
+%{ endif ~}
   - name: "FIRECRAWL_TIMEOUT"
     value: "30000"
   
   # Feature Flags
+%{ if !eso_enabled ~}
   - name: "SKIP_SOCIAL_LINKS"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#SKIP_SOCIAL_LINKS>"
   - name: "ENABLE_IMAGE_ALT_GENERATION"
     value: "<path:${vault_mount}/data/ixo-domain-indexer#ENABLE_IMAGE_ALT_GENERATION>"
+%{ endif ~}
   
   # Network
   - name: "NETWORK"

@@ -14,11 +14,17 @@ ingress:
     ${indent(4, hosts)}
 service:
   port: 5000
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-cellnode # Whole KV path synced by external-secrets-operator; keys become env vars via envFrom
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
   - name: "PORT"
     value: "5000"
+%{ if !eso_enabled ~}
   - name: "WEB3_KEY"
     value: "<path:${vault_mount}/data/ixo-cellnode#WEB3_KEY>"
   - name: "WEB3_PROOF"
@@ -29,6 +35,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-cellnode#FILEBASE_SECRET_KEY>"
   - name: "FILEBASE_BUCKET"
     value: "<path:${vault_mount}/data/ixo-cellnode#FILEBASE_BUCKET>"
+%{ endif ~}
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
   - name: "MIGRATE_DB_PROGRAMATICALLY"

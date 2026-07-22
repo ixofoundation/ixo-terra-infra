@@ -17,6 +17,11 @@ ingress:
           pathType: Prefix
 service:
   port: 80
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-faucet
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
@@ -24,8 +29,10 @@ env:
     value: "${rpc_url}"
   - name: "PORT"
     value: "80"
+%{ if !eso_enabled ~}
   - name: "FAUCET_MNEMONIC"
     value: "<path:${vault_mount}/data/ixo-faucet#FAUCET_MNEMONIC>"
+%{ endif ~}
   - name: "PROJECT_NAME"
     value: "Ixo ${title(environment)}"
 resources:

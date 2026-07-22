@@ -15,7 +15,13 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-ussd-supamoto
+%{ endif ~}
 env:
+%{ if !eso_enabled ~}
   - name: "AFRICASTALKING_API_KEY"
     value: "<path:${vault_mount}/data/ixo-ussd-supamoto#AFRICASTALKING_API_KEY>"
   - name: "AFRICASTALKING_SENDER_ID"
@@ -96,6 +102,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-ussd-supamoto#ZM_SERVICE_CODES>"
   - name: "ZM_SUPPORT_PHONE"
     value: "<path:${vault_mount}/data/ixo-ussd-supamoto#ZM_SUPPORT_PHONE>"
+%{ endif ~}
 service:
   port: 3000
 resources:

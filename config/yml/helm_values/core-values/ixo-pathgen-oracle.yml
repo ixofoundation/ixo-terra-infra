@@ -15,6 +15,11 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-pathgen-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
@@ -34,6 +39,7 @@ env:
     value: "${pgCluster}-primary.${pgNamespace}.svc.cluster.local"
   - name: "POSTGRES_PORT"
     value: "5432"
+%{ if !eso_enabled ~}
   - name: "ORACLE_NAME"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#ORACLE_NAME>"
   - name: MATRIX_ORACLE_ADMIN_PASSWORD
@@ -60,20 +66,27 @@ env:
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#TAVILY_API_KEY>"
   - name: "SLACK_APP_TOKEN"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#SLACK_APP_TOKEN>"
+%{ endif ~}
   - name: "DATABASE_USE_SSL"
     value: "true"
+%{ if !eso_enabled ~}
   - name: "PATHGEN_API_URL"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#PATHGEN_API_URL>"
   - name: "PATHGEN_API_KEY"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#PATHGEN_API_KEY>"
+%{ endif ~}
   - name: "SKIP_LOGGING_CHAT_HISTORY_TO_MATRIX"
     value: "true"
+%{ if !eso_enabled ~}
   - name: "MAP_BOX_TOKEN"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#MAP_BOX_TOKEN>"
+%{ endif ~}
   - name: "CYPHER_ENABLED"
     value: "true"
+%{ if !eso_enabled ~}
   - name: "ORACLE_ENTITY_DID"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#ORACLE_ENTITY_DID>"
+%{ endif ~}
 service:
   port: 3000
 resources:

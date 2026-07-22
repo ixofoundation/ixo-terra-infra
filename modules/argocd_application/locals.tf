@@ -10,9 +10,13 @@ locals {
   }
 
   _allow_tags = (
-    var.image_updater != null && var.image_updater.allow_tags_override != null
-    ? var.image_updater.allow_tags_override
-    : lookup(local._ws_allow_tags, terraform.workspace, null)
+    terraform.workspace == "mainnet"
+    ? null
+    : (
+      try(var.image_updater.allow_tags_override, null) != null
+      ? var.image_updater.allow_tags_override
+      : lookup(local._ws_allow_tags, terraform.workspace, null)
+    )
   )
 
   image_updater_enabled = (

@@ -17,9 +17,15 @@ ingress:
           pathType: Prefix
 service:
   port: 3000
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-kyc-server
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
+%{ if !eso_enabled ~}
   - name: "AUTHORIZATION"
     value: "<path:${vault_mount}/data/ixo-kyc-server#AUTHORIZATION>"
   - name: "COMPLYCUBE_API_KEY"
@@ -28,16 +34,20 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-server#COMPLYCUBE_WEBHOOK_SECRET>"
   - name: "WEBVIEW_BASE_URL"
     value: "<path:${vault_mount}/data/ixo-kyc-server#WEBVIEW_BASE_URL>"
+%{ endif ~}
   - name: "IXO_NETWORK"
     value: "${environment}"
+%{ if !eso_enabled ~}
   - name: "ORACLE_DID"
     value: "<path:${vault_mount}/data/ixo-kyc-server#ORACLE_DID>"
   - name: "CREDENTIALS_WORKER_API_KEY"
     value: "<path:${vault_mount}/data/ixo-kyc-server#CREDENTIALS_WORKER_API_KEY>"
   - name: "CREDENTIALS_WORKER_URL"
     value: "<path:${vault_mount}/data/ixo-kyc-server#CREDENTIALS_WORKER_URL>"
+%{ endif ~}
   - name: "RPC_ENDPOINT"
     value: "${rpc_url}"
+%{ if !eso_enabled ~}
   - name: "ORACLE_DELEGATOR_ADDRESS"
     value: "<path:${vault_mount}/data/ixo-kyc-server#ORACLE_DELEGATOR_ADDRESS>"
   - name: "ORACLE_DELEGATE_MNEMONIC"
@@ -50,6 +60,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-server#SLACK_WEBHOOK_URL>"
   - name: "SERVICE_ED25519_MNEMONIC"
     value: "<path:${vault_mount}/data/ixo-kyc-server#SERVICE_ED25519_MNEMONIC>"
+%{ endif ~}
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
   - name: "MIGRATE_DB_PROGRAMATICALLY"

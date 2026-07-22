@@ -15,6 +15,11 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-faq-assistant
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
@@ -30,6 +35,7 @@ env:
     value: "5432"
   - name: "DATABASE_USE_SSL"
     value: "1"
+%{ if !eso_enabled ~}
   - name: "OPEN_AI_API_KEY"
     value: "<path:${vault_mount}/data/ixo-faq-assistant#OPEN_AI_API_KEY>"
   - name: "AIRTABLE_API_KEY"
@@ -72,6 +78,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-faq-assistant#REDIS_TOKEN>"
   - name: "QUEUE_CALLBACK_Root_Path"
     value: "<path:${vault_mount}/data/ixo-faq-assistant#QUEUE_CALLBACK_Root_Path>"
+%{ endif ~}
 service:
   port: 3000
 resources:

@@ -17,6 +17,11 @@ ingress:
           pathType: Prefix
 service:
   port: 3000
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-payments-nest
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
@@ -30,6 +35,7 @@ env:
     value: "3000"
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
+%{ if !eso_enabled ~}
   - name: "AUTHORIZATION"
     value: "<path:${vault_mount}/data/ixo-payments-nest#AUTHORIZATION>"
   - name: "BLOCKSYNC_URL"
@@ -58,6 +64,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-payments-nest#TOKENS_TO_SELL>"
   - name: "TOKENS_TO_SELL_COLLECTIONS"
     value: "<path:${vault_mount}/data/ixo-payments-nest#TOKENS_TO_SELL_COLLECTIONS>"
+%{ endif ~}
 resources:
   requests:
     memory: 300Mi

@@ -15,7 +15,13 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-ai-oracles-guru
+%{ endif ~}
 env:
+%{ if !eso_enabled ~}
   - name: "NODE_ENV"
     value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#NODE_ENV>"
   - name: "SLACK_SIGNING_SECRET"
@@ -112,6 +118,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#SUPAMOTO_API_KEY>"
   - name: "PUBLIC_API_KEY"
     value: "<path:${vault_mount}/data/ixo-ai-oracles-guru#PUBLIC_API_KEY>"
+%{ endif ~}
 service:
   port: 3000
 resources:

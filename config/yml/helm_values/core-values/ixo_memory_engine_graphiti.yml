@@ -33,15 +33,22 @@ ingressMcp:
 service:
   port: 8000
   portMcp: 9000
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-memory-engine-graphiti
+%{ endif ~}
 env:
   - name: "PORT"
     value: "8000"
+%{ if !eso_enabled ~}
   - name: "OPENAI_API_KEY"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#OPENAI_API_KEY>"
   - name: "MODEL_NAME"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MODEL_NAME>"
   - name: "EMBEDDING_MODEL_NAME"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#EMBEDDING_MODEL_NAME>"
+%{ endif ~}
   - name: "NEO4J_URI"
     value: "${neo4j_uri}"
   - name: "NEO4J_PORT"
@@ -52,6 +59,7 @@ env:
     value: "${neo4j_password}"
   - name: "DEFAULT_DATABASE"
     value: "neo4j"
+%{ if !eso_enabled ~}
   - name: "COMPLETION_OPENAI_API_KEY"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#COMPLETION_OPENAI_API_KEY>"
   - name: "COMPLETION_OPENAI_BASE_URL"
@@ -64,8 +72,10 @@ env:
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#EMBEDDING_OPENAI_API_KEY>"
   - name: "EMBEDDING_OPENAI_BASE_URL"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#EMBEDDING_OPENAI_BASE_URL>"
+%{ endif ~}
   - name: "NODE_ENV"
     value: "production"
+%{ if !eso_enabled ~}
   - name: "MATRIX_HOMESERVER_URL"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_HOMESERVER_URL>"
   - name: "MATRIX_BOT_USER_ID"
@@ -88,10 +98,13 @@ env:
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#BRIDGE_API_KEY>"
   - name: "NETWORK"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#NETWORK>"
+%{ endif ~}
   - name: "MCP_PORT"
     value: "9000"
+%{ if !eso_enabled ~}
   - name: "MCP_DID_HOSTNAME"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MCP_DID_HOSTNAME>"
+%{ endif ~}
 resources:
   requests:
     memory: 100Mi

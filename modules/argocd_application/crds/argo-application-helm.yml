@@ -20,6 +20,7 @@ spec:
     targetRevision: ${revision}
     helm:
       releaseName: ${chart}
+      skipCrds: ${skipCrds}
       values: |
         ${indent(8, helm_values)}
   destination:

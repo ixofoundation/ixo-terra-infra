@@ -15,15 +15,22 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-trading-bot-server
+%{ endif ~}
 env:
   - name: "NODE_ENV"
     value: "production"
+%{ if !eso_enabled ~}
   - name: "POOL_ADDRESSES"
     value: "<path:${vault_mount}/data/ixo-trading-bot-server#POOL_ADDRESSES>"
   - name: "MNEMONICS"
     value: "<path:${vault_mount}/data/ixo-trading-bot-server#MNEMONICS>"
   - name: "EXECUTE_RANDOM_TRADES"
     value: "<path:${vault_mount}/data/ixo-trading-bot-server#EXECUTE_RANDOM_TRADES>"
+%{ endif ~}
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
   - name: "MIGRATE_DB_PROGRAMATICALLY"

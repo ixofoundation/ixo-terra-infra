@@ -15,11 +15,17 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-ecs-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
   - name: PORT
     value: "3000"
+%{ if !eso_enabled ~}
   - name: OPEN_ROUTER_API_KEY
     value: "<path:${vault_mount}/data/ixo-ecs-oracle#OPEN_ROUTER_API_KEY>"
   - name: SECP_MNEMONIC
@@ -86,6 +92,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-ecs-oracle#ECS_MCP_AUTH_TOKEN>"
   - name: "NODE_OPTIONS"
     value: "<path:${vault_mount}/data/ixo-ecs-oracle#NODE_OPTIONS>"
+%{ endif ~}
 service:
   port: 3000
 resources:

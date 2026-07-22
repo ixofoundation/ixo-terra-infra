@@ -17,6 +17,11 @@ ingress:
           pathType: Prefix
 service:
   port: 8081
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-blocksync-core
+%{ endif ~}
 env:
   - name: "PORT"
     value: "8081"
@@ -32,8 +37,10 @@ env:
     value: "1"
   - name: "SENTRYDSN"
     value: ""
+%{ if !eso_enabled ~}
   - name: "DATABASE_URL"
     value: "<path:${vault_mount}/data/ixo-blocksync-core#DATABASE_URL>"
+%{ endif ~}
 resources:
   requests:
     memory: 300Mi

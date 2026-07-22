@@ -20,11 +20,18 @@ persistentVolume:
   size: ${storage_size}
 service:
   port: 3000
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-observable-framework-builder
+%{ endif ~}
 env:
   - name: "PORT"
     value: "3000"
+%{ if !eso_enabled ~}
   - name: "API_KEY"
     value: "<path:${vault_mount}/data/ixo-observable-framework-builder#API_KEY>"
+%{ endif ~}
   - name: "DATABASE_URL"
     value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
   - name: "DATABASE_USE_SSL"

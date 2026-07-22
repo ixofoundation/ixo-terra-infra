@@ -1,0 +1,6 @@
+recommender:
+  enabled: true
+updater:
+  enabled: false
+admissionController:
+  enabled: false

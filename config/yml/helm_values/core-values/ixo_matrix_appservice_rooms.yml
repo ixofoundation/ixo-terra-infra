@@ -25,10 +25,10 @@ env:
     value: "8081"
 resources:
   requests:
-    memory: 300Mi
+    memory: 500Mi
     cpu: "40m"
   limits:
-    memory: 450Mi
+    memory: 650Mi
 autoscaling:
   enabled: true
   minReplicas: 1

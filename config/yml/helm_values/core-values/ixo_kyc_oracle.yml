@@ -15,14 +15,22 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-kyc-oracle
+%{ endif ~}
 env:
   - name: NODE_ENV
     value: "production"
   - name: PORT
     value: "4000"
+%{ if !eso_enabled ~}
   - name: ORACLE_NAME
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#ORACLE_NAME>"
+%{ endif ~}
   # Network
+%{ if !eso_enabled ~}
   - name: NETWORK
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#NETWORK>"
   - name: RPC_URL
@@ -31,7 +39,9 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#BLOCKSYNC_GRAPHQL_URL>"
   - name: BLOCKSYNC_URI
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#BLOCKSYNC_URI>"
+%{ endif ~}
   # Matrix
+%{ if !eso_enabled ~}
   - name: MATRIX_BASE_URL
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#MATRIX_BASE_URL>"
   - name: MATRIX_ORACLE_ADMIN_ACCESS_TOKEN
@@ -46,20 +56,28 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#MATRIX_VALUE_PIN>"
   - name: MATRIX_ACCOUNT_ROOM_ID
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#MATRIX_ACCOUNT_ROOM_ID>"
+%{ endif ~}
   # Blockchain
+%{ if !eso_enabled ~}
   - name: SECP_MNEMONIC
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#SECP_MNEMONIC>"
   - name: ORACLE_ENTITY_DID
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#ORACLE_ENTITY_DID>"
+%{ endif ~}
   # Database
+%{ if !eso_enabled ~}
   - name: REDIS_URL
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#REDIS_URL>"
+%{ endif ~}
   # LLM
+%{ if !eso_enabled ~}
   - name: OPENAI_API_KEY
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#OPENAI_API_KEY>"
   - name: OPEN_ROUTER_API_KEY
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#OPEN_ROUTER_API_KEY>"
+%{ endif ~}
   # External Services
+%{ if !eso_enabled ~}
   - name: MEMORY_MCP_URL
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#MEMORY_MCP_URL>"
   - name: MEMORY_ENGINE_URL
@@ -70,7 +88,9 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#DOMAIN_INDEXER_URL>"
   - name: SANDBOX_MCP_URL
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#SANDBOX_MCP_URL>"
+%{ endif ~}
   # Observability
+%{ if !eso_enabled ~}
   - name: LANGSMITH_TRACING
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#LANGSMITH_TRACING>"
   - name: LANGSMITH_ENDPOINT
@@ -79,7 +99,9 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#LANGSMITH_API_KEY>"
   - name: LANGSMITH_PROJECT
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#LANGSMITH_PROJECT>"
+%{ endif ~}
   # Misc
+%{ if !eso_enabled ~}
   - name: DISABLE_CREDITS
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#DISABLE_CREDITS>"
   - name: CORS_ORIGIN
@@ -88,6 +110,7 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#SUBSCRIPTION_URL>"
   - name: ORACLE_SECRETS
     value: "<path:${vault_mount}/data/ixo-kyc-oracle#ORACLE_SECRETS>"
+%{ endif ~}
 service:
   port: 4000
 resources:
