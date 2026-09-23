@@ -1,5 +1,8 @@
 useDeploy: true
 
+image:
+  tag: "2.4.0"
+
 livenessProbe:
   enabled: true # Disable for initial DB setup
 

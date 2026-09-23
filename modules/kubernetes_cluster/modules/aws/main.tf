@@ -471,40 +471,36 @@ resource "helm_release" "cluster_autoscaler" {
   namespace  = "kube-system"
   version    = var.cluster_autoscaler_chart_version
 
-  set {
-    name  = "autoDiscovery.clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "awsRegion"
-    value = var.region
-  }
-
-  set {
-    name  = "rbac.serviceAccount.name"
-    value = "cluster-autoscaler"
-  }
-
-  set {
-    name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = aws_iam_role.cluster_autoscaler.arn
-  }
-
-  set {
-    name  = "extraArgs.expander"
-    value = "least-waste"
-  }
-
-  set {
-    name  = "extraArgs.balance-similar-node-groups"
-    value = "true"
-  }
-
-  set {
-    name  = "extraArgs.skip-nodes-with-system-pods"
-    value = "false"
-  }
+  set = [
+    {
+      name  = "autoDiscovery.clusterName"
+      value = var.cluster_name
+    },
+    {
+      name  = "awsRegion"
+      value = var.region
+    },
+    {
+      name  = "rbac.serviceAccount.name"
+      value = "cluster-autoscaler"
+    },
+    {
+      name  = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = aws_iam_role.cluster_autoscaler.arn
+    },
+    {
+      name  = "extraArgs.expander"
+      value = "least-waste"
+    },
+    {
+      name  = "extraArgs.balance-similar-node-groups"
+      value = "true"
+    },
+    {
+      name  = "extraArgs.skip-nodes-with-system-pods"
+      value = "false"
+    },
+  ]
 
   depends_on = [
     aws_eks_node_group.main,

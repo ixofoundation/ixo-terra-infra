@@ -3,8 +3,17 @@ kind: PostgresCluster
 metadata:
   name: ${pg_cluster_name}
   namespace: ${pg_namespace}
+%{ if upgrade_name != "" ~}
+  annotations:
+    # Required by the operator before it will run the named PGUpgrade against this
+    # cluster. Safe to set while the cluster is running; the upgrade job does not start
+    # until spec.shutdown is true.
+    postgres-operator.crunchydata.com/allow-upgrade: "${upgrade_name}"
+%{ endif ~}
 spec:
-  shutdown: false
+  # Stops all instances, releasing the data directory for pg_upgrade. The cluster is
+  # unavailable to all clients while this is true.
+  shutdown: ${shutdown}
   image: ${pg_image}:${pg_image_tag}
   postgresVersion: ${pg_version}
   service:
@@ -12,6 +21,27 @@ spec:
       annotations:
         tailscale.com/hostname: "${pg_cluster_name}-db-${environment}"
         tailscale.com/expose: "true"
+%{ if enable_otel ~}
+  # OpenTelemetry collector sidecar, replacing the pgmonitor exporter. Required for
+  # Postgres 18 and above, which the exporter does not support. Metrics remain on
+  # 9187/metrics, but the namespace is ccp_* rather than the exporter's pg_*; the
+  # Prometheus rules in config/yml/helm_values/prometheus.yml match accordingly.
+  instrumentation:
+    logs:
+      retentionPeriod: 1d
+      exporters:
+        - otlphttp/loki
+    config:
+      exporters:
+        otlphttp/loki:
+          logs_endpoint: http://loki.loki.svc.cluster.local:3100/otlp/v1/logs
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+%{ else ~}
   monitoring:
     pgmonitor:
       exporter:
@@ -22,6 +52,7 @@ spec:
               optional: true
           - configMap:
               name: ${pg_cluster_name}-exporter-queries-config
+%{ endif ~}
   users:
     ${indent(4, pg_users)}
   instances:
@@ -31,6 +62,14 @@ spec:
       image: ${pgbackrest_image}:${pgbackrest_image_tag}
       global:
         repo1-gcs-key: /etc/pgbackrest/conf.d/gcs-key.json
+        repo1-retention-full-type: "${retention_type}"
+        repo1-retention-full: "${retention_full}"
+%{ if gcs_repo2_bucket != "" ~}
+        repo2-gcs-key: /etc/pgbackrest/conf.d/gcs-key.json
+        repo2-path: /pgbackrest/repo2
+        repo2-retention-full-type: "${repo2_retention_type}"
+        repo2-retention-full: "${repo2_retention_full}"
+%{ endif ~}
       configuration:
         - secret:
             name: ${pg_cluster_name}-gcs-pgbackrest-secret

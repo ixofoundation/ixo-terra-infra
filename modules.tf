@@ -125,10 +125,10 @@ module "argocd" {
   hostnames = {
     (terraform.workspace) = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
   }
-  github_client_id         = var.oidc_argo.clientId
-  github_client_secret     = var.oidc_argo.clientSecret
-  argo_version             = var.versions["argocd"]
-  org                      = var.org
+  github_client_id      = var.oidc_argo.clientId
+  github_client_secret  = var.oidc_argo.clientSecret
+  argo_version          = var.versions["argocd"]
+  org                   = var.org
   cert_manager_enabled  = var.environments[terraform.workspace].application_configs["cert_manager"].enabled
   vault_mount_path      = local.vault_mount_path
   image_updater_enabled = var.environments[terraform.workspace].application_configs["argocd_image_updater"].enabled
@@ -368,6 +368,7 @@ module "prometheus_stack" {
       org                       = var.org
       environment               = terraform.workspace
       additional_scrape_metrics = var.additional_prometheus_scrape_metrics[terraform.workspace]
+      pg_enable_otel            = local.pg_enable_otel
       storage_class             = var.storage_classes["bulk"]
     })
   }
@@ -564,21 +565,131 @@ module "matrix" {
     repository = "https://ananace.gitlab.io/charts"
     values_override = templatefile("${local.helm_values_config_path}/matrix-values.yml",
       {
-        pg_host                  = "${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local"
-        pg_username              = "synapse"
-        pg_cluster_name          = var.pg_matrix.pg_cluster_name
-        host                     = local.dns_for_environment[terraform.workspace]["matrix"]
-        kv_mount                 = var.vault_core_mount
-        app_name                 = "matrix"
-        gcs_bucket_url           = google_storage_bucket.matrix_backups[0].url
-        storage_class            = var.storage_classes["bulk"]
-        livekit_host             = local.dns_for_environment[terraform.workspace]["matrix_livekit"]
-        matrix_whatsapp_enabled  = var.environments[terraform.workspace].application_configs["ixo_matrix_whatsapp"].enabled
+        pg_host                 = "${var.pg_matrix.pg_cluster_name}-primary.matrix-synapse.svc.cluster.local"
+        pg_username             = "synapse"
+        pg_cluster_name         = var.pg_matrix.pg_cluster_name
+        host                    = local.dns_for_environment[terraform.workspace]["matrix"]
+        kv_mount                = var.vault_core_mount
+        app_name                = "matrix"
+        gcs_bucket_url          = google_storage_bucket.matrix_backups[0].url
+        storage_class           = var.storage_classes["bulk"]
+        livekit_host            = local.dns_for_environment[terraform.workspace]["matrix_livekit"]
+        matrix_whatsapp_enabled = var.environments[terraform.workspace].application_configs["ixo_matrix_whatsapp"].enabled
       }
     )
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
+}
+
+# Synapse media-store backup.
+#
+# This cannot live in the Synapse container: the ananace chart exposes no sidecar hook,
+# and anything that walks the media store from inside shares Synapse's 2536Mi cgroup and
+# OOMKills it - both `zip -r` and `gsutil rsync` did exactly that on devnet. As its own
+# pod it gets its own cgroup, so a runaway backup can no longer take Synapse down.
+#
+# rclone is what makes this fit: it lists directory-by-directory instead of building a
+# whole-tree index, so walking all ~61k files costs ~20Mi of heap and uploading ~90Mi
+# (measured on devnet), against gsutil's 1.1Gi+. The image is a static binary, which also
+# removes the ~1.1Gi google-cloud-cli apt install the old in-container backup needed.
+#
+# The media PVC is ReadWriteOnce - that is per-NODE, not per-pod - so podAffinity
+# co-schedules this with Synapse and it mounts the same volume read-only. Verified
+# working while Synapse held it. If Synapse's node is full the job is skipped, which
+# shows up in CronJob status rather than failing silently.
+#
+# `copy` not `sync`, deliberately: copy never deletes, so a failed or empty mount cannot
+# clear the backup. Synapse media is content-addressed and immutable, so the destination
+# is always a superset of every earlier state.
+resource "kubectl_manifest" "matrix_media_backup" {
+  count      = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
+  depends_on = [module.matrix]
+
+  yaml_body = <<-YAML
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: matrix-media-backup
+      namespace: ${kubernetes_namespace_v1.matrix.metadata[0].name}
+      labels:
+        app.kubernetes.io/part-of: ixo
+    spec:
+      schedule: "30 2 * * *"
+      concurrencyPolicy: Forbid
+      startingDeadlineSeconds: 3600
+      successfulJobsHistoryLimit: 3
+      failedJobsHistoryLimit: 3
+      jobTemplate:
+        spec:
+          backoffLimit: 2
+          template:
+            metadata:
+              labels:
+                app.kubernetes.io/name: matrix-media-backup
+                app.kubernetes.io/part-of: ixo
+            spec:
+              restartPolicy: Never
+              affinity:
+                podAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    - topologyKey: kubernetes.io/hostname
+                      labelSelector:
+                        matchLabels:
+                          app.kubernetes.io/name: matrix-synapse
+                          app.kubernetes.io/component: synapse
+              containers:
+                - name: rclone
+                  image: rclone/rclone:1.75.1
+                  args:
+                    - copy
+                    - /data
+                    - "gcs:${google_storage_bucket.matrix_backups[0].name}/matrix/data/"
+                    - --transfers=4
+                    - --checkers=8
+                    - --buffer-size=0
+                    - --use-mmap
+                    - --stats=5m
+                    - --stats-one-line
+                    # Without this the job logs literally one line and you cannot tell
+                    # progress or read a summary: rclone emits stats at INFO, but its
+                    # default log level is NOTICE, so they are silently dropped.
+                    - --stats-log-level=NOTICE
+                  env:
+                    - name: RCLONE_CONFIG_GCS_TYPE
+                      value: "google cloud storage"
+                    - name: RCLONE_CONFIG_GCS_SERVICE_ACCOUNT_FILE
+                      value: /gcp/key.json
+                    - name: RCLONE_CONFIG_GCS_OBJECT_ACL
+                      value: private
+                    - name: RCLONE_CONFIG_GCS_BUCKET_ACL
+                      value: private
+                  resources:
+                    requests:
+                      cpu: 20m
+                      memory: 64Mi
+                    # 256Mi was measured against a small subtree and proved too tight for
+                    # a full 62G/61k-object run, which drifted up to ~233Mi. 512Mi still
+                    # fits the node's request headroom and is an order of magnitude below
+                    # what gsutil needed. Incremental runs sit far below this.
+                    limits:
+                      memory: 512Mi
+                  volumeMounts:
+                    - name: media
+                      mountPath: /data
+                      readOnly: true
+                    - name: gcp
+                      mountPath: /gcp
+                      readOnly: true
+              volumes:
+                - name: media
+                  persistentVolumeClaim:
+                    claimName: matrix-synapse
+                    readOnly: true
+                - name: gcp
+                  secret:
+                    secretName: gcp-key-secret
+  YAML
 }
 
 module "matrix_livekit" {
@@ -779,36 +890,48 @@ module "postgres-operator" { # Sets up Cluster Instances
   clusters = [
     {
       # Matrix Postgres Cluster
-      pg_cluster_name        = var.pg_matrix.pg_cluster_name
-      pg_cluster_namespace   = kubernetes_namespace_v1.matrix.metadata[0].name
-      pg_image               = var.pg_matrix.pg_image
-      pg_image_tag           = var.pg_matrix.pg_image_tag
-      pg_version             = var.pg_matrix.pg_version
-      pg_instances           = file("${local.postgres_operator_config_path}/matrix-postgres-instances.yml")
-      pg_users               = local.matrix_pg_users_yaml
-      pg_usernames           = local.matrix_pg_users_usernames
-      pgbackrest_image       = var.pg_matrix.pgbackrest_image
-      pgbackrest_image_tag   = var.pg_matrix.pgbackrest_image_tag
-      pgbackrest_repos       = file("${local.postgres_operator_config_path}/matrix-postgres-backups-repos.yml")
+      pg_cluster_name      = var.pg_matrix.pg_cluster_name
+      pg_cluster_namespace = kubernetes_namespace_v1.matrix.metadata[0].name
+      pg_image             = var.pg_matrix.pg_image
+      pg_image_tag         = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].pg_image_tag
+      pg_version           = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].pg_version
+      pg_instances         = file("${local.postgres_operator_config_path}/matrix-postgres-instances.yml")
+      pg_users             = local.matrix_pg_users_yaml
+      pg_usernames         = local.matrix_pg_users_usernames
+      pgbackrest_image     = var.pg_matrix.pgbackrest_image
+      pgbackrest_image_tag = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].pgbackrest_image_tag
+      pgbackrest_repos = templatefile("${local.postgres_operator_config_path}/matrix-postgres-backups-repos.yml", {
+        repo1_storage = "200Gi"
+        gcs_bucket    = google_storage_bucket.matrix_backups[0].name
+      })
       pgmonitoring_image     = var.pg_matrix.pgmonitoring_image
       pgmonitoring_image_tag = var.pg_matrix.pgmonitoring_image_tag
       initSql                = file("${path.root}/config/sql/matrix-init.sql")
       enable_pgbouncer       = false # Synapse manages its own connection pooling
+      enable_otel            = local.pg_enable_otel
+      retention_full         = local.pg_retention_full_matrix
+      retention_type         = "count"
+      gcs_repo2_bucket       = google_storage_bucket.matrix_backups[0].name
+      repo2_retention_type   = "time"
+      repo2_retention_full   = local.pg_retention_days
+      shutdown               = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].shutdown
+      upgrade                = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].upgrade
     },
     {
       # IXO Cluster
       pg_cluster_name      = var.pg_ixo.pg_cluster_name
       pg_cluster_namespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
       pg_image             = var.pg_ixo.pg_image
-      pg_image_tag         = var.pg_ixo.pg_image_tag
-      pg_version           = var.pg_ixo.pg_version
+      pg_image_tag         = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].pg_image_tag
+      pg_version           = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].pg_version
       pg_instances = templatefile("${local.postgres_operator_config_path}/ixo-postgres-instances.yml", {
         storage_size = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].storage_size
+        enable_otel  = local.pg_enable_otel
       })
       pg_users             = local.pg_users_yaml
       pg_usernames         = local.pg_users_usernames
       pgbackrest_image     = var.pg_ixo.pgbackrest_image
-      pgbackrest_image_tag = var.pg_ixo.pgbackrest_image_tag
+      pgbackrest_image_tag = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].pgbackrest_image_tag
       pgbackrest_repos = templatefile("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml",
         {
           gcs_bucket = google_storage_bucket.postgres_backups[0].name
@@ -820,6 +943,11 @@ module "postgres-operator" { # Sets up Cluster Instances
       enable_pg_cron         = true
       pg_cron_database       = "firecrawl"
       enable_pgbouncer       = true
+      enable_otel            = local.pg_enable_otel
+      retention_full         = local.pg_retention_days
+      retention_type         = "time"
+      shutdown               = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].shutdown
+      upgrade                = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].upgrade
     }
   ]
   gcs_key = file("${path.root}/credentials.json")
@@ -1092,9 +1220,9 @@ module "nomic_embedding" {
   enable_tls     = true
 
   ingress_annotations = {
-    "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
-    "nginx.org/proxy-read-timeout"   = "300"
-    "nginx.org/proxy-send-timeout"   = "300"
+    "cert-manager.io/cluster-issuer"            = "letsencrypt-prod"
+    "nginx.org/proxy-read-timeout"              = "300"
+    "nginx.org/proxy-send-timeout"              = "300"
     "acme.cert-manager.io/http01-edit-in-place" = "true"
   }
 }

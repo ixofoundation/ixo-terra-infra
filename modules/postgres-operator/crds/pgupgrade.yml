@@ -1,0 +1,21 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PGUpgrade
+metadata:
+  name: ${upgrade_name}
+  namespace: ${pg_namespace}
+spec:
+  postgresClusterName: ${pg_cluster_name}
+  # The operator verifies the cluster is on this major version before starting.
+  fromPostgresVersion: ${from_version}
+  toPostgresVersion: ${to_version}
+  # Copy leaves the previous major version's data directory in place, allowing a
+  # rollback by reverting postgresVersion and image. It requires the volume to hold both
+  # versions at once. Link is faster and uses less space but consumes the old directory,
+  # leaving pgBackRest restore as the only way back.
+  transferMethod: ${transfer_method}
+  resources:
+    requests:
+      cpu: ${cpu_request}
+      memory: ${memory_request}
+    limits:
+      memory: ${memory_limit}

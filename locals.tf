@@ -28,6 +28,7 @@ locals {
     "ixo_trading_bot_server",
     "hermes",
     "ixo_registry_server",
+    "searxng",
     # Infrastructure services that shouldn't be monitored via blackbox
     "cert_manager",
     "ingress_nginx", 
@@ -239,7 +240,54 @@ locals {
 
   # Postgres Operator
   postgres_operator_config_path = "${path.root}/config/yml/postgres-operator"
-  pg_users_usernames            = [for user in var.pg_ixo.pg_users : user.username]
+
+  # Switches both PostgresClusters in this workspace from the pgmonitor exporter to the
+  # OpenTelemetry collector. Required before Postgres 18, which the exporter does not
+  # support. Metrics change namespace from pg_* to ccp_*, and log shipping moves from the
+  # promtail sidecar to the collector.
+  pg_enable_otel = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].use_otel
+
+  # pgBackRest retention for this workspace, per cluster. The object-storage and
+  # PersistentVolume repositories are bounded differently; see variables.tf.
+  pg_retention_days        = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].backup_retention_days
+  pg_retention_full_matrix = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].matrix_backup_retention_full
+
+  # Major version upgrade state for this workspace (see variable "pg_upgrade").
+  pg_upgrade_cfg = lookup(var.pg_upgrade, terraform.workspace, null)
+
+  # Per-cluster resolution of the values a major version upgrade changes. Clusters not
+  # listed in pg_upgrade.clusters keep their pg_ixo/pg_matrix defaults, allowing an upgrade
+  # to be staged one cluster at a time. Version and image change only at cutover, which is
+  # what makes stages 1 and 2 reversible.
+  pg_upgrade_for = {
+    for c in [
+      { name = var.pg_ixo.pg_cluster_name, version = var.pg_ixo.pg_version, image_tag = var.pg_ixo.pg_image_tag, pgbackrest_image_tag = var.pg_ixo.pgbackrest_image_tag },
+      { name = var.pg_matrix.pg_cluster_name, version = var.pg_matrix.pg_version, image_tag = var.pg_matrix.pg_image_tag, pgbackrest_image_tag = var.pg_matrix.pgbackrest_image_tag },
+      ] : c.name => (
+      local.pg_upgrade_cfg != null && try(local.pg_upgrade_cfg.enabled, false) && contains(try(local.pg_upgrade_cfg.clusters, []), c.name)
+      ? {
+        pg_version           = local.pg_upgrade_cfg.cutover ? tostring(local.pg_upgrade_cfg.to_version) : c.version
+        pg_image_tag         = local.pg_upgrade_cfg.cutover ? local.pg_upgrade_cfg.postgres_image_tag : c.image_tag
+        pgbackrest_image_tag = local.pg_upgrade_cfg.cutover ? local.pg_upgrade_cfg.pgbackrest_image_tag : c.pgbackrest_image_tag
+        shutdown             = local.pg_upgrade_cfg.shutdown
+        upgrade = {
+          name            = "${c.name}-pg${local.pg_upgrade_cfg.from_version}-to-pg${local.pg_upgrade_cfg.to_version}"
+          from_version    = local.pg_upgrade_cfg.from_version
+          to_version      = local.pg_upgrade_cfg.to_version
+          transfer_method = local.pg_upgrade_cfg.transfer_method
+        }
+      }
+      : {
+        pg_version           = c.version
+        pg_image_tag         = c.image_tag
+        pgbackrest_image_tag = c.pgbackrest_image_tag
+        shutdown             = false
+        upgrade              = null
+      }
+    )
+  }
+
+  pg_users_usernames = [for user in var.pg_ixo.pg_users : user.username]
   pg_users_yaml = yamlencode(
     [
       for user in var.pg_ixo.pg_users : {

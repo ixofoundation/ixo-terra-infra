@@ -44,7 +44,7 @@ resource "kubernetes_config_map_v1" "promtail_postgres" {
                 - localhost
               labels:
                 job: ixo-postgres/ixo-postgres-promtail
-                __path__: /pgdata/*/log/postgresql*.log
+                __path__: /pgdata/logs/postgres/postgresql*.log
                 cluster: ixo
                 name: ixo-postgres-promtail
                 app_kubernetes_io_name: ixo-postgres-promtail
@@ -84,15 +84,55 @@ resource "kubectl_manifest" "cluster" {
       enable_pg_cron         = each.value.enable_pg_cron != null ? each.value.enable_pg_cron : false
       pg_cron_database       = each.value.pg_cron_database != null ? each.value.pg_cron_database : "postgres"
       enable_pgbouncer       = each.value.enable_pgbouncer != null ? each.value.enable_pgbouncer : false
+      enable_otel            = each.value.enable_otel != null ? each.value.enable_otel : false
+      shutdown               = each.value.shutdown != null ? each.value.shutdown : false
+      retention_full         = each.value.retention_full != null ? each.value.retention_full : 4
+      retention_type         = each.value.retention_type != null ? each.value.retention_type : "count"
+      gcs_repo2_bucket       = each.value.gcs_repo2_bucket != null ? each.value.gcs_repo2_bucket : ""
+      repo2_retention_type   = each.value.repo2_retention_type != null ? each.value.repo2_retention_type : "time"
+      repo2_retention_full   = each.value.repo2_retention_full != null ? each.value.repo2_retention_full : 365
+      upgrade_name           = try(each.value.upgrade.name, "")
       environment            = terraform.workspace
     }
   )
 }
 
+# Declarative major version upgrade. The operator takes no action until the referenced
+# cluster is shut down, so this may be created in advance. Removing it after a completed
+# upgrade does not revert the cluster.
+resource "kubectl_manifest" "pgupgrade" {
+  for_each = {
+    for cluster in var.clusters : cluster.pg_cluster_namespace => cluster
+    if cluster.upgrade != null
+  }
+  depends_on = [kubectl_manifest.cluster]
+  yaml_body = templatefile("${path.module}/crds/pgupgrade.yml",
+    {
+      upgrade_name    = each.value.upgrade.name
+      pg_namespace    = each.value.pg_cluster_namespace
+      pg_cluster_name = each.value.pg_cluster_name
+      from_version    = each.value.upgrade.from_version
+      to_version      = each.value.upgrade.to_version
+      transfer_method = each.value.upgrade.transfer_method
+      cpu_request     = each.value.upgrade.cpu_request
+      memory_request  = each.value.upgrade.memory_request
+      memory_limit    = each.value.upgrade.memory_limit
+    }
+  )
+}
+
 resource "time_sleep" "wait_for_secret" {
-  for_each        = { for cluster_key, cluster in var.clusters : cluster_key => yamldecode(cluster.pg_users) if cluster.pg_users != "" }
-  depends_on      = [kubectl_manifest.cluster]
-  create_duration = "5s"
+  for_each   = { for cluster_key, cluster in var.clusters : cluster_key => yamldecode(cluster.pg_users) if cluster.pg_users != "" }
+  depends_on = [kubectl_manifest.cluster]
+
+  # Recreated whenever the user list changes
+  triggers = {
+    users = sha1(jsonencode(each.value))
+  }
+
+  # The operator needs time to create the secret for a newly added user before the
+  # user_secret data sources below are read.
+  create_duration = "30s"
 }
 
 data "kubernetes_secret_v1" "user_secret" {

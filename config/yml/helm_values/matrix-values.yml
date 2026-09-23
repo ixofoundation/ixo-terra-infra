@@ -291,6 +291,13 @@ synapse:
   extraEnv:
     - name: GOOGLE_APPLICATION_CREDENTIALS
       value: /secrets/gcp/key.json
+    # jemalloc was TRIED AND REVERTED 2026-09-15 - do not re-add without re-measuring.
+    # The chart's command override bypasses the upstream entrypoint that normally sets
+    # LD_PRELOAD, so Synapse runs on glibc malloc. Forcing jemalloc did lower the
+    # baseline (~1050Mi -> ~550Mi) but made RSS far spikier: bursts to ~1.9Gi took the
+    # 2536Mi cgroup over and OOMKilled Synapse every 40-50 min, against every 1-2 days
+    # on glibc. Lower average, much worse tail - glibc retains and reuses freed arenas
+    # where jemalloc returns them and re-faults on the next burst.
   extraVolumes:
     - name: matrix-rooms
       configMap:
@@ -308,19 +315,47 @@ synapse:
       mountPath: /data/appservice/whatsapp
 %{endif}    - name: gcp-service-account-key
       mountPath: /secrets/gcp
-  extraCommands: # This is for backing up.
-    - 'apt-get update -yqq && apt-get install -yqq apt-transport-https ca-certificates gnupg curl zip'
-    - 'curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg'
-    - 'echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list'
-    - 'apt-get update -yqq && apt-get install -yqq google-cloud-cli'
-    - 'gcloud auth login --cred-file=$GOOGLE_APPLICATION_CREDENTIALS'
-    - 'nohup sh -c "while true; do cd /synapse && zip -r data.zip data && gsutil cp data.zip ${gcs_bucket_url}/matrix/$(date +\%Y\%m\%d)/ && rm -f data.zip; sleep 86400; done" &' # Every 24 hours.
+  # BACKUP DISABLED 2026-09-15 - do not re-enable in this form.
+  #
+  # In-container backup of the 59G media store does not fit beside Synapse in the 2536Mi
+  # cgroup, and OOMKills it. Measured on devnet: `apt-get install google-cloud-cli` peaks
+  # at ~1.1G, and `gsutil rsync` of /synapse/data drove the cgroup to its 2536Mi ceiling
+  # during its listing phase and killed Synapse. The previous `zip -r data.zip data` loop
+  # failed the same way - that was the original OOM this work started from.
+  #
+  # Last good backup: gs://ixofoundation-devnet-matrix/matrix/20260914/data.zip (62G,
+  # 2026-09-14T21:19Z). Dated zips remain under matrix/<date>/ until the 365d lifecycle.
+  #
+  # A working backup needs to run OUTSIDE this container. The ananace chart exposes no
+  # extraContainers hook, so that means a CronJob (PVC is RWO - needs node affinity or a
+  # volume snapshot) or moving Synapse to a chart that supports a sidecar, as every other
+  # matrix service already does via its `backup:` block + gcp-backups sidecar.
+  extraCommands: []
   resources:
+    # Keep request == limit: Vultr VKE nodes can spuriously OOM/NotReady at ~80-90%
+    # node memory, and an overcommitted limit is what lets them drift into that band.
+    # If Synapse needs more after the jemalloc fix, use a bigger node, not a higher limit.
     limits:
       memory: 2536Mi
     requests:
       cpu: 50m
       memory: 2536Mi
+  # Chart default is timeoutSeconds 1, so any I/O stall on the HDD-backed media PVC
+  # restarted a Synapse that was merely busy - a second restart path alongside the OOM.
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    timeoutSeconds: 5
+    periodSeconds: 15
+    failureThreshold: 5
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    timeoutSeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
 workers:
   federation_sender:
     enabled: false

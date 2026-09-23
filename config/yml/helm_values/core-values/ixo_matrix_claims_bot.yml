@@ -43,3 +43,5 @@ backup:
       memory: 600Mi
   gcs:
     bucket: ${gcs_bucket}
+verticalPodAutoscaler:
+  enabled: true

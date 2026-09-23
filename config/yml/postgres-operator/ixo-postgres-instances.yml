@@ -4,6 +4,7 @@
     labels:
       app.kubernetes.io/part-of: ixo
       app.kubernetes.io/name: ixo-postgres
+%{ if !enable_otel ~}
   containers:
     - name: promtail
       image: grafana/promtail:latest
@@ -13,6 +14,11 @@
       volumeMounts:
         - name: postgres-data
           mountPath: /pgdata
+        # Provided by spec.monitoring.pgmonitor.exporter.configuration, which projects
+        # promtail-config into this volume. It exists only while that block is set: the CRD
+        # offers no other way to mount a ConfigMap into an instance pod, as
+        # instances[].volumes.additional accepts only PVCs or OCI images. This sidecar is
+        # therefore omitted when the OpenTelemetry collector is used instead.
         - name: exporter-config
           readOnly: false
           mountPath: /conf
@@ -22,10 +28,7 @@
         requests:
           cpu: 50m
           memory: 128Mi
-  config:
-    files:
-      - configMap:
-          name: promtail-config
+%{ endif ~}
   resources:
     requests:
       cpu: 500m

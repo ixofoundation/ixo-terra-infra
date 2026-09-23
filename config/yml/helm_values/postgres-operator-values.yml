@@ -4,3 +4,12 @@ monitoring: true
 #     value: "InstanceSidecars=true"
 features:
   InstanceSidecars: true
+  # Required for Postgres 18 and above. The spec.monitoring.pgmonitor.exporter path ships
+  # query files only for Postgres 17 and below, and replicas fail to bootstrap against
+  # later versions. Enabling these gates has no effect on its own; a cluster uses the
+  # collector only once it sets spec.instrumentation.
+  OpenTelemetryMetrics: true
+  # Logs move together with metrics. Removing spec.monitoring also removes the
+  # exporter-config volume that the promtail sidecar reads its configuration from, so a
+  # cluster using the collector ships logs through it rather than through promtail.
+  OpenTelemetryLogs: true

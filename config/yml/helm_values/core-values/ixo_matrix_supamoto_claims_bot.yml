@@ -27,7 +27,7 @@ env:
     value: "8083"
 resources:
   requests:
-    memory: 100Mi
+    memory: 500Mi
     cpu: "40m"
   limits:
     memory: 650Mi
@@ -45,3 +45,5 @@ backup:
       memory: 256Mi
   gcs:
     bucket: ${gcs_bucket}
+verticalPodAutoscaler:
+  enabled: true

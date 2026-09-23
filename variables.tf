@@ -100,6 +100,21 @@ variable "environments" {
       dns_prefix    = optional(string)
       storage_class = optional(string)
       storage_size  = optional(string)
+      # postgres_operator_crunchydata only: run the OpenTelemetry collector instead of the
+      # pgmonitor exporter. Required before upgrading that environment to Postgres 18.
+      use_otel = optional(bool, false)
+      # Days of pgBackRest retention for the object-storage repositories (the core
+      # cluster's repo1 and the matrix cluster's repo2). Time-based, so the window does not
+      # depend on how many scheduled backups succeeded.
+      #
+      # Keep this below the bucket's lifecycle Delete age. pgBackRest expires only at the
+      # end of a backup run rather than on a timer, so an equal value can let lifecycle
+      # remove an object before the next run expires the backup that references it,
+      # leaving the repository listing backups whose data no longer exists.
+      backup_retention_days = optional(number, 350)
+      # The matrix cluster's repo1 is a fixed-size PersistentVolume, so it is bounded by a
+      # count of full backups rather than by age.
+      matrix_backup_retention_full = optional(number, 2)
     }))
   }))
 
@@ -152,13 +167,66 @@ variable "versions" {
   type        = map(string)
 }
 
+# Postgres major version upgrades, per workspace. pg_ixo and pg_matrix are global, so this
+# is what scopes an upgrade to a single environment.
+#
+# Applied in three stages, as pg_upgrade requires the cluster to be stopped:
+#   1. enabled = true                    creates the PGUpgrade object and the annotation
+#                                        consenting to it. The cluster stays available.
+#   2. shutdown = true                   stops the cluster and runs pg_upgrade. The cluster
+#                                        is unavailable until stage 3. Wait for the
+#                                        PGUpgrade status to report PGUpgradeCompleted.
+#   3. cutover = true, shutdown = false  restarts the cluster on the new major version.
+#
+# Reverting stages 1 and 2 restores the previous version, provided transfer_method is
+# "Copy", which leaves the old data directory intact.
+variable "pg_upgrade" {
+  description = "Per-workspace Postgres major version upgrade control. Omit a workspace for no upgrade."
+  type = map(object({
+    enabled              = optional(bool, false)
+    shutdown             = optional(bool, false)
+    cutover              = optional(bool, false)
+    from_version         = number
+    to_version           = number
+    postgres_image_tag   = string
+    pgbackrest_image_tag = string
+    transfer_method      = optional(string, "Copy")
+    # pg_cluster_name values in scope. Trim this to stage clusters one at a time.
+    clusters = list(string)
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for ws, cfg in var.pg_upgrade :
+      contains(["Clone", "Copy", "CopyFileRange", "Link"], cfg.transfer_method)
+    ])
+    error_message = "pg_upgrade.transfer_method must be one of: Clone, Copy, CopyFileRange, Link."
+  }
+
+  validation {
+    condition = alltrue([
+      for ws, cfg in var.pg_upgrade : cfg.to_version > cfg.from_version
+    ])
+    error_message = "pg_upgrade.to_version must be greater than from_version."
+  }
+
+  validation {
+    condition = alltrue([
+      for ws, cfg in var.pg_upgrade : cfg.enabled if cfg.shutdown || cfg.cutover
+    ])
+    error_message = "pg_upgrade.shutdown and cutover require enabled = true."
+  }
+}
+
 variable "gcp_project_ids" {
   description = "Project IDs for GCP"
   type        = map(string)
   default = {
-    devnet  = "devsecops-415617"
-    testnet = "devsecops-415617"
-    mainnet = "devsecops-415617"
+    devnet     = "devsecops-415617"
+    testnet    = "devsecops-415617"
+    mainnet    = "devsecops-415617"
+    devnet_aws = "devsecops-415617"
   }
 }
 

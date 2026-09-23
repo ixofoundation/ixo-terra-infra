@@ -1,3 +1,6 @@
+# repo1: a PersistentVolume in the same cluster as the database. Fast to write and
+# restore from, but not a durable copy, since it is lost with the cluster. Retention is
+# kept short because the volume is a fixed size.
 - name: repo1
   volume:
     volumeClaimSpec:
@@ -5,4 +8,13 @@
         - "ReadWriteOnce"
       resources:
         requests:
-          storage: 150Gi
+          storage: ${repo1_storage}
+  schedules:
+    full: "0 3 * * 0"          # offset from the ixo-postgres schedule (02:00)
+    differential: "0 3 * * 1-6"
+# repo2: object storage, providing a copy that survives loss of the cluster.
+- name: repo2
+  gcs:
+    bucket: ${gcs_bucket}
+  schedules:
+    full: "0 4 * * 0"          # after repo1, so the two runs do not overlap

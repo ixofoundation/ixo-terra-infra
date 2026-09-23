@@ -167,3 +167,5 @@ matrix-bridge-api:
       memory: 750Mi
     limits:
       memory: 1Gi
+verticalPodAutoscaler:
+  enabled: true

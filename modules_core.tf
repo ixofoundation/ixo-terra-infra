@@ -1383,6 +1383,87 @@ module "ixo_flow_manager_oracle" {
   }
 }
 
+module "ixo_diagnostic_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_diagnostic_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-diagnostic-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/diagnostic-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_diagnostic_oracle.yml",
+      {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_diagnostic_oracle"].use_eso
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_diagnostic_oracle"]
+        vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_diagnostic_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_diagnostic_oracle"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_diagnostic_oracle"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-diagnostic-oracle"
+  }
+}
+
+module "ixo_xero_oracle" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_xero_oracle"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-xero-oracle"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/xero-oracle-app"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_xero_oracle.yml",
+      {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_xero_oracle"].use_eso
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_xero_oracle"]
+        vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_xero_oracle"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_xero_oracle"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_xero_oracle"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-xero-oracle"
+  }
+}
+
+module "ixo_supamoto_3cx_server" {
+  count  = var.environments[terraform.workspace].application_configs["ixo_supamoto_3cx_server"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
+  application = {
+    name       = "ixo-supamoto-3cx-server"
+    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
+    repository = var.ixo_helm_chart_repository
+    path       = "charts/${terraform.workspace}/ixoworld/ixo-supamoto-3cx-server"
+    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_supamoto_3cx_server.yml",
+      {
+        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_supamoto_3cx_server"].use_eso
+        environment = terraform.workspace
+        host        = local.dns_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
+        vault_mount = local.vault_mount_path
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
+        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
+      }
+    )
+  }
+  create_kv        = var.environments[terraform.workspace].application_configs["ixo_supamoto_3cx_server"].create_kv
+  argo_namespace   = module.argocd.argo_namespace
+  vault_mount_path = local.vault_mount_path
+  image_updater = {
+    image = "ghcr.io/ixoworld/ixo-supamoto-3cx-server"
+  }
+}
+
 module "ixo_trading_bot_server" {
   count  = var.environments[terraform.workspace].application_configs["ixo_trading_bot_server"].enabled ? 1 : 0
   source = "./modules/argocd_application"

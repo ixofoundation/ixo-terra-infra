@@ -155,3 +155,27 @@ resource "vault_identity_group_alias" "devops" {
   mount_accessor = vault_jwt_auth_backend.oidc.accessor
   name           = "${var.org}:${terraform.workspace}-devsecops"
 }
+# Config Editors Team
+# Write access to non-sensitive app config (ixo_core/config/*) without read on
+# the sibling secret paths. Attaches via the group alias below, so members log
+# in with the default "reader" role and inherit this policy on top of it.
+resource "vault_policy" "config_editor" {
+  name   = "config-editor"
+  policy = file("${path.root}/config/vault/config_editor.hcl")
+}
+
+resource "vault_identity_group" "config_editors" {
+  name     = "ConfigEditors"
+  policies = [vault_policy.config_editor.name]
+  type     = "external"
+  metadata = {
+    organization = "ixofoundation"
+  }
+}
+
+resource "vault_identity_group_alias" "config_editors" {
+  depends_on     = [vault_auth_backend.kubernetes, vault_kubernetes_auth_backend_role.vault_argocd_role]
+  canonical_id   = vault_identity_group.config_editors.id
+  mount_accessor = vault_jwt_auth_backend.oidc.accessor
+  name           = "${var.org}:${terraform.workspace}-config"
+}

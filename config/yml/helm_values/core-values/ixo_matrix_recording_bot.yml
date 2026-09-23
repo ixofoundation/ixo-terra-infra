@@ -36,3 +36,5 @@ autoscaling:
 persistentVolume:
   storageClass: ${storage_class}
   size: ${storage_size}
+verticalPodAutoscaler:
+  enabled: true

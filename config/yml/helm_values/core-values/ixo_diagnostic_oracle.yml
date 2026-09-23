@@ -3,47 +3,46 @@ image:
 ingress:
   enabled: true
   className: nginx
-%{ if environment != "mainnet" ~}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     acme.cert-manager.io/http01-edit-in-place: "true"
   tls:
     - hosts:
         - ${host}
-      secretName: ixo-matrix-supamoto-bot-tls
-%{ endif ~}
+      secretName: ixo-diagnostic-oracle-tls
   hosts:
     - host: ${host}
       paths:
         - path: /
-          pathType: Prefix  
-persistentVolume:
-  storageClass: ${storage_class}
-  size: ${storage_size}
+          pathType: Prefix
 service:
-  port: 8084
+  port: 8081
+%{ if eso_enabled ~}
+externalSecret:
+  enabled: true
+  vaultPath: ixo-diagnostic-oracle
+%{ endif ~}
 env:
   - name: "PORT"
-    value: "8083"
+    value: "8081"
+  - name: "NODE_ENV"
+    value: "production"
 resources:
   requests:
-    memory: 500Mi
-    cpu: "40m"
+    memory: 350Mi
+    cpu: "50m"
   limits:
-    memory: 650Mi
+    memory: 450Mi
+podSecurityContext:
+  fsGroup: 1000
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
 autoscaling:
   enabled: true
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
-backup:
-  resources:
-    requests:
-      cpu: 10m
-      memory: 128Mi
-    limits:
-      memory: 256Mi
-  gcs:
-    bucket: ${gcs_bucket}
-verticalPodAutoscaler:
-  enabled: true
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}

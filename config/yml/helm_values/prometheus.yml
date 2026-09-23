@@ -155,9 +155,13 @@ prometheus:
           - role: pod
             selectors:
               - role: pod
-                label: postgres-operator.crunchydata.com/crunchy-postgres-exporter=true
+                # Selects on cluster membership rather than the exporter-specific label, so
+                # this job keeps working across the pgmonitor-exporter -> OTel-collector
+                # migration. Both serve Prometheus metrics on 9187, and the keep-rule below
+                # drops every pod that does not expose that port.
+                label: postgres-operator.crunchydata.com/cluster
         relabel_configs:
-          # Keep exporter port and drop all others
+          # Keep exporter/collector port and drop all others
           - source_labels: [ __meta_kubernetes_pod_container_port_number ]
             action: keep
             regex: 9187
@@ -332,6 +336,63 @@ prometheusOperator:
 additionalPrometheusRulesMap:
   ixo-infrastructure-rules:
     groups:
+      # The two metric namespaces are mutually exclusive: the OTel collector publishes
+      # pgMonitor's ccp_* series, the retired pgmonitor exporter published postgres_exporter's
+      # pg_* series. Rules are selected by the same flag that switches the clusters, so an
+      # environment never ends up with rules that silently match nothing.
+%{ if pg_enable_otel ~}
+      - name: ixo.postgres
+        rules:
+          - alert: PostgresInstanceDown
+            # Scrape health rather than a payload metric, so this survives future exporter
+            # changes and also fires when the collector itself is down.
+            expr: up{job="crunchy-postgres-exporter"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              name: PostgresInstanceDown
+            annotations:
+              summary: "{{ $labels.pod }} in {{ $labels.kubernetes_namespace }} is unreachable"
+
+          - alert: PostgresConnectionSaturation
+            # ccp_connection_stats is already per-instance (not per-database) and both series
+            # come from the same query, so the labels match without an explicit on() clause.
+            expr: |
+              ccp_connection_stats_total / ccp_connection_stats_max_connections > 0.80
+            for: 5m
+            labels:
+              severity: warning
+              name: PostgresConnectionSaturation
+            annotations:
+              summary: "{{ $labels.pod }} ({{ $labels.pg_cluster }}) connections at {{ $value | humanizePercentage }}"
+
+          - alert: PostgresLongRunningTransaction
+            # ccp_connection_stats has no datname label, so the old system-database filter is
+            # gone. Covers both a long-running query and a session parked idle in transaction,
+            # which together are what the old max_tx_duration series caught.
+            expr: |
+              ccp_connection_stats_max_query_time > 300
+                or ccp_connection_stats_max_idle_in_txn_time > 300
+            for: 2m
+            labels:
+              severity: warning
+              name: PostgresLongRunningTransaction
+            annotations:
+              summary: "{{ $labels.pod }} in {{ $labels.kubernetes_namespace }} has a transaction open for {{ $value | humanizeDuration }}"
+
+          - alert: PostgresReplicationLag
+            # replay_time is zero when last WAL received equals last WAL replayed, so this
+            # does not false-positive when the primary simply stops writing.
+            expr: ccp_replication_lag_replay_time{role="replica"} > 300
+            for: 5m
+            labels:
+              severity: warning
+              name: PostgresReplicationLag
+            annotations:
+              summary: "{{ $labels.pod }} ({{ $labels.pg_cluster }}) replica is {{ $value | humanizeDuration }} behind primary"
+%{ else ~}
+      # Legacy pgmonitor exporter rules. Kept verbatim for environments still on the
+      # exporter; they disappear the moment that environment sets use_otel.
       - name: ixo.postgres
         rules:
           - alert: PostgresInstanceDown
@@ -376,6 +437,7 @@ additionalPrometheusRulesMap:
               name: PostgresReplicationLag
             annotations:
               summary: "{{ $labels.pod }} ({{ $labels.pg_cluster }}) replica is {{ $value | humanizeDuration }} behind primary"
+%{ endif ~}
 
       - name: ixo.node
         rules:

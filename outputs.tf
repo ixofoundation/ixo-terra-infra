@@ -13,25 +13,25 @@ output "ixo_postgres_user_passwords" {
 }
 
 output "supamoto_tunnel_token" {
-  value     = module.cloudflare_supamoto_tunnel[0].tunnel_token
+  value     = try(module.cloudflare_supamoto_tunnel[0].tunnel_token, "")
   sensitive = true
 }
 
 output "digihub_tunnel_token" {
-  value     = module.cloudflare_digihub_tunnel[0].tunnel_token
+  value     = try(module.cloudflare_digihub_tunnel[0].tunnel_token, "")
   sensitive = true
 }
 
 # Hyperdrive config inputs for Cloudflare Workers → ixo-postgres (see cloudflare_workers_db_tunnel)
 output "workers_db_tunnel_hostname" {
-  value = module.cloudflare_workers_db_tunnel.postgres_hostname
+  value = try(module.cloudflare_workers_db_tunnel.postgres_hostname, "")
 }
 
 output "workers_db_tunnel_access_client_id" {
-  value = module.cloudflare_workers_db_tunnel.access_client_id
+  value = try(module.cloudflare_workers_db_tunnel.access_client_id, "")
 }
 
 output "workers_db_tunnel_access_client_secret" {
-  value     = module.cloudflare_workers_db_tunnel.access_client_secret
+  value     = try(module.cloudflare_workers_db_tunnel.access_client_secret, "")
   sensitive = true
 }

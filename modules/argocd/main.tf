@@ -8,7 +8,7 @@ terraform {
 
 module "argocd_release" {
   source  = "terraform-module/release/helm"
-  version = "2.8.1"
+  version = "2.9.1"
   app = {
     name         = "argocd"
     chart        = "argo-cd"

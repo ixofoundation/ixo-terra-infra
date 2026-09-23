@@ -46,7 +46,7 @@ versions = {
   descheduler                  = "0.35.1" # https://artifacthub.io/packages/helm/descheduler/descheduler
   vpa                          = "4.12.3" # https://artifacthub.io/packages/helm/fairwinds-stable/vpa (upstream VPA v1.6.0)
   hummingbot                   = "0.2.0"
-  uptime-kuma                  = "4.0.0" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
+  uptime-kuma                  = "4.1.0" # https://artifacthub.io/packages/helm/uptime-kuma/uptime-kuma
   chromadb                     = "0.2.2" # https://github.com/amikos-tech/chromadb-chart
   ghost                        = "25.0.4" # https://artifacthub.io/packages/helm/bitnami/ghost
   neo4j                        = "2026.3.1" # https://artifacthub.io/packages/helm/neo4j-helm-charts/neo4j
@@ -100,6 +100,13 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         storage_size = "210Gi"
+        # Run the OpenTelemetry collector instead of the pgmonitor exporter.
+        # Required before this environment can move to Postgres 18.
+        use_otel = true
+        # pgBackRest full backups to retain (fulls are weekly => ~4 weeks of PITR).
+        # Without this nothing ever expires and WAL is kept back to the oldest full.
+        backup_retention_days        = 350
+        matrix_backup_retention_full = 2
       }
       prometheus_stack = {
         enabled = true
@@ -662,6 +669,33 @@ environments = {
         storage_class = "fast"
         storage_size = "10Gi"
       }
+      ixo_diagnostic_oracle = {
+        enabled = false
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "diagnostic"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_xero_oracle = {
+        enabled = false
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "xero"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_supamoto_3cx_server = {
+        enabled = false
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "3cx"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
       ixo_kyc_oracle = {
         enabled = false
         create_kv = true
@@ -772,6 +806,13 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         storage_size = "210Gi"
+        # Run the OpenTelemetry collector instead of the pgmonitor exporter.
+        # Required before this environment can move to Postgres 18.
+        use_otel = true
+        # pgBackRest full backups to retain (fulls are weekly => ~4 weeks of PITR).
+        # Without this nothing ever expires and WAL is kept back to the oldest full.
+        backup_retention_days        = 350
+        matrix_backup_retention_full = 2
       }
       prometheus_stack = {
         enabled = true
@@ -1335,6 +1376,33 @@ environments = {
         storage_class = "fast"
         storage_size = "10Gi"
       }
+      ixo_diagnostic_oracle = {
+        enabled = false
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "diagnostic"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_xero_oracle = {
+        enabled = false
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "xero"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_supamoto_3cx_server = {
+        enabled = true
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "3cx"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
       ixo_kyc_oracle = {
         enabled = true
         create_kv = true
@@ -1457,6 +1525,12 @@ environments = {
         create_kv = false
         domain = "ixoworld"
         storage_size = "300Gi"
+        # Run the OpenTelemetry collector instead of the pgmonitor exporter.
+        # Required before this environment can move to Postgres 18.
+        use_otel = true
+        # pgBackRest retention. See variables.tf.
+        backup_retention_days        = 350
+        matrix_backup_retention_full = 2
       }
       prometheus_stack = {
         enabled = true
@@ -1569,7 +1643,7 @@ environments = {
         enabled = true
         create_kv = false
         domain = "ixoworld"
-        dns_endpoint = "status.mainnet.ixo.world"
+        dns_endpoint = "status.ixo.world"
       }
       chromadb = {
         enabled = false
@@ -2050,6 +2124,33 @@ environments = {
         storage_class = "fast"
         storage_size = "10Gi"
       }
+      ixo_diagnostic_oracle = {
+        enabled = true
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "diagnostic"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_xero_oracle = {
+        enabled = true
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "xero"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
+      ixo_supamoto_3cx_server = {
+        enabled = true
+        create_kv = true
+        use_eso = true
+        domain = "ixoearth"
+        dns_prefix = "3cx"
+        storage_class = "fast"
+        storage_size = "10Gi"
+      }
       ixo_kyc_oracle = {
         enabled = true
         create_kv = true
@@ -2286,6 +2387,14 @@ pg_ixo = {
     { // 23
       username = "feegrant-nest"
       databases = ["feegrant-nest"]
+    },
+    { // 24
+      username = "eval-engine"
+      databases = ["eval-engine"]
+    },
+    { // 25
+      username = "3cx-server"
+      databases = ["3cx-server"]
     }
   ]
   pg_version             = 15
@@ -2293,6 +2402,65 @@ pg_ixo = {
   pgbackrest_image_tag   = "ubi8-2.47-2"
   pgmonitoring_image     = "registry.developers.crunchydata.com/crunchydata/crunchy-postgres-exporter"
   pgmonitoring_image_tag = "ubi8-5.5.0-0"
+}
+
+# Postgres major version upgrades, per workspace. See variable "pg_upgrade" in variables.tf
+# for the staged sequence. Omitting a workspace means no upgrade is configured there.
+#
+# Image tags must match those the running operator resolves; read them from the pgo
+# Deployment's RELATED_IMAGE_POSTGRES_* and RELATED_IMAGE_PGBACKREST environment variables,
+# and re-read them whenever the operator is upgraded.
+pg_upgrade = {
+  devnet = {
+    enabled  = true
+    shutdown = false
+    cutover  = true
+
+    from_version         = 15
+    to_version           = 18
+    postgres_image_tag   = "ubi9-18.3-2610"
+    pgbackrest_image_tag = "ubi9-2.58.0-2610"
+
+    transfer_method = "Copy"
+
+    clusters = ["synapse", "ixo-postgres"]
+  }
+
+  testnet = {
+    enabled  = true
+    shutdown = false
+    cutover  = true
+
+    from_version         = 15
+    to_version           = 18
+    postgres_image_tag   = "ubi9-18.3-2610"
+    pgbackrest_image_tag = "ubi9-2.58.0-2610"
+
+    transfer_method = "Copy"
+
+    clusters = ["synapse", "ixo-postgres"]
+  }
+
+  # Preconditions before setting shutdown = true:
+  #   - use_otel applied, with ccp_* metrics served on 9187 and logs reaching Loki
+  #   - a current full backup on both clusters
+  #   - enough free space on each data volume for both major versions plus WAL growth,
+  #     since transfer_method = "Copy" retains the old data directory. Remove it after
+  #     cutover and confirm WAL archiving is succeeding, or the volume will fill.
+  mainnet = {
+    enabled  = true
+    shutdown = false
+    cutover  = true
+
+    from_version         = 15
+    to_version           = 18
+    postgres_image_tag   = "ubi9-18.3-2610"
+    pgbackrest_image_tag = "ubi9-2.58.0-2610"
+
+    transfer_method = "Copy"
+
+    clusters = ["synapse", "ixo-postgres"]
+  }
 }
 
 additional_prometheus_scrape_metrics = {

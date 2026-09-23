@@ -72,6 +72,12 @@ GRANT CREATE ON SCHEMA "public" TO "ussd-supamoto";
 \c 'feegrant-nest'
 GRANT CREATE ON SCHEMA "public" TO "feegrant-nest";
 
+\c 'eval-engine'
+GRANT CREATE ON SCHEMA "public" TO "eval-engine";
+
+\c '3cx-server'
+GRANT CREATE ON SCHEMA "public" TO "3cx-server";
+
 -- Read-only role for ixo-blocksync-api's optional "core" pg service (the
 -- `coreEventCores` connection) and other raw-chain-event consumers
 -- (domain-indexer, billing engine, email-notifier). Codified here so a

@@ -53,7 +53,7 @@ provider "kubectl" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     config_path = module.kubernetes_cluster.kubeconfig_path
   }
 }
@@ -316,7 +316,11 @@ resource "google_storage_bucket" "postgres_backups" {
       storage_class = "ARCHIVE"
     }
     condition {
-      age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
+      # Objects are COLDLINE from creation via the bucket's default storage class; this
+      # moves them to ARCHIVE once they are unlikely to be read. Note ARCHIVE's 365-day
+      # minimum duration starts at the transition, not at object creation, so objects
+      # removed by the Delete rule above are billed for the remainder of that minimum.
+      age = 60
     }
   }
 }

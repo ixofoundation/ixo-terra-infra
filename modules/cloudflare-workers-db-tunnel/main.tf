@@ -28,6 +28,13 @@ resource "cloudflare_tunnel" "workers_db" {
   account_id = var.cloudflare_account_id
   name       = "${var.name}-postgres-${var.environment}"
   secret     = random_id.tunnel_secret.b64_std
+
+  # The API never returns the secret, so an imported tunnel has an empty one in
+  # state. Without this, the diff against random_id would force-replace a live
+  # tunnel (new id, new token, new CNAME) purely as an import artefact.
+  lifecycle {
+    ignore_changes = [secret]
+  }
 }
 
 resource "cloudflare_tunnel_config" "workers_db" {
