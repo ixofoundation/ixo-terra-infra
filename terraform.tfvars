@@ -103,9 +103,13 @@ environments = {
         # Run the OpenTelemetry collector instead of the pgmonitor exporter.
         # Required before this environment can move to Postgres 18.
         use_otel = true
-        # pgBackRest full backups to retain (fulls are weekly => ~4 weeks of PITR).
-        # Without this nothing ever expires and WAL is kept back to the oldest full.
-        backup_retention_days        = 350
+        # Patroni synchronous_mode on ixo-postgres (see variables.tf). Rolled out here
+        # first; promote to testnet and mainnet once a failover here loses no acked writes.
+        enable_sync_replication = true
+        # pgBackRest retention in days on the object-storage repos (ixo-postgres repo1,
+        # matrix repo2). Devnet keeps ~4 weekly fulls of PITR rather than the 350 days
+        # testnet/mainnet keep, which a dev environment does not need.
+        backup_retention_days        = 30
         matrix_backup_retention_full = 2
       }
       prometheus_stack = {
@@ -171,6 +175,7 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "devmx.ixo.earth"
+        storage_size = "100Gi"
       }
       matrix_admin = {
         enabled = true
@@ -230,7 +235,7 @@ environments = {
         domain = "ixoearth"
       }
       neo4j = {
-        enabled = true
+        enabled = false
         create_kv = false
         domain = "ixoearth"
         dns_prefix = "neo4j"
@@ -326,7 +331,7 @@ environments = {
         dns_prefix = "faucet"
       }
       ixo_matrix_state_bot = {
-        enabled = true
+        enabled = false # decommissioned devnet 2026-09-23
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "state.bot.devmx.ixo.earth"
@@ -550,7 +555,7 @@ environments = {
         dns_prefix = "firecrawl"
       }
       ixo_matrix_bids_bot = {
-        enabled = true
+        enabled = false # decommissioned devnet 2026-09-23
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "bid.bot.devmx.ixo.earth"
@@ -587,7 +592,7 @@ environments = {
         storage_size = "10Gi"
       }
       ixo_matrix_claims_bot = {
-        enabled = true
+        enabled = false # decommissioned devnet 2026-09-23
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "claim.bot.devmx.ixo.earth"
@@ -742,7 +747,7 @@ environments = {
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
-        enabled = true
+        enabled = false
         create_kv = true
         use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
@@ -809,6 +814,9 @@ environments = {
         # Run the OpenTelemetry collector instead of the pgmonitor exporter.
         # Required before this environment can move to Postgres 18.
         use_otel = true
+        # Patroni synchronous_mode on ixo-postgres (see variables.tf). Requires a healthy
+        # streaming standby; check patronictl list before enabling in a new environment.
+        enable_sync_replication = true
         # pgBackRest full backups to retain (fulls are weekly => ~4 weeks of PITR).
         # Without this nothing ever expires and WAL is kept back to the oldest full.
         backup_retention_days        = 350
@@ -877,6 +885,7 @@ environments = {
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "testmx.ixo.earth"
+        storage_size = "150Gi" # resized by hand from 100Gi; a PVC can only grow
       }
       matrix_admin = {
         enabled = true
@@ -936,7 +945,7 @@ environments = {
         domain = "ixoearth"
       }
       neo4j = {
-        enabled = true
+        enabled = false
         create_kv = false
         domain = "ixoearth"
         dns_prefix = "neo4j"
@@ -1031,7 +1040,7 @@ environments = {
         dns_prefix = "faucet"
       }
       ixo_matrix_state_bot = {
-        enabled = true
+        enabled = false # decommissioned testnet 2026-09-23
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "state.bot.testmx.ixo.earth"
@@ -1262,7 +1271,7 @@ environments = {
         dns_prefix = "firecrawl"
       }
       ixo_matrix_bids_bot = {
-        enabled = true
+        enabled = false # decommissioned testnet 2026-09-23
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "bid.bot.testmx.ixo.earth"
@@ -1299,7 +1308,7 @@ environments = {
         storage_size = "10Gi"
       }
       ixo_matrix_claims_bot = {
-        enabled = true
+        enabled = false # decommissioned testnet 2026-09-23
         create_kv = false
         domain = "ixoearth"
         dns_endpoint = "claim.bot.testmx.ixo.earth"
@@ -1454,7 +1463,7 @@ environments = {
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
-        enabled = true
+        enabled = false
         create_kv = true
         use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"
@@ -1528,6 +1537,9 @@ environments = {
         # Run the OpenTelemetry collector instead of the pgmonitor exporter.
         # Required before this environment can move to Postgres 18.
         use_otel = true
+        # Patroni synchronous_mode on ixo-postgres (see variables.tf). Requires a healthy
+        # streaming standby; check patronictl list before enabling in a new environment.
+        enable_sync_replication = true
         # pgBackRest retention. See variables.tf.
         backup_retention_days        = 350
         matrix_backup_retention_full = 2
@@ -1595,6 +1607,7 @@ environments = {
         create_kv = false
         domain = "ixoworld"
         dns_endpoint = "mx.ixo.earth"
+        storage_size = "100Gi"
       }
       matrix_admin = {
         enabled = true
@@ -1657,7 +1670,7 @@ environments = {
         dns_prefix = "impacts"
       }
       neo4j = {
-        enabled = true
+        enabled = false
         create_kv = false
         domain = "ixoearth"
         dns_prefix = "neo4j"
@@ -1751,7 +1764,7 @@ environments = {
         dns_endpoint = "faucet2.mainnetkb.ixo.earth"
       }
       ixo_matrix_state_bot = {
-        enabled = true
+        enabled = false # decommissioned mainnet 2026-09-23
         create_kv = false
         domain = "ixoworld"
         dns_endpoint = "state.bot.mx.ixo.earth"
@@ -1964,7 +1977,7 @@ environments = {
         domain = "ixoearth"
       }
       ixo_matrix_bids_bot = {
-        enabled = true
+        enabled = false # decommissioned mainnet 2026-09-23
         create_kv = false
         domain = "ixoworld"
         dns_endpoint = "bid.bot.mx.ixo.earth"
@@ -2042,7 +2055,7 @@ environments = {
         storage_size = "40Gi"
       }
       ixo_matrix_claims_bot = {
-        enabled = true
+        enabled = false # decommissioned mainnet 2026-09-23
         create_kv = false
         domain = "ixoworld"
         dns_endpoint = "claim.bot.mx.ixo.earth"
@@ -2202,7 +2215,7 @@ environments = {
         dns_prefix = "memory-engine"
       }
       ixo_companion = {
-        enabled = true
+        enabled = false
         create_kv = true
         use_eso = true # env secrets via external-secrets-operator
         domain = "ixoearth"

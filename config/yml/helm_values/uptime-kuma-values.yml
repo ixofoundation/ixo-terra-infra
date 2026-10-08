@@ -3,6 +3,14 @@ useDeploy: true
 image:
   tag: "2.4.0"
 
+podEnv:
+  # Switches the SQLite knex pool from a single forced connection to WAL-mode
+  # multi-connection (max 20), so the nightly clear-old-data job no longer
+  # holds the only DB connection and starves monitor checks / the liveness
+  # probe's own DB read. Known upstream issue: louislam/uptime-kuma#2470, #6486.
+  - name: UPTIME_KUMA_SQLITE_SINGLE_CONNECTION
+    value: "false"
+
 livenessProbe:
   enabled: true # Disable for initial DB setup
 

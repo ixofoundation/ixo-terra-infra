@@ -290,9 +290,6 @@ resource "aws_iam_openid_connect_provider" "github_oidc" {
 }
 
 resource "google_storage_bucket" "postgres_backups" {
-  lifecycle {
-    ignore_changes = [lifecycle_rule]
-  }
   count         = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enabled ? 1 : 0
   location      = "US"
   name          = "${var.org}-${terraform.workspace}-core-postgres"
@@ -323,6 +320,29 @@ resource "google_storage_bucket" "postgres_backups" {
       age = 60
     }
   }
+
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+    condition {
+      # Catches anything uploaded with an explicit class instead of the bucket default.
+      matches_storage_class = ["STANDARD", "NEARLINE"]
+    }
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      # pgBackRest expire deletes files, which versioning then keeps as noncurrent
+      # versions. See the matrix bucket for why ARCHIVE is excluded.
+      days_since_noncurrent_time = 7
+      matches_storage_class      = ["STANDARD", "NEARLINE", "COLDLINE"]
+    }
+  }
 }
 
 resource "google_storage_bucket" "matrix_backups" {
@@ -349,12 +369,35 @@ resource "google_storage_bucket" "matrix_backups" {
       storage_class = "ARCHIVE"
     }
     condition {
-      age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
+      age = 60 # Objects older than 60 days will be moved to ARCHIVE storage class to save on costs.
     }
   }
 
-  lifecycle {
-    ignore_changes = [lifecycle_rule]
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+    condition {
+      # Catches anything uploaded with an explicit class instead of the bucket default.
+      matches_storage_class = ["STANDARD", "NEARLINE"]
+    }
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      # Versioning keeps every overwritten or deleted object as a noncurrent version, and
+      # nothing removed them: the old in-container Synapse zip backup re-uploaded the
+      # day's zip on every OOM restart, leaving ~20TB of noncurrent versions across the
+      # matrix buckets. Seven days still covers an accidental overwrite. ARCHIVE is
+      # excluded because its 365-day minimum is billed whether it is deleted early or not,
+      # so deleting it early would lose the copy and save nothing.
+      days_since_noncurrent_time = 7
+      matches_storage_class      = ["STANDARD", "NEARLINE", "COLDLINE"]
+    }
   }
 }
 
@@ -382,12 +425,19 @@ resource "google_storage_bucket" "supamoto_backups" {
       storage_class = "ARCHIVE"
     }
     condition {
-      age = 60 # Objects older than 60 days will be moved to NEARLINE storage class to save on costs.
+      age = 60 # Objects older than 60 days will be moved to ARCHIVE storage class to save on costs.
     }
   }
 
-  lifecycle {
-    ignore_changes = [lifecycle_rule]
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      # See the matrix bucket for why noncurrent versions are expired and ARCHIVE is not.
+      days_since_noncurrent_time = 7
+      matches_storage_class      = ["STANDARD", "NEARLINE", "COLDLINE"]
+    }
   }
 }
 

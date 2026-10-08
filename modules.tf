@@ -573,6 +573,7 @@ module "matrix" {
         app_name                = "matrix"
         gcs_bucket_url          = google_storage_bucket.matrix_backups[0].url
         storage_class           = var.storage_classes["bulk"]
+        media_storage_size      = coalesce(local.storage_size_for_environment[terraform.workspace]["matrix"], "100Gi")
         livekit_host            = local.dns_for_environment[terraform.workspace]["matrix_livekit"]
         matrix_whatsapp_enabled = var.environments[terraform.workspace].application_configs["ixo_matrix_whatsapp"].enabled
       }
@@ -649,6 +650,16 @@ resource "kubectl_manifest" "matrix_media_backup" {
                     - --checkers=8
                     - --buffer-size=0
                     - --use-mmap
+                    # Without this, rclone walks the GCS destination directory-by-directory
+                    # (one List call per directory via the delimiter API), and Synapse's
+                    # content-addressed media store nests almost 1 directory per file - this
+                    # was costing ~1 GCS List call per object in the tree (63,824 calls for
+                    # 61,829 objects, measured on devnet 2026-10-06). --fast-list switches to
+                    # a single flat, paginated listing instead (~1 call per 1,000 objects),
+                    # at the cost of holding that listing in memory for the run - negligible
+                    # at this media store's size; revisit the memory limit below if it grows
+                    # by orders of magnitude.
+                    - --fast-list
                     - --stats=5m
                     - --stats-one-line
                     # Without this the job logs literally one line and you cannot tell
@@ -944,10 +955,12 @@ module "postgres-operator" { # Sets up Cluster Instances
       pg_cron_database       = "firecrawl"
       enable_pgbouncer       = true
       enable_otel            = local.pg_enable_otel
-      retention_full         = local.pg_retention_days
-      retention_type         = "time"
-      shutdown               = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].shutdown
-      upgrade                = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].upgrade
+      # Only this cluster: the matrix cluster runs a single instance and has no standby.
+      enable_sync_replication = local.pg_enable_sync_replication
+      retention_full          = local.pg_retention_days
+      retention_type          = "time"
+      shutdown                = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].shutdown
+      upgrade                 = local.pg_upgrade_for[var.pg_ixo.pg_cluster_name].upgrade
     }
   ]
   gcs_key = file("${path.root}/credentials.json")

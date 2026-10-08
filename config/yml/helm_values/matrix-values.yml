@@ -193,7 +193,9 @@ persistence:
 #  storageClass: "nfs"
   storageClass: ${storage_class}
   accessMode: ReadWriteOnce
-  size: 100Gi
+  # Per environment (application_configs.matrix.storage_size). Must never be set below the
+  # live PVC: Kubernetes refuses to shrink one, and ArgoCD then fails every sync of this app.
+  size: ${media_storage_size}
 
 ## Configuration for the main Synapse service.
 ## To use TLS inside Synapse itself, add an TLS listener, and change the ports

@@ -247,6 +247,11 @@ locals {
   # promtail sidecar to the collector.
   pg_enable_otel = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].use_otel
 
+  # Patroni synchronous_mode on the core cluster in this workspace. Applied to ixo-postgres
+  # only: the matrix cluster runs a single instance, so it has no standby to synchronise
+  # with. See variables.tf for the trade-off and the precondition.
+  pg_enable_sync_replication = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enable_sync_replication
+
   # pgBackRest retention for this workspace, per cluster. The object-storage and
   # PersistentVolume repositories are bounded differently; see variables.tf.
   pg_retention_days        = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].backup_retention_days

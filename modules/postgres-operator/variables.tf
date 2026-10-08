@@ -24,6 +24,20 @@ variable "clusters" {
       # OpenTelemetryLogs feature gates on the operator.
       enable_otel = optional(bool, false)
 
+      # How often the ccp_backrest_* metrics (pgbackrest backup/archive status) are
+      # collected, when enable_otel is true. The operator's own built-in default is 5s,
+      # which calls `pgbackrest info` - a full GCS repo listing - every 5 seconds per
+      # instance with no caching. Backup status cannot change faster than backups run
+      # (weekly full, daily diff), so this is overridden to a much longer interval. See
+      # crds/cluster.yml and crds/pgbackrest-metrics-queries.yaml.
+      pgbackrest_metrics_interval = optional(string, "300s")
+
+      # Patroni synchronous_mode (non-strict). Only meaningful on a cluster with at least
+      # one standby; a single-instance cluster degrades to asynchronous either way. See the
+      # root variables.tf for the trade-off. failsafe_mode is set unconditionally in
+      # crds/cluster.yml and is not gated by this.
+      enable_sync_replication = optional(bool, false)
+
       # pgBackRest repo1 retention. type "time" makes retention_full a number of DAYS
       # (predictable even when a scheduled full fails); "count" makes it a number of full
       # backups. Expiry is permanent and runs at the end of a backup.

@@ -254,7 +254,12 @@ grafana:
   deploymentStrategy:
     type: Recreate
   livenessProbe:
-    initialDelaySeconds: 60
+    # The annotation dashboard_uid migration runs before the HTTP server starts listening
+    # and takes ~2 minutes against the bulk (HDD) volume; with max_open_conn=1 below,
+    # everything else queues behind it. At 60s the probe killed Grafana mid-migration and
+    # it never got far enough to serve /api/health. Must stay comfortably above that scan.
+    initialDelaySeconds: 300
+    failureThreshold: 10
   readinessProbe:
     initialDelaySeconds: 60
   persistence:
@@ -271,6 +276,20 @@ grafana:
       wal: true
       cache_mode: shared
       migration_locking: false
+      # Serialise all SQLite access onto a single connection. Grafana 12.4.3 runs the
+      # batched annotation dashboard_uid migration in the background while the dashboard
+      # sidecar provisions dashboards; with more than one connection those writes contend,
+      # the transaction retries run out and Grafana shuts itself down on migration error,
+      # which crash-loops indefinitely (grafana/grafana#115875). The DB lives on the bulk
+      # (HDD) storage class, so each lock is held long enough to make this likely.
+      # Verified on devnet 2026-09-23: with one connection the migration completes and
+      # SQLITE_BUSY disappears entirely.
+      max_open_conn: 1
+      max_idle_conn: 1
+      # Retries alone do NOT fix the above — they are spaced ~10ms apart, so even 50 of
+      # them span only ~0.5s while the lock is held for minutes. Kept as cheap insurance.
+      query_retries: 25
+      transaction_retries: 50
     auth.generic_oauth:
       client_id: grafana-client
       client_secret: $__env{CLIENT_SECRET}

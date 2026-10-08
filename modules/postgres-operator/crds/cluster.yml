@@ -41,6 +41,26 @@ spec:
         memory: 128Mi
       limits:
         memory: 256Mi
+    metrics:
+      customQueries:
+        # Drops the operator's built-in 5s pgbackrest-info query (removing every one of its
+        # metric_names removes the query itself) and re-adds the same metrics via the
+        # ConfigMap below at pgbackrest_metrics_interval. See that ConfigMap for why.
+        remove:
+          - ccp_backrest_last_diff_backup_time_since_completion_seconds
+          - ccp_backrest_last_full_backup_time_since_completion_seconds
+          - ccp_backrest_last_incr_backup_time_since_completion_seconds
+          - ccp_backrest_last_info_backrest_repo_version
+          - ccp_backrest_last_info_backup_error
+          - ccp_backrest_last_info_backup_runtime_seconds
+          - ccp_backrest_last_info_repo_backup_size_bytes
+          - ccp_backrest_oldest_full_backup_time_seconds
+        add:
+          - name: pgbackrest-info-slow
+            queries:
+              name: ${pg_cluster_name}-pgbackrest-metrics-queries
+              key: queries.yaml
+            collectionInterval: ${pgbackrest_metrics_interval}
 %{ else ~}
   monitoring:
     pgmonitor:
@@ -84,6 +104,20 @@ spec:
     name: ${pg_cluster_name}-init-sql
   patroni:
     dynamicConfiguration:
+      # Keep the leader role through a loss of the DCS (the Kubernetes API) for as long as
+      # the leader can still reach every other member over Patroni's REST API. Without it a
+      # failed lease renewal on its own demotes a healthy primary, which is what triggered
+      # all four mainnet failovers between 2026-08-26 and 2026-09-25 ("demoting self
+      # because DCS is not accessible" / "failed to update leader lock in DCS"). A real
+      # node-network partition still demotes, which is the wanted behaviour.
+      failsafe_mode: true
+%{ if enable_sync_replication ~}
+      # Non-strict: when no standby is healthy Patroni clears synchronous_standby_names and
+      # commits fall back to asynchronous, so a dead replica never blocks writes. While a
+      # standby is streaming, a commit is acknowledged only after the standby has the WAL,
+      # so a failover cannot lose an acknowledged write.
+      synchronous_mode: true
+%{ endif ~}
       postgresql:
         parameters:
 %{ if enable_pg_cron ~}

@@ -103,6 +103,17 @@ variable "environments" {
       # postgres_operator_crunchydata only: run the OpenTelemetry collector instead of the
       # pgmonitor exporter. Required before upgrading that environment to Postgres 18.
       use_otel = optional(bool, false)
+      # postgres_operator_crunchydata only: Patroni synchronous_mode on the core cluster.
+      # A commit is acknowledged only once the standby has the WAL, so a failover cannot
+      # lose an acknowledged write — the failure mode behind the Sep 20 and Sep 25 2026
+      # mainnet split-brains, where the primary kept committing locally after replication
+      # was severed. Non-strict, so a dead or absent standby degrades to asynchronous
+      # rather than blocking writes.
+      #
+      # Costs one intra-cluster round trip per commit; blocksync-core catch-up (~10
+      # blocks/s) is the workload that feels it. Requires a healthy streaming standby, so
+      # enable it per environment only after `patronictl list` shows one.
+      enable_sync_replication = optional(bool, false)
       # Days of pgBackRest retention for the object-storage repositories (the core
       # cluster's repo1 and the matrix cluster's repo2). Time-based, so the window does not
       # depend on how many scheduled backups succeeded.

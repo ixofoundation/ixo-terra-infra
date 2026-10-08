@@ -1,0 +1,72 @@
+# Re-declares the 8 ccp_backrest_* metrics the operator bundles at a 5s collection
+# interval (internal/collector/postgres_5s_metrics.yaml in CrunchyData/postgres-operator),
+# verbatim except for the interval. Paired with instrumentation.metrics.customQueries.remove
+# in cluster.yml, which drops the built-in 5s version once every one of its metric_names is
+# removed (confirmed in the operator's removeMetricsFromQueries()).
+#
+# Why: get_pgbackrest_info() shells out to `pgbackrest info --output=json`, which lists the
+# whole GCS repo (backup set + archive history) to build its JSON - no caching, no throttle.
+# At 5s/cluster/instance this was ~10M GCS ListObjects calls/week across the 6 postgres/matrix
+# buckets (3 envs), the dominant driver of the Cloud Storage bill. Backup status does not
+# change faster than backups run (weekly full, daily diff), so 5 minutes is more than enough
+# for the "no backup in N days" alerting these metrics exist for.
+- sql: |
+    SELECT * FROM get_pgbackrest_info();
+  metrics:
+    - metric_name: ccp_backrest_last_diff_backup_time_since_completion_seconds
+      description: Seconds since the last completed full or differential backup. Differential is always based off last full.
+      value_column: last_diff_backup
+      attribute_columns: ["repo"]
+      static_attributes:
+        server: "localhost:5432"
+        stanza: "db"
+    - metric_name: ccp_backrest_last_full_backup_time_since_completion_seconds
+      description: Seconds since the last completed full backup
+      value_column: last_full_backup
+      attribute_columns: ["repo"]
+      static_attributes:
+        server: "localhost:5432"
+        stanza: "db"
+    - metric_name: ccp_backrest_last_incr_backup_time_since_completion_seconds
+      description: |
+        Seconds since the last completed full, differential or incremental backup.
+        Incremental is always based off last full or differential.
+      value_column: last_incr_backup
+      attribute_columns: ["repo"]
+      static_attributes:
+        server: "localhost:5432"
+        stanza: "db"
+    - metric_name: ccp_backrest_last_info_backrest_repo_version
+      description: pgBackRest version number when this backup was performed
+      value_column: last_info_backrest_repo_version
+      attribute_columns: ["backup_type", "repo"]
+      static_attributes:
+        server: "localhost:5432"
+        stanza: "db"
+    - metric_name: ccp_backrest_last_info_backup_error
+      description: An error has been encountered in the backup. Check logs for more information.
+      value_column: last_info_backup_error
+      attribute_columns: ["backup_type", "repo"]
+      static_attributes:
+        server: "localhost:5432"
+        stanza: "db"
+    - metric_name: ccp_backrest_last_info_backup_runtime_seconds
+      description: Total runtime in seconds of this backup
+      value_column: backup_runtime_seconds
+      attribute_columns: ["backup_type", "repo"]
+      static_attributes:
+        server: "localhost:5432"
+        stanza: "db"
+    - metric_name: ccp_backrest_last_info_repo_backup_size_bytes
+      description: Actual size of only this individual backup in the pgbackrest repository
+      value_column: repo_backup_size_bytes
+      attribute_columns: ["backup_type", "repo"]
+      static_attributes:
+        server: "localhost:5432"
+        stanza: "db"
+    - metric_name: ccp_backrest_oldest_full_backup_time_seconds
+      description: Seconds since the oldest completed full backup
+      value_column: oldest_full_backup
+      attribute_columns: ["repo"]
+      static_attributes:
+        server: "localhost:5432"
