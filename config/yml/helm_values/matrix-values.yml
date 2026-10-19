@@ -136,6 +136,8 @@ extraConfig:
     msc3266_enabled: true
     # MSC4222 needed for syncv2 state_after. This allow clients to correctly track the state of the room.
     msc4222_enabled: true
+    msc2697_enabled:  true
+    msc3814_enabled: true
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##

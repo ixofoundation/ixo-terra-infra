@@ -1607,7 +1607,7 @@ environments = {
         create_kv = false
         domain = "ixoworld"
         dns_endpoint = "mx.ixo.earth"
-        storage_size = "100Gi"
+        storage_size = "150Gi"
       }
       matrix_admin = {
         enabled = true
