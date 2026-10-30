@@ -47,6 +47,32 @@ apps:
     team_id: 22SU8P8XG8
     topic: com.ixo.mobilerelease
     send_badge_counts: false
+  # Stage builds (bundle id com.ixo.mobilerelease.stage) — the APNs topic is the bundle id, so
+  # they need their own pushkin. The `.dev` ids are what Xcode device builds register (signed
+  # for the development APNs): same key, sandbox environment.
+  com.ixo.mobilerelease.stage:
+    type: apns
+    keyfile: /secrets/AuthKey_G73NBYKQL3.p8
+    key_id: G73NBYKQL3
+    team_id: 22SU8P8XG8
+    topic: com.ixo.mobilerelease.stage
+    send_badge_counts: false
+  com.ixo.mobilerelease.stage.dev:
+    type: apns
+    platform: sandbox
+    keyfile: /secrets/AuthKey_G73NBYKQL3.p8
+    key_id: G73NBYKQL3
+    team_id: 22SU8P8XG8
+    topic: com.ixo.mobilerelease.stage
+    send_badge_counts: false
+  com.ixo.mobilerelease.dev:
+    type: apns
+    platform: sandbox
+    keyfile: /secrets/AuthKey_G73NBYKQL3.p8
+    key_id: G73NBYKQL3
+    team_id: 22SU8P8XG8
+    topic: com.ixo.mobilerelease
+    send_badge_counts: false
   com.ixo.mobile:
     type: gcm
     api_version: v1
