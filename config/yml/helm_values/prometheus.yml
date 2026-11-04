@@ -496,6 +496,26 @@ additionalPrometheusRulesMap:
             annotations:
               summary: "{{ $labels.instance }} {{ $labels.mountpoint }} has {{ $value | humanizePercentage }} inodes free"
 
+      - name: ixo.containers
+        rules:
+          - alert: ContainerOOMKilled
+            # A container restarted and its last termination reason was OOMKilled:
+            # its working set exceeded its memory limit. The fix is normally to
+            # raise the limit in the chart; a repeat within the hour means a leak
+            # or a working set that no longer fits. Fires once per kill (the
+            # restart counter increases, the reason stays set until the next
+            # termination).
+            expr: |
+              increase(kube_pod_container_status_restarts_total[15m]) > 0
+              and on (namespace, pod, container)
+              kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+            for: 0m
+            labels:
+              severity: critical
+              name: ContainerOOMKilled
+            annotations:
+              summary: "{{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container }} was OOM-killed ({{ $value }} restart(s) in 15m) — raise its memory limit"
+
       - name: ixo.loki
         rules:
           - alert: LokiIngestionDropped
