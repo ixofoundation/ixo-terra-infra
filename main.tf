@@ -1,5 +1,17 @@
 terraform {
-  required_version = ">= 1.2.0"
+  # S3 backend locking (use_lockfile) needs 1.10+.
+  required_version = ">= 1.10.0"
+
+  # State per workspace at ixo-terra-infra/<workspace>/terraform.tfstate in the ixo-devops account.
+  backend "s3" {
+    bucket               = "ixo-terraform-remote-state"
+    key                  = "terraform.tfstate"
+    workspace_key_prefix = "ixo-terra-infra"
+    region               = "eu-west-1"
+    profile              = "ixo-devops"
+    encrypt              = true
+    use_lockfile         = true
+  }
 
   required_providers {
     kubectl = {
