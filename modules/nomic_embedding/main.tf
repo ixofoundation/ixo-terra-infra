@@ -12,7 +12,7 @@ terraform {
 # Create namespace
 resource "kubernetes_namespace_v1" "nomic_embedding" {
   count = var.create_namespace ? 1 : 0
-  
+
   metadata {
     name = var.namespace
     labels = {
@@ -66,7 +66,7 @@ resource "kubernetes_config_map_v1" "nomic_embedding_config" {
         echo "File size: $(du -h "$MODEL_DIR/$MODEL_FILE" | cut -f1)"
       fi
     EOF
-    
+
     "run-llama-server.sh" = <<-EOF
       #!/bin/sh
       set -e
@@ -95,7 +95,7 @@ resource "kubernetes_config_map_v1" "nomic_embedding_config" {
         -ub ${var.llama_batch_size} \
         --n-predict -1
     EOF
-  }, var.backend == "vllm" ? {
+    }, var.backend == "vllm" ? {
     # vLLM V1 approach (2025 updated)  
     "run-vllm-server.sh" = <<-EOF
       #!/bin/bash
@@ -148,7 +148,7 @@ resource "kubernetes_config_map_v1" "nomic_embedding_config" {
 # PersistentVolumeClaim for model storage (only needed for llama.cpp)
 resource "kubernetes_persistent_volume_claim_v1" "nomic_embedding_pvc" {
   count = var.backend == "llama_cpp" ? 1 : 0
-  
+
   metadata {
     name      = "${var.application_name}-pvc"
     namespace = var.namespace
@@ -158,7 +158,7 @@ resource "kubernetes_persistent_volume_claim_v1" "nomic_embedding_pvc" {
     access_modes = ["ReadWriteOnce"]
     resources {
       requests = {
-        storage = "40Gi"  # Reduced since Q4_K_M is only 328MB
+        storage = "40Gi" # Reduced since Q4_K_M is only 328MB
       }
     }
     storage_class_name = var.storage_class != "" ? var.storage_class : null
@@ -169,6 +169,8 @@ resource "kubernetes_persistent_volume_claim_v1" "nomic_embedding_pvc" {
 
 # Deployment for the embedding service
 resource "kubernetes_deployment_v1" "nomic_embedding" {
+  count = var.enable_deployment ? 1 : 0
+
   metadata {
     name      = var.application_name
     namespace = var.namespace
@@ -179,7 +181,7 @@ resource "kubernetes_deployment_v1" "nomic_embedding" {
 
   spec {
     replicas = 1
-    
+
     selector {
       match_labels = {
         app = var.application_name
@@ -198,15 +200,15 @@ resource "kubernetes_deployment_v1" "nomic_embedding" {
         dynamic "init_container" {
           for_each = var.backend == "llama_cpp" ? [1] : []
           content {
-            name  = "model-downloader"
-            image = "alpine:3.19"
+            name    = "model-downloader"
+            image   = "alpine:3.19"
             command = ["/bin/sh", "/scripts/download-model.sh"]
-            
+
             volume_mount {
               name       = "model-storage"
               mount_path = "/models"
             }
-            
+
             volume_mount {
               name       = "scripts"
               mount_path = "/scripts"
@@ -215,13 +217,13 @@ resource "kubernetes_deployment_v1" "nomic_embedding" {
         }
 
         container {
-          name  = var.application_name
-          image = local.container_image
+          name    = var.application_name
+          image   = local.container_image
           command = local.container_command
 
           port {
             container_port = 8080
-            name          = "http"
+            name           = "http"
           }
 
           resources {
@@ -334,7 +336,7 @@ resource "kubernetes_service_v1" "nomic_embedding" {
 
   spec {
     type = "ClusterIP"
-    
+
     port {
       port        = 80
       target_port = 8080
@@ -360,8 +362,8 @@ resource "kubernetes_ingress_v1" "nomic_embedding" {
     annotations = merge(
       var.ingress_annotations,
       {
-        "kubernetes.io/ingress.class"           = var.ingress_class
-        "cert-manager.io/cluster-issuer"         = "letsencrypt-staging"
+        "kubernetes.io/ingress.class"               = var.ingress_class
+        "cert-manager.io/cluster-issuer"            = "letsencrypt-staging"
         "acme.cert-manager.io/http01-edit-in-place" = "true"
       }
     )
@@ -369,7 +371,7 @@ resource "kubernetes_ingress_v1" "nomic_embedding" {
 
   spec {
     ingress_class_name = var.ingress_class
-    
+
     dynamic "tls" {
       for_each = var.enable_tls ? [1] : []
       content {
@@ -380,12 +382,12 @@ resource "kubernetes_ingress_v1" "nomic_embedding" {
 
     rule {
       host = var.host
-      
+
       http {
         path {
           path      = "/"
           path_type = "Prefix"
-          
+
           backend {
             service {
               name = kubernetes_service_v1.nomic_embedding.metadata[0].name
@@ -407,36 +409,36 @@ locals {
   # Backend-specific configuration
   backend_config = {
     vllm = {
-      image = "python:3.10-bullseye"
-      command = ["/bin/bash", "/scripts/run-vllm-server.sh"]
+      image          = "python:3.10-bullseye"
+      command        = ["/bin/bash", "/scripts/run-vllm-server.sh"]
       memory_request = var.vllm_memory_request
-      memory_limit = var.vllm_memory_limit
-      cpu_request = var.vllm_cpu_request
-      cpu_limit = var.vllm_cpu_limit
-      startup_time = 180
-      model_name = "nomic-ai/nomic-embed-text-v2-moe"
+      memory_limit   = var.vllm_memory_limit
+      cpu_request    = var.vllm_cpu_request
+      cpu_limit      = var.vllm_cpu_limit
+      startup_time   = 180
+      model_name     = "nomic-ai/nomic-embed-text-v2-moe"
     }
     llama_cpp = {
-      image = var.llama_cpp_image
-      command = ["/bin/sh", "/scripts/run-llama-server.sh"]
+      image          = var.llama_cpp_image
+      command        = ["/bin/sh", "/scripts/run-llama-server.sh"]
       memory_request = var.memory_request
-      memory_limit = var.memory_limit
-      cpu_request = var.cpu_request
-      cpu_limit = var.cpu_limit
-      startup_time = 60
-      model_name = "nomic-embed-text-v2-moe.Q4_K_M.gguf"
+      memory_limit   = var.memory_limit
+      cpu_request    = var.cpu_request
+      cpu_limit      = var.cpu_limit
+      startup_time   = 60
+      model_name     = "nomic-embed-text-v2-moe.Q4_K_M.gguf"
     }
   }
-  
+
   # Select configuration based on backend
   config = local.backend_config[var.backend]
-  
-  container_image = local.config.image
+
+  container_image   = local.config.image
   container_command = local.config.command
-  memory_request = local.config.memory_request
-  memory_limit = local.config.memory_limit
-  cpu_request = local.config.cpu_request
-  cpu_limit = local.config.cpu_limit
-  startup_time = local.config.startup_time
-  model_name = local.config.model_name
+  memory_request    = local.config.memory_request
+  memory_limit      = local.config.memory_limit
+  cpu_request       = local.config.cpu_request
+  cpu_limit         = local.config.cpu_limit
+  startup_time      = local.config.startup_time
+  model_name        = local.config.model_name
 } 

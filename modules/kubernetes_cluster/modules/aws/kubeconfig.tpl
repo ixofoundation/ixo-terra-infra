@@ -17,11 +17,21 @@ users:
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
-      command: /usr/local/bin/aws
+      command: ${aws_cli_path}
       args:
         - "eks"
         - "get-token"
         - "--cluster-name"
         - "${cluster_name}"
         - "--region"
-        - "${region}" 
+        - "${region}" %{ if aws_profile != null }
+      env:
+        - name: "AWS_PROFILE"
+          value: "${aws_profile}"
+        - name: "AWS_ACCESS_KEY_ID"
+          value: ""
+        - name: "AWS_SECRET_ACCESS_KEY"
+          value: ""
+        - name: "AWS_SESSION_TOKEN"
+          value: ""
+%{ endif }

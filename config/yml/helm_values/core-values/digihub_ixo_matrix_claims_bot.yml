@@ -41,7 +41,7 @@ config:
   homeserverUrl: https://matrix.emediaworkspace.org
   homeserverName: matrix.emediaworkspace.org
   accessToken: "<path:${vault_mount}/data/matrix#MATRIX_DIGIHUB_IXO_CLAIMS_BOT_ACCESS_TOKEN>"
-  recoveryKey: "<path:${vault_mount}/data/matrix#MATRIX_DIGIHUB_IXO_CLAIM_BOT_RECOVERY_KEY>"
+  # recoveryKey: "<path:${vault_mount}/data/matrix#MATRIX_DIGIHUB_IXO_CLAIM_BOT_RECOVERY_KEY>"
   ucan:
     hostname: ${host}
     mnemonic: "<path:${vault_mount}/data/matrix#MATRIX_DIGIHUB_IXO_CLAIMS_BOT_MNEMONIC>"

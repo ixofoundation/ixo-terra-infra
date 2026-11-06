@@ -47,4 +47,14 @@ output "cluster_iam_role_arn" {
 output "node_group_iam_role_arn" {
   description = "IAM role ARN of the EKS node group"
   value       = aws_iam_role.node_group.arn
-} 
+}
+
+output "oidc_provider_arn" {
+  description = "ARN of the cluster's IAM OIDC identity provider, for IRSA role trust policies"
+  value       = aws_iam_openid_connect_provider.cluster.arn
+}
+
+output "oidc_provider_url" {
+  description = "Issuer URL of the cluster's IAM OIDC identity provider, without the https:// scheme"
+  value       = replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")
+}

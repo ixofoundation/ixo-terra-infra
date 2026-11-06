@@ -21,7 +21,7 @@ module "ixo_cellnode" {
     name       = "ixo-cellnode"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-cellnode"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-cellnode"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cellnode.yml",
       {
         environment = terraform.workspace
@@ -41,25 +41,25 @@ module "ixo_cellnode" {
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
   image_updater = {
-    image = "ghcr.io/ixofoundation/ixo-cellnode"
+    image               = "ghcr.io/ixofoundation/ixo-cellnode"
     allow_tags_override = "regexp:-(develop|dev)\\."
   }
 }
 
 module "ixo_matrix_state_bot" {
-  count      = var.environments[terraform.workspace].application_configs["ixo_matrix_state_bot"].enabled ? 1 : 0
-  source     = "./modules/argocd_application"
+  count  = var.environments[terraform.workspace].application_configs["ixo_matrix_state_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
   application = {
     name       = "ixo-matrix-state-bot"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-state-bot"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-matrix-state-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-matrix-state-bot.yml",
       {
-        host       = local.dns_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
-        gcs_bucket = "${google_storage_bucket.matrix_backups[0].url}/bot/state"
+        host          = local.dns_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/state"
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_state_bot"]
       }
     )
   }
@@ -67,25 +67,26 @@ module "ixo_matrix_state_bot" {
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
   image_updater = {
-    image = "ghcr.io/ixofoundation/ixo-matrix-state-bot"
+    image    = "ghcr.io/ixofoundation/ixo-matrix-state-bot"
     strategy = "newest-build"
   }
 }
 
 module "supamoto_matrix_state_bot" {
-  count      = var.environments[terraform.workspace].application_configs["supamoto_matrix_state_bot"].enabled ? 1 : 0
-  source     = "./modules/argocd_application"
+  count  = var.environments[terraform.workspace].application_configs["supamoto_matrix_state_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
   application = {
     name       = "supamoto-matrix-state-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-state-bot"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-matrix-state-bot"
+    auto_sync  = false
     values_override = templatefile("${local.helm_values_config_path}/core-values/supamoto_matrix_state_bot.yml",
       {
-        host       = local.dns_for_environment[terraform.workspace]["supamoto_matrix_state_bot"]
-        gcs_bucket = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-state"
+        host          = local.dns_for_environment[terraform.workspace]["supamoto_matrix_state_bot"]
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-state"
         storage_class = local.storage_class_for_environment[terraform.workspace]["supamoto_matrix_state_bot"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_state_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_state_bot"]
       }
     )
   }
@@ -98,21 +99,22 @@ module "supamoto_matrix_state_bot" {
 }
 
 module "supamoto_ixo_matrix_claims_bot" {
-  count      = var.environments[terraform.workspace].application_configs["supamoto_ixo_matrix_claims_bot"].enabled ? 1 : 0
-  source     = "./modules/argocd_application"
+  count  = var.environments[terraform.workspace].application_configs["supamoto_ixo_matrix_claims_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
   application = {
     name       = "supamoto-ixo-matrix-claims-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-claims-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-claims-bot"
+    auto_sync  = false
     values_override = templatefile("${local.helm_values_config_path}/core-values/supamoto_ixo_matrix_claims_bot.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["supamoto_ixo_matrix_claims_bot"]
-        vault_mount = local.vault_mount_path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-ixo-claims"
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["supamoto_ixo_matrix_claims_bot"]
+        vault_mount   = local.vault_mount_path
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-ixo-claims"
         storage_class = local.storage_class_for_environment[terraform.workspace]["supamoto_ixo_matrix_claims_bot"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["supamoto_ixo_matrix_claims_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["supamoto_ixo_matrix_claims_bot"]
       }
     )
   }
@@ -131,7 +133,7 @@ module "ixo_blocksync_core" {
     name       = "ixo-blocksync-core"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-blocksync-core"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-blocksync-core"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-core.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_blocksync_core"].use_eso
@@ -142,7 +144,7 @@ module "ixo_blocksync_core" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_blocksync_core"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_blocksync_core"].create_kv
   kv_defaults = {
     "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[2].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[2].username])}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[2].username}"
   }
@@ -160,28 +162,30 @@ module "ixo_memory_engine_graphiti" {
     name       = "ixo-memory-engine-graphiti"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/memory-engine-graphiti"
+    path       = "charts/${local.chart_tree}/ixoworld/memory-engine-graphiti"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_memory_engine_graphiti.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].use_eso
-        environment = terraform.workspace
-        vault_mount = local.vault_mount_path
-        neo4j_uri = "neo4j://neo4j.neo4j.svc.cluster.local"
-        neo4j_port = "7687"
-        neo4j_user = "neo4j"
+        eso_enabled    = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].use_eso
+        environment    = terraform.workspace
+        vault_mount    = local.vault_mount_path
+        neo4j_uri      = "neo4j://neo4j.neo4j.svc.cluster.local"
+        neo4j_port     = "7687"
+        neo4j_user     = "neo4j"
         neo4j_password = random_password.neo4j_password.result
-        host = local.dns_for_environment[terraform.workspace]["ixo_memory_engine_graphiti"]
+        host           = local.dns_for_environment[terraform.workspace]["ixo_memory_engine_graphiti"]
+        storage_class  = local.storage_class_for_environment[terraform.workspace]["ixo_memory_engine_graphiti"]
+        storage_size   = local.storage_size_for_environment[terraform.workspace]["ixo_memory_engine_graphiti"]
       }
     )
   }
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].create_kv
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
-  image_updater = {
+  image_updater = local.live_overrides.graphiti_image_updater ? {
     image               = "ghcr.io/ixoworld/memory-engine-graphiti-api-server"
     strategy            = "newest-build"
     allow_tags_override = "regexp:^main-"
-  }
+  } : null
 }
 
 module "ixo_companion" {
@@ -191,14 +195,14 @@ module "ixo_companion" {
     name       = "ixo-companion"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/companion-app"
+    path       = "charts/${local.chart_tree}/ixoworld/companion-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_companion.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_companion"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_companion"]
-        vault_mount = local.vault_mount_path
-        firecrawl_mcp_url = terraform.workspace == "devnet" ? "http://ixo-firecrawl-ixo-firecrawler-mcp.core.svc.cluster.local:3001/mcp" : "https://mcp-firecrawl.devnet.ixo.earth/mcp"
+        eso_enabled       = var.environments[terraform.workspace].application_configs["ixo_companion"].use_eso
+        environment       = terraform.workspace
+        host              = local.dns_for_environment[terraform.workspace]["ixo_companion"]
+        vault_mount       = local.vault_mount_path
+        firecrawl_mcp_url = "https://mcp-firecrawl.devnet.ixo.earth/mcp"
       }
     )
   }
@@ -217,10 +221,10 @@ module "ixo_blocksync" {
     name       = "ixo-blocksync"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-blocksync"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-blocksync"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_blocksync"].use_eso
+        eso_enabled          = var.environments[terraform.workspace].application_configs["ixo_blocksync"].use_eso
         environment          = terraform.workspace
         vault_mount          = local.vault_mount_path
         rpc_url              = var.environments[terraform.workspace].rpc_url
@@ -233,7 +237,7 @@ module "ixo_blocksync" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_blocksync"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_blocksync"].create_kv
   kv_defaults = {
     "DATABASE_URL" = "postgresql://${var.pg_ixo.pg_users[3].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[3].username])}@${var.pg_ixo.pg_cluster_name}-primary.${kubernetes_namespace_v1.ixo-postgres.metadata[0].name}.svc.cluster.local/${var.pg_ixo.pg_users[3].username}"
   }
@@ -251,10 +255,10 @@ module "ixo_blocksync_api" {
     name       = "ixo-blocksync-api"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-blocksync-api"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-blocksync-api"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-blocksync-api.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_blocksync_api"].use_eso
+        eso_enabled          = var.environments[terraform.workspace].application_configs["ixo_blocksync_api"].use_eso
         host                 = local.dns_for_environment[terraform.workspace]["ixo_blocksync_api"]
         vault_mount          = local.vault_mount_path
         ipfs_service_mapping = var.environments[terraform.workspace].ipfs_service_mapping
@@ -276,11 +280,11 @@ module "credentials_prospect" {
     name       = "claims-credentials-prospect"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    path       = "charts/${local.chart_tree}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_prospect.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_prospect"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_prospect"]
         vault_mount = local.vault_mount_path
@@ -302,19 +306,19 @@ module "ecs" {
     name       = "claims-credentials-ecs"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    path       = "charts/${local.chart_tree}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_ecs.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_ecs"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_ecs"]
         vault_mount = local.vault_mount_path
-        cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+        cellnode    = "http://ixo-cellnode.core.svc.cluster.local:5000"
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["claims_credentials_ecs"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["claims_credentials_ecs"].create_kv
   kv_defaults = {
     "REMOTE_CONTEXTS" = "[ \"https://w3id.org/ixo/context/v1\" ]" # TODO this can be moved to an application config in future.
   }
@@ -332,15 +336,15 @@ module "carbon" {
     name       = "claims-credentials-carbon"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    path       = "charts/${local.chart_tree}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_carbon.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_carbon"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_carbon"]
         vault_mount = local.vault_mount_path
-        cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+        cellnode    = "http://ixo-cellnode.core.svc.cluster.local:5000"
       }
     )
   }
@@ -359,15 +363,15 @@ module "claimformprotocol" {
     name       = "claims-credentials-claimformprotocol"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    path       = "charts/${local.chart_tree}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_claimformprotocol.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_claimformprotocol"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name # rename pin: renders NETWORK
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_claimformprotocol"]
         vault_mount = local.vault_mount_path
-        cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+        cellnode    = "http://ixo-cellnode.core.svc.cluster.local:5000"
       }
     )
   }
@@ -386,11 +390,11 @@ module "umuzi" {
     name       = "claims-credentials-umuzi"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    path       = "charts/${local.chart_tree}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_umuzi.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_umuzi"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_umuzi"]
         vault_mount = local.vault_mount_path
@@ -412,15 +416,15 @@ module "did" {
     name       = "claims-credentials-did"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/emerging-claims-credentials"
+    path       = "charts/${local.chart_tree}/ixofoundation/emerging-claims-credentials"
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_did.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_did"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_did"]
         vault_mount = local.vault_mount_path
-        cellnode    = terraform.workspace == "mainnet" ? "https://${local.dns_for_environment[terraform.workspace]["ixo_cellnode"]}" : "http://ixo-cellnode.core.svc.cluster.local:5000" #todo remove
+        cellnode    = "http://ixo-cellnode.core.svc.cluster.local:5000"
       }
     )
   }
@@ -439,7 +443,7 @@ module "ixo_feegrant_nest" {
     name       = "ixo-feegrant-nest"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-feegrant-nest"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-feegrant-nest"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_feegrant_nest.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_feegrant_nest"].use_eso
@@ -469,7 +473,7 @@ module "ixo_payments_nest" {
     name       = "ixo-payments-nest"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-payments-nest"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-payments-nest"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_payments_nest.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_payments_nest"].use_eso
@@ -484,7 +488,7 @@ module "ixo_payments_nest" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_payments_nest"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_payments_nest"].create_kv
   kv_defaults = {
     AUTHORIZATION                           = ""
     BLOCKSYNC_URL                           = ""
@@ -513,7 +517,7 @@ module "ixo_did_resolver" {
     name       = "ixo-did-resolver"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-did-resolver"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-did-resolver"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_did_resolver.yml",
       {
         environment = terraform.workspace
@@ -538,11 +542,11 @@ module "ixo_faucet" {
     name       = "ixo-faucet"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-faucet"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-faucet"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_faucet.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_faucet"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_faucet"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = local.vault_mount_path
@@ -553,7 +557,7 @@ module "ixo_faucet" {
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
   image_updater = {
-    image = "ghcr.io/ixofoundation/ixo-faucet"
+    image               = "ghcr.io/ixofoundation/ixo-faucet"
     allow_tags_override = "regexp:-(develop|dev)\\."
   }
 }
@@ -565,7 +569,7 @@ module "ixo_deeplink_server" {
     name       = "ixo-deeplink-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-deeplink-server"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-deeplink-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_deeplink_server.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_deeplink_server"].use_eso
@@ -579,7 +583,7 @@ module "ixo_deeplink_server" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_deeplink_server"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_deeplink_server"].create_kv
   kv_defaults = {
     AUTHORIZATION        = ""
     BASE_URL             = ""
@@ -602,11 +606,11 @@ module "ixo_kyc_server" {
     name       = "ixo-kyc-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-kyc-server"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-kyc-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_server.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_kyc_server"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_server"]
         vault_mount = local.vault_mount_path
@@ -617,7 +621,7 @@ module "ixo_kyc_server" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_kyc_server"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_kyc_server"].create_kv
   kv_defaults = {
     AUTHORIZATION               = ""
     COMPLYCUBE_API_KEY          = ""
@@ -638,9 +642,21 @@ module "ixo_kyc_server" {
   }
 }
 
+# Redirect-only hosts per workspace; each also needs a $host block in f5-nginx-ingress-controller-values.yml.
+locals {
+  redirect_hosts = {
+    mainnet_main = { hosts = ["blockscan.ixo.world", "chronicle.impacts.network"], tls_secret_name = "blockscan-mainnet-tls" }
+  }
+}
+
 module "ixo_redirects" {
+  count           = contains(keys(local.redirect_hosts), local.legacy_workspace_name) ? 1 : 0 # keyed by the rename pin
   source          = "./modules/ixo_redirects"
   nginx_namespace = kubernetes_namespace_v1.ingress_nginx.metadata[0].name
+  hosts           = try(local.redirect_hosts[local.legacy_workspace_name].hosts, [])
+  tls_secret_name = try(local.redirect_hosts[local.legacy_workspace_name].tls_secret_name, "")
+
+  depends_on = [module.ingress_nginx]
 }
 
 module "ixo_matrix_appservice_rooms" {
@@ -650,15 +666,17 @@ module "ixo_matrix_appservice_rooms" {
     name       = "ixo-matrix-appservice-rooms"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-appservice-rooms"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-matrix-appservice-rooms"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_appservice_rooms.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
-        vault_mount = local.vault_mount_path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/rooms"
-        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
+        environment    = terraform.workspace
+        host           = local.dns_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
+        memory_request = coalesce(var.environments[terraform.workspace].application_configs["ixo_matrix_appservice_rooms"].memory_request, "500Mi")
+        memory_limit   = coalesce(var.environments[terraform.workspace].application_configs["ixo_matrix_appservice_rooms"].memory_limit, "650Mi")
+        vault_mount    = local.vault_mount_path
+        gcs_bucket     = "${google_storage_bucket.matrix_backups[0].url}/bot/rooms"
+        storage_class  = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
+        storage_size   = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_appservice_rooms"]
       }
     )
   }
@@ -677,15 +695,15 @@ module "supamoto_matrix_appservice_rooms" {
     name       = "supamoto-matrix-appservice-rooms"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-appservice-rooms"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-matrix-appservice-rooms"
     values_override = templatefile("${local.helm_values_config_path}/core-values/supamoto_matrix_appservice_rooms.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["supamoto_matrix_appservice_rooms"]
-        vault_mount = local.vault_mount_path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-rooms"
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["supamoto_matrix_appservice_rooms"]
+        vault_mount   = local.vault_mount_path
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-rooms"
         storage_class = local.storage_class_for_environment[terraform.workspace]["supamoto_matrix_appservice_rooms"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_appservice_rooms"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_appservice_rooms"]
       }
     )
   }
@@ -704,15 +722,15 @@ module "ixo_matrix_bids_bot" {
     name       = "ixo-matrix-bids-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-bids-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-bids-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_bids_bot.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
-        vault_mount = local.vault_mount_path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/bids"
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
+        vault_mount   = local.vault_mount_path
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/bids"
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_bids_bot"]
       }
     )
   }
@@ -731,15 +749,16 @@ module "supamoto_matrix_bids_bot" {
     name       = "supamoto-matrix-bids-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-bids-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-bids-bot"
+    auto_sync  = false
     values_override = templatefile("${local.helm_values_config_path}/core-values/supamoto_matrix_bids_bot.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["supamoto_matrix_bids_bot"]
-        vault_mount = local.vault_mount_path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-bids"
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["supamoto_matrix_bids_bot"]
+        vault_mount   = local.vault_mount_path
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-bids"
         storage_class = local.storage_class_for_environment[terraform.workspace]["supamoto_matrix_bids_bot"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_bids_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["supamoto_matrix_bids_bot"]
       }
     )
   }
@@ -752,13 +771,13 @@ module "supamoto_matrix_bids_bot" {
 }
 
 module "digihub_matrix_state_bot" {
-  count      = var.environments[terraform.workspace].application_configs["digihub_matrix_state_bot"].enabled ? 1 : 0
-  source     = "./modules/argocd_application"
+  count  = var.environments[terraform.workspace].application_configs["digihub_matrix_state_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
   application = {
     name       = "digihub-matrix-state-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-state-bot"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-matrix-state-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/digihub_matrix_state_bot.yml",
       {
         host          = local.dns_for_environment[terraform.workspace]["digihub_matrix_state_bot"]
@@ -783,7 +802,7 @@ module "digihub_matrix_appservice_rooms" {
     name       = "digihub-matrix-appservice-rooms"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-matrix-appservice-rooms"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-matrix-appservice-rooms"
     values_override = templatefile("${local.helm_values_config_path}/core-values/digihub_matrix_appservice_rooms.yml",
       {
         environment   = terraform.workspace
@@ -810,7 +829,7 @@ module "digihub_matrix_bids_bot" {
     name       = "digihub-matrix-bids-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-bids-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-bids-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/digihub_matrix_bids_bot.yml",
       {
         environment   = terraform.workspace
@@ -831,13 +850,13 @@ module "digihub_matrix_bids_bot" {
 }
 
 module "digihub_ixo_matrix_claims_bot" {
-  count      = var.environments[terraform.workspace].application_configs["digihub_ixo_matrix_claims_bot"].enabled ? 1 : 0
-  source     = "./modules/argocd_application"
+  count  = var.environments[terraform.workspace].application_configs["digihub_ixo_matrix_claims_bot"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
   application = {
     name       = "digihub-ixo-matrix-claims-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-claims-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-claims-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/digihub_ixo_matrix_claims_bot.yml",
       {
         environment   = terraform.workspace
@@ -857,6 +876,7 @@ module "digihub_ixo_matrix_claims_bot" {
   }
 }
 
+# Bot-store backups: without a matrix bucket here, the zips go to pg_standby.matrix_bucket.
 module "ixo_matrix_supamoto_bot" {
   count  = var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_bot"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -864,15 +884,17 @@ module "ixo_matrix_supamoto_bot" {
     name       = "ixo-matrix-supamoto-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-supamoto-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-supamoto-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_supamoto_bot.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
-        vault_mount = local.vault_mount_path
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
-        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
-        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto"
+        environment    = terraform.workspace
+        host           = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
+        memory_request = coalesce(var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_bot"].memory_request, "500Mi")
+        memory_limit   = coalesce(var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_bot"].memory_limit, "650Mi")
+        vault_mount    = local.vault_mount_path
+        storage_size   = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
+        storage_class  = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_supamoto_bot"]
+        gcs_bucket     = "${try(google_storage_bucket.matrix_backups[0].url, "gs://${coalesce(try(local.env.pg_standby.matrix_bucket, null), "${var.org}-${local.global_resource_name}-matrix")}")}/bot/supamoto" # else the source env bucket
       }
     )
   }
@@ -891,14 +913,14 @@ module "ixo_matrix_supamoto_onboarding_server" {
     name       = "ixo-matrix-supamoto-onboarding-server"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-supamoto-onboarding-server"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-supamoto-onboarding-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_supamoto_onboarding_server.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_onboarding_server"]
-        vault_mount = local.vault_mount_path
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_onboarding_server"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_supamoto_onboarding_server"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_onboarding_server"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_onboarding_server"]
       }
     )
   }
@@ -917,29 +939,43 @@ module "ixo_domain_indexer" {
     name       = "ixo-domain-indexer"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/domain-indexer"
+    path       = "charts/${local.chart_tree}/ixoworld/domain-indexer"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_domain_indexer.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_domain_indexer"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_domain_indexer"]
-        vault_mount = local.vault_mount_path
-        firecrawl_api_url = terraform.workspace == "devnet" ? "http://ixo-firecrawl-ixo-firecrawler-api.core.svc.cluster.local:3002" : "https://firecrawl.devnet.ixo.earth"
+        # Rendered as NETWORK: the chain name.
+        environment       = local.chart_tree
+        host              = local.dns_for_environment[terraform.workspace]["ixo_domain_indexer"]
+        vault_mount       = local.vault_mount_path
+        firecrawl_api_url = "https://firecrawl.devnet.ixo.earth"
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_domain_indexer"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_domain_indexer"].create_kv
   kv_defaults = {
-    SURREAL_USER       = "admin"
-    SURREAL_PASS       = random_password.surrealdb_password.result
-    OPENAI_API_KEY     = ""
-    MAPS_API_KEY       = ""
-    FIRECRAWL_API_KEY  = ""
+    SURREAL_USER      = "admin"
+    SURREAL_PASS      = random_password.surrealdb_password.result
+    OPENAI_API_KEY    = ""
+    MAPS_API_KEY      = ""
+    FIRECRAWL_API_KEY = ""
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
   image_updater = {
     image = "ghcr.io/ixoworld/domain-indexer"
+  }
+}
+
+# Source IPs allowed to reach both firecrawl hosts; workspaces not listed stay open. Needs PROXY
+# protocol on the LB (enable_aws_proxy_protocol), else nginx sees only the ELB's VPC addresses.
+locals {
+  firecrawl_allowed_ips = {
+    mainnet_main = [
+      "54.73.133.123",  # NAT EIP eipalloc-012b6219779e891b9: in-cluster oracles call the public hosts
+      "95.179.136.147", # blackbox probe (old; likely dead)
+      "54.228.122.84",  # testnet NAT EIP eipalloc-017ade176cd4926ab (ixo-test)
+      "54.154.45.24",   # devnet NAT INSTANCE auto-assigned IP (ixo-dev): changes if the instance is replaced
+    ]
   }
 }
 
@@ -950,12 +986,13 @@ module "ixo_firecrawl" {
     name       = "ixo-firecrawl"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-firecrawl"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-firecrawl"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_firecrawl.yml",
       {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_firecrawl"]
         vault_mount = local.vault_mount_path
+        allowed_ips = try(local.firecrawl_allowed_ips[local.legacy_workspace_name], []) # keyed by the rename pin
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[20].username
@@ -977,15 +1014,17 @@ module "ixo_matrix_supamoto_claims_bot" {
     name       = "ixo-matrix-supamoto-claims-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-supamoto-claims-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-supamoto-claims-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_supamoto_claims_bot.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
-        vault_mount = local.vault_mount_path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/supamoto-claims"
-        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
-        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
+        environment    = terraform.workspace
+        host           = local.dns_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
+        memory_request = coalesce(var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_claims_bot"].memory_request, "500Mi")
+        memory_limit   = coalesce(var.environments[terraform.workspace].application_configs["ixo_matrix_supamoto_claims_bot"].memory_limit, "650Mi")
+        vault_mount    = local.vault_mount_path
+        gcs_bucket     = "${try(google_storage_bucket.matrix_backups[0].url, "gs://${coalesce(try(local.env.pg_standby.matrix_bucket, null), "${var.org}-${local.global_resource_name}-matrix")}")}/bot/supamoto-claims" # else the source env bucket
+        storage_class  = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
+        storage_size   = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_supamoto_claims_bot"]
       }
     )
   }
@@ -1004,15 +1043,15 @@ module "minerva_oracle" {
     name       = "ixo-minerva-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/minerva-app"
+    path       = "charts/${local.chart_tree}/ixoworld/minerva-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_minerva_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_minerva_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_minerva_oracle"]
-        vault_mount = local.vault_mount_path
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_minerva_oracle"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_minerva_oracle"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_minerva_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_minerva_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_minerva_oracle"]
       }
     )
   }
@@ -1031,7 +1070,7 @@ module "ixo_minerva_livekit" {
     name       = "ixo-minerva-livekit"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/minerva-livekit"
+    path       = "charts/${local.chart_tree}/ixoworld/minerva-livekit"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_minerva_livekit.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_minerva_livekit"].use_eso
@@ -1056,15 +1095,15 @@ module "ixo_matrix_claims_bot" {
     name       = "ixo-matrix-claims-bot"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-claims-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-claims-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_claims_bot.yml",
       {
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
-        vault_mount = local.vault_mount_path
-        gcs_bucket  = "${google_storage_bucket.matrix_backups[0].url}/bot/claims"
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
+        vault_mount   = local.vault_mount_path
+        gcs_bucket    = "${google_storage_bucket.matrix_backups[0].url}/bot/claims"
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_claims_bot"]
       }
     )
   }
@@ -1083,16 +1122,16 @@ module "ixo_matrix_whatsapp" {
     name       = "ixo-matrix-whatsapp"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-whatsapp"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-whatsapp"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_whatsapp.yml",
       {
-        postgres_uri = "postgres://${var.pg_matrix.pg_users[0].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_matrix.pg_users[0].username])}@${var.pg_matrix.pg_cluster_name}-primary.${kubernetes_namespace_v1.matrix.metadata[0].name}.svc.cluster.local/matrix_whatsapp?sslmode=require"
+        postgres_uri  = "postgres://${var.pg_matrix.pg_users[0].username}:${urlencode(module.postgres-operator[0].database_password[var.pg_matrix.pg_users[0].username])}@${var.pg_matrix.pg_cluster_name}-primary.${kubernetes_namespace_v1.matrix.metadata[0].name}.svc.cluster.local/matrix_whatsapp?sslmode=require"
         matrix_domain = local.dns_for_environment[terraform.workspace]["matrix"]
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_whatsapp"]
         storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_whatsapp"]
-        as_token = random_password.matrix_whatsapp_as_token.result
-        hs_token = random_password.matrix_whatsapp_hs_token.result
-        host = local.dns_for_environment[terraform.workspace]["ixo_matrix_whatsapp"]
+        as_token      = random_password.matrix_whatsapp_as_token[0].result
+        hs_token      = random_password.matrix_whatsapp_hs_token[0].result
+        host          = local.dns_for_environment[terraform.workspace]["ixo_matrix_whatsapp"]
       }
     )
   }
@@ -1108,7 +1147,7 @@ module "ixo_faq_assistant" {
     name       = "ixo-faq-assistant"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/faq-assistant"
+    path       = "charts/${local.chart_tree}/ixofoundation/faq-assistant"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-faq-assistant.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_faq_assistant"].use_eso
@@ -1122,7 +1161,7 @@ module "ixo_faq_assistant" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_faq_assistant"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_faq_assistant"].create_kv
   kv_defaults = {
     OPEN_AI_API_KEY = ""
 
@@ -1163,7 +1202,7 @@ module "ixo_guru" {
     name       = "ixo-guru"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-guru"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-guru"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-guru.yml",
       {
         environment = terraform.workspace
@@ -1172,7 +1211,7 @@ module "ixo_guru" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_guru"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_guru"].create_kv
   kv_defaults = {
     SLACK_SIGNING_SECRET  = ""
     SLACK_BOT_TOKEN       = ""
@@ -1223,7 +1262,7 @@ module "ixo_guru_temp" {
     name       = "ixo-ai-oracles-guru"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-ai-oracles-guru"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-ai-oracles-guru"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ai-oracles-guru.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_guru"].use_eso
@@ -1233,7 +1272,7 @@ module "ixo_guru_temp" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_guru"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_guru"].create_kv
   kv_defaults = {
     SLACK_SIGNING_SECRET  = ""
     SLACK_BOT_TOKEN       = ""
@@ -1288,7 +1327,7 @@ module "ixo_giza_oracle" {
     name       = "ixo-ai-oracles-giza"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-ai-oracles-giza"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-ai-oracles-giza"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ai-oracles-giza.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_giza"].use_eso
@@ -1298,7 +1337,7 @@ module "ixo_giza_oracle" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_giza"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_ai_oracles_giza"].create_kv
   kv_defaults = {
     SLACK_SIGNING_SECRET  = ""
     SLACK_BOT_TOKEN       = ""
@@ -1363,15 +1402,17 @@ module "ixo_flow_manager_oracle" {
     name       = "ixo-flow-manager-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/flow-manager-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/flow-manager-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_flow_manager_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_flow_manager_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
-        vault_mount = local.vault_mount_path
-        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
+        eso_enabled    = var.environments[terraform.workspace].application_configs["ixo_flow_manager_oracle"].use_eso
+        environment    = terraform.workspace
+        host           = local.dns_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
+        memory_request = coalesce(var.environments[terraform.workspace].application_configs["ixo_flow_manager_oracle"].memory_request, "950Mi")
+        memory_limit   = coalesce(var.environments[terraform.workspace].application_configs["ixo_flow_manager_oracle"].memory_limit, "1024Mi")
+        vault_mount    = local.vault_mount_path
+        storage_class  = local.storage_class_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
+        storage_size   = local.storage_size_for_environment[terraform.workspace]["ixo_flow_manager_oracle"]
       }
     )
   }
@@ -1390,15 +1431,15 @@ module "ixo_diagnostic_oracle" {
     name       = "ixo-diagnostic-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/diagnostic-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/diagnostic-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_diagnostic_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_diagnostic_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_diagnostic_oracle"]
-        vault_mount = local.vault_mount_path
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_diagnostic_oracle"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_diagnostic_oracle"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_diagnostic_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_diagnostic_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_diagnostic_oracle"]
       }
     )
   }
@@ -1417,15 +1458,15 @@ module "ixo_xero_oracle" {
     name       = "ixo-xero-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/xero-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/xero-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_xero_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_xero_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_xero_oracle"]
-        vault_mount = local.vault_mount_path
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_xero_oracle"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_xero_oracle"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_xero_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_xero_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_xero_oracle"]
       }
     )
   }
@@ -1444,15 +1485,16 @@ module "ixo_supamoto_3cx_server" {
     name       = "ixo-supamoto-3cx-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-supamoto-3cx-server"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-supamoto-3cx-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_supamoto_3cx_server.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_supamoto_3cx_server"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
-        vault_mount = local.vault_mount_path
-        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
+        eso_enabled    = var.environments[terraform.workspace].application_configs["ixo_supamoto_3cx_server"].use_eso
+        environment    = terraform.workspace
+        host           = local.dns_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
+        vault_mount    = local.vault_mount_path
+        storage_class  = local.storage_class_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
+        storage_size   = local.storage_size_for_environment[terraform.workspace]["ixo_supamoto_3cx_server"]
+        cloud_provider = var.cloud_provider
       }
     )
   }
@@ -1471,7 +1513,7 @@ module "ixo_trading_bot_server" {
     name       = "ixo-trading-bot-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-trading-bot-server"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-trading-bot-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-trading-bot-server.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_trading_bot_server"].use_eso
@@ -1486,7 +1528,7 @@ module "ixo_trading_bot_server" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_trading_bot_server"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_trading_bot_server"].create_kv
   kv_defaults = {
     POOL_ADDRESSES        = ""
     MNEMONICS             = ""
@@ -1503,15 +1545,15 @@ module "ixo_domain_creator_oracle" {
     name       = "ixo-domain-creator-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/domain-creator-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/domain-creator-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_domain_creator_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_domain_creator_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
-        vault_mount = local.vault_mount_path
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_domain_creator_oracle"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_domain_creator_oracle"]
       }
     )
   }
@@ -1530,13 +1572,15 @@ module "ixo_qi_agents_builder" {
     name       = "ixo-qi-agents-builder"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/qi-agents-builder-app"
+    path       = "charts/${local.chart_tree}/ixoworld/qi-agents-builder-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_qi_agents_builder.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_qi_agents_builder"].use_eso
-        environment = terraform.workspace
-        vault_mount = local.vault_mount_path
-        host        = local.dns_for_environment[terraform.workspace]["ixo_qi_agents_builder"]
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_qi_agents_builder"].use_eso
+        environment   = terraform.workspace
+        vault_mount   = local.vault_mount_path
+        host          = local.dns_for_environment[terraform.workspace]["ixo_qi_agents_builder"]
+        storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_qi_agents_builder"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_qi_agents_builder"]
       }
     )
   }
@@ -1555,14 +1599,14 @@ module "ixo_matrix_recording_bot" {
     name       = "ixo-matrix-recording-bot"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-matrix-recording-bot"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-matrix-recording-bot"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_matrix_recording_bot.yml",
       {
-        environment = terraform.workspace
-        vault_mount = local.vault_mount_path
-        host        = local.dns_for_environment[terraform.workspace]["ixo_matrix_recording_bot"]
+        environment   = terraform.workspace
+        vault_mount   = local.vault_mount_path
+        host          = local.dns_for_environment[terraform.workspace]["ixo_matrix_recording_bot"]
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_matrix_recording_bot"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_recording_bot"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_matrix_recording_bot"]
       }
     )
   }
@@ -1578,15 +1622,15 @@ module "ixo_kyc_oracle" {
     name       = "ixo-kyc-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/kyc-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/kyc-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_kyc_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_oracle"]
-        vault_mount = local.vault_mount_path
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_kyc_oracle"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_kyc_oracle"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_kyc_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_kyc_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_kyc_oracle"]
       }
     )
   }
@@ -1602,15 +1646,15 @@ module "ixo_yellowcard_oracle" {
     name       = "ixo-yellowcard-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-yellowcard-app"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-yellowcard-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_yellowcard_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_yellowcard_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
-        vault_mount = local.vault_mount_path
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_yellowcard_oracle"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_yellowcard_oracle"]
       }
     )
   }
@@ -1626,7 +1670,7 @@ module "ixo_subscriptions_oracle" {
     name       = "ixo-subscriptions-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/subscriptions-oracle"
+    path       = "charts/${local.chart_tree}/ixoworld/subscriptions-oracle"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-subscriptions-oracle.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle"].use_eso
@@ -1641,26 +1685,26 @@ module "ixo_subscriptions_oracle" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle"].create_kv
   kv_defaults = {
-    STRIPE_API_KEY        = ""
-    CHAIN_NETWORK             = ""
-    ALLOWED_STRIPE_PLANS = ""
-    BLOCKSYNC_GRAPHQL_URL = ""
-    SUBSCRIPTION_PROTOCOL_DID = ""
-    ORACLE_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID = ""
+    STRIPE_API_KEY                                     = ""
+    CHAIN_NETWORK                                      = ""
+    ALLOWED_STRIPE_PLANS                               = ""
+    BLOCKSYNC_GRAPHQL_URL                              = ""
+    SUBSCRIPTION_PROTOCOL_DID                          = ""
+    ORACLE_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID       = ""
     SUBSCRIPTION_SERVICE_CLAIM_COLLECTION_PROTOCOL_DID = ""
-    RPC_URL = ""
-    SECP_MNEMONIC = ""
-    DID = ""
-    RELAYER_NODE = ""
-    MATRIX_ACCESS_TOKEN = ""
-    STRIPE_WEBHOOK_SECRET = ""
-    STRIPE_PRO_PLAN_ID = ""
-    STRIPE_TEAM_PLAN_ID = ""
-    STRIPE_ECOSYSTEM_PLAN_ID = ""
-    STRIPE_TOP_UP_1500_PLAN_ID = ""
-    STRIPE_TRIAL_PERIOD_DAYS = ""
+    RPC_URL                                            = ""
+    SECP_MNEMONIC                                      = ""
+    DID                                                = ""
+    RELAYER_NODE                                       = ""
+    MATRIX_ACCESS_TOKEN                                = ""
+    STRIPE_WEBHOOK_SECRET                              = ""
+    STRIPE_PRO_PLAN_ID                                 = ""
+    STRIPE_TEAM_PLAN_ID                                = ""
+    STRIPE_ECOSYSTEM_PLAN_ID                           = ""
+    STRIPE_TOP_UP_1500_PLAN_ID                         = ""
+    STRIPE_TRIAL_PERIOD_DAYS                           = ""
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
@@ -1676,7 +1720,7 @@ module "ixo_subscriptions_oracle_bot" {
     name       = "ixo-subscriptions-oracle-bot"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/subscription-oracle-bot-app"
+    path       = "charts/${local.chart_tree}/ixoworld/subscription-oracle-bot-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-subscriptions-oracle-bot.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_subscriptions_oracle_bot"].use_eso
@@ -1705,7 +1749,7 @@ module "ixo_pathgen_oracle" {
     name       = "ixo-pathgen-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/pathgen-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/pathgen-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-pathgen-oracle.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_pathgen_oracle"].use_eso
@@ -1715,7 +1759,10 @@ module "ixo_pathgen_oracle" {
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[16].username
-        pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[16].username]  
+        pgPassword  = module.postgres-operator[0].database_password[var.pg_ixo.pg_users[16].username]
+        # Empty unless the env sets storage_size: then the chart's shared RWX claim is used as before.
+        storage_size  = try(coalesce(local.storage_size_for_environment[terraform.workspace]["ixo_pathgen_oracle"]), "")
+        storage_class = coalesce(local.storage_class_for_environment[terraform.workspace]["ixo_pathgen_oracle"], var.storage_classes["standard"])
       }
     )
   }
@@ -1734,33 +1781,33 @@ module "ixo_website_bot_oracle" {
     name       = "ixo-website-bot-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/website-bot-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/website-bot-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-website-bot-oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_website_bot_oracle"].use_eso
-        environment = terraform.workspace
-        vault_mount = local.vault_mount_path
-        host        = local.dns_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_website_bot_oracle"].use_eso
+        environment   = terraform.workspace
+        vault_mount   = local.vault_mount_path
+        host          = local.dns_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_website_bot_oracle"]
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_website_bot_oracle"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_website_bot_oracle"].create_kv
   kv_defaults = {
-    ORACLE_NAME = "website-bot-oracle"
-    MATRIX_BASE_URL = ""
+    ORACLE_NAME                      = "website-bot-oracle"
+    MATRIX_BASE_URL                  = ""
     MATRIX_ORACLE_ADMIN_ACCESS_TOKEN = ""
-    MATRIX_ORACLE_ADMIN_PASSWORD = ""
-    MATRIX_ORACLE_ADMIN_USER_ID = ""
-    MATRIX_RECOVERY_PHRASE = ""
-    LANGFUSE_PUBLIC_KEY = ""
-    LANGFUSE_SECRET_KEY = ""
-    LANGFUSE_HOST = ""
-    OPEN_ROUTER_API_KEY = ""
-    ORACLE_ROOM_ID = ""
-    AIRTABLE_API_KEY = ""
-    AIRTABLE_BASE_ID = ""
+    MATRIX_ORACLE_ADMIN_PASSWORD     = ""
+    MATRIX_ORACLE_ADMIN_USER_ID      = ""
+    MATRIX_RECOVERY_PHRASE           = ""
+    LANGFUSE_PUBLIC_KEY              = ""
+    LANGFUSE_SECRET_KEY              = ""
+    LANGFUSE_HOST                    = ""
+    OPEN_ROUTER_API_KEY              = ""
+    ORACLE_ROOM_ID                   = ""
+    AIRTABLE_API_KEY                 = ""
+    AIRTABLE_BASE_ID                 = ""
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
@@ -1776,7 +1823,7 @@ module "ixo_jokes_oracle" {
     name       = "ixo-jokes-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/jokes-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/jokes-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-jokes-oracle.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_jokes_oracle"].use_eso
@@ -1790,7 +1837,7 @@ module "ixo_jokes_oracle" {
       }
     )
     create_kv        = var.environments[terraform.workspace].application_configs["ixo_jokes_oracle"].create_kv
-    argo_namespace = module.argocd.argo_namespace
+    argo_namespace   = module.argocd.argo_namespace
     vault_mount_path = local.vault_mount_path
   }
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_jokes_oracle"].create_kv
@@ -1808,19 +1855,19 @@ module "ixo_ecs_oracle" {
     name       = "ixo-ecs-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ecs-oracle-app"
+    path       = "charts/${local.chart_tree}/ixoworld/ecs-oracle-app"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_ecs_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_ecs_oracle"]
-        vault_mount = local.vault_mount_path
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_ecs_oracle"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_ecs_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_ecs_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_ecs_oracle"]
       }
     )
     create_kv        = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].create_kv
-    argo_namespace = module.argocd.argo_namespace
+    argo_namespace   = module.argocd.argo_namespace
     vault_mount_path = local.vault_mount_path
   }
   create_kv        = var.environments[terraform.workspace].application_configs["ixo_ecs_oracle"].create_kv
@@ -1835,15 +1882,15 @@ module "ixo_yoma_agent_oracle" {
     name       = "ixo-yoma-agent-oracle"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/yoma-agent"
+    path       = "charts/${local.chart_tree}/ixoworld/yoma-agent"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_yoma_agent_oracle.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_yoma_agent_oracle"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
-        vault_mount = local.vault_mount_path
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_yoma_agent_oracle"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
+        vault_mount   = local.vault_mount_path
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_yoma_agent_oracle"]
       }
     )
   }
@@ -1851,7 +1898,7 @@ module "ixo_yoma_agent_oracle" {
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
   image_updater = {
-    image = "ghcr.io/ixoworld/yoma-agent"
+    image               = "ghcr.io/ixoworld/yoma-agent"
     allow_tags_override = "regexp:-(develop|dev)\\."
   }
 }
@@ -1863,7 +1910,7 @@ module "ixo_whizz" {
     name       = "ixo-whizz"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-whizz"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-whizz"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-whizz.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_whizz"].use_eso
@@ -1877,7 +1924,7 @@ module "ixo_whizz" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_whizz"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_whizz"].create_kv
   kv_defaults = {
     OPEN_AI_API_KEY = ""
 
@@ -1920,7 +1967,7 @@ module "ixo_coin_server" {
     name       = "ixo-coin-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-coin-server"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-coin-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-coin-server.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_coin_server"].use_eso
@@ -1934,7 +1981,7 @@ module "ixo_coin_server" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_coin_server"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_coin_server"].create_kv
   kv_defaults = {
     AUTHORIZATION     = ""
     COINGECKO_API_KEY = ""
@@ -1953,7 +2000,7 @@ module "ixo_stake_reward_claimer" {
     name       = "ixo-stake-reward-claimer"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-stake-reward-claimer"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-stake-reward-claimer"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-stake-reward-claimer.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_stake_reward_claimer"].use_eso
@@ -1964,7 +2011,7 @@ module "ixo_stake_reward_claimer" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_stake_reward_claimer"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_stake_reward_claimer"].create_kv
   kv_defaults = {
     AUTHORIZATION = ""
     SENTRYDSN     = ""
@@ -1984,18 +2031,18 @@ module "ixo_offset_auto_approve" {
     name       = "auto-approve-offset"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-auto-approve-agent"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-auto-approve-agent"
     values_override = templatefile("${local.helm_values_config_path}/core-values/auto_approve_offset.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["auto_approve_offset"].use_eso
-        environment = terraform.workspace
+        environment = local.legacy_workspace_name
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["auto_approve_offset"]
         vault_mount = local.vault_mount_path
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["auto_approve_offset"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["auto_approve_offset"].create_kv
   kv_defaults = {
     AUTHORIZATION              = ""
     BLOCKSYNC_GRAPHQL          = ""
@@ -2019,7 +2066,7 @@ module "ixo_iot_data" {
     name       = "ixo-iot-data"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-iot-data"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-iot-data"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-iot-data.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_iot_data"].use_eso
@@ -2033,7 +2080,7 @@ module "ixo_iot_data" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_iot_data"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_iot_data"].create_kv
   kv_defaults = {
     AUTHORIZATION = ""
   }
@@ -2048,7 +2095,7 @@ module "ixo_message_relayer" {
     name       = "ixo-message-relayer"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-message-relayer"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-message-relayer"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-message-relayer.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_message_relayer"].use_eso
@@ -2062,7 +2109,7 @@ module "ixo_message_relayer" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_message_relayer"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_message_relayer"].create_kv
   kv_defaults = {
     AUTHORIZATION = ""
   }
@@ -2080,7 +2127,7 @@ module "ixo_notification_server" {
     name       = "ixo-notification-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-notification-server"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-notification-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-notification-server.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_notification_server"].use_eso
@@ -2094,7 +2141,7 @@ module "ixo_notification_server" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_notification_server"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_notification_server"].create_kv
   kv_defaults = {
     AUTHORIZATION                   = ""
     AIRTABLE_API_KEY                = ""
@@ -2113,7 +2160,7 @@ module "hermes" {
     name       = "hermes"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/hermes"
+    path       = "charts/${local.chart_tree}/ixofoundation/hermes"
     values_override = templatefile("${local.helm_values_config_path}/core-values/hermes.yml",
       {
         environment = terraform.workspace
@@ -2122,7 +2169,7 @@ module "hermes" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["hermes"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["hermes"].create_kv
   kv_defaults = {
     CHAIN_A_RPC_ADDR  = ""
     CHAIN_A_GRPC_ADDR = ""
@@ -2143,7 +2190,7 @@ module "ixo_cvms_exporter" {
     name       = "ixo-cvms-exporter"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixofoundation/ixo-cvms-exporter"
+    path       = "charts/${local.chart_tree}/ixofoundation/ixo-cvms-exporter"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-cvms-exporter.yml",
       {
         environment = terraform.workspace
@@ -2164,7 +2211,7 @@ module "ixo_dmrv_registry_server" {
     name       = "ixo-registry-server"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/ixo-registry-server"
+    path       = "charts/${local.chart_tree}/ixoworld/ixo-registry-server"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-registry-server.yml",
       {
         environment = terraform.workspace
@@ -2190,19 +2237,19 @@ module "ixo_observable_framework_builder" {
     name       = "ixo-observable-framework-builder"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/observable-framework-builder"
+    path       = "charts/${local.chart_tree}/ixoworld/observable-framework-builder"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_observable_framework_builder.yml",
       {
-        eso_enabled = var.environments[terraform.workspace].application_configs["ixo_observable_framework_builder"].use_eso
-        environment = terraform.workspace
-        host        = local.dns_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
-        vault_mount = local.vault_mount_path
-        pgCluster   = var.pg_ixo.pg_cluster_name
-        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-        pgUsername  = var.pg_ixo.pg_users[15].username
-        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[15].username])
+        eso_enabled   = var.environments[terraform.workspace].application_configs["ixo_observable_framework_builder"].use_eso
+        environment   = terraform.workspace
+        host          = local.dns_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
+        vault_mount   = local.vault_mount_path
+        pgCluster     = var.pg_ixo.pg_cluster_name
+        pgNamespace   = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+        pgUsername    = var.pg_ixo.pg_users[15].username
+        pgPassword    = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[15].username])
         storage_class = local.storage_class_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
-        storage_size = local.storage_size_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
+        storage_size  = local.storage_size_for_environment[terraform.workspace]["ixo_observable_framework_builder"]
       }
     )
   }
@@ -2223,7 +2270,7 @@ module "ixo_agent_images_slack" {
   github_repo_org   = "ixoworld"
   function_fileName = "./modules/aws/lambda_function/dummy.zip"
   function_handler  = "worker.lambda_handler"
-  function_name     = "agent-images-slack-${terraform.workspace}"
+  function_name     = "agent-images-slack-${local.global_resource_name}"
   function_runtime  = "python3.9"
 }
 
@@ -2233,26 +2280,6 @@ module "ixo_aws_iam" {
   users  = var.environments[terraform.workspace].aws_iam_users
 }
 
-#module "ixo_ussd" {
-#  count  = var.environments[terraform.workspace].application_configs["ixo_ussd"].enabled ? 1 : 0
-#  source = "./modules/argocd_application"
-#  application = {
-#    name       = "ixo-ussd"
-#    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-#    repository = var.ixo_helm_chart_repository
-#    path       = "charts/${terraform.workspace}/ixofoundation/ixo-ussd"
-#    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo-ussd.yml",
-#      {
-#        environment = terraform.workspace
-#        host        = local.dns_for_environment[terraform.workspace]["ixo_ussd"]
-#        vault_mount = local.vault_mount_path
-#      }
-#    )
-#  }
-#  argo_namespace   = module.argocd.argo_namespace
-#  vault_mount_path = local.vault_mount_path
-#}
-
 module "ixo_ussd_supamoto" {
   count  = var.environments[terraform.workspace].application_configs["ixo_ussd_supamoto"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -2260,7 +2287,7 @@ module "ixo_ussd_supamoto" {
     name       = "ixo-ussd-supamoto"
     namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/emerging-eco/ixo-ussd-supamoto"
+    path       = "charts/${local.chart_tree}/emerging-eco/ixo-ussd-supamoto"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_ussd_supamoto.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_ussd_supamoto"].use_eso
@@ -2286,7 +2313,7 @@ module "ixo_sygnal" {
     name       = "ixo-sygnal"
     namespace  = kubernetes_namespace_v1.matrix.metadata[0].name
     repository = var.ixo_helm_chart_repository
-    path       = "charts/${terraform.workspace}/ixoworld/sygnal"
+    path       = "charts/${local.chart_tree}/ixoworld/sygnal"
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_sygnal.yml",
       {
         host        = local.dns_for_environment[terraform.workspace]["ixo_sygnal"]
@@ -2299,37 +2326,37 @@ module "ixo_sygnal" {
       }
     )
   }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_sygnal"].create_kv
+  create_kv = var.environments[terraform.workspace].application_configs["ixo_sygnal"].create_kv
   kv_defaults = {
-    APNS_P8_KEY                  = "" # base64-encoded content of AuthKey_G73NBYKQL3.p8
+    APNS_P8_KEY                   = "" # base64-encoded content of AuthKey_G73NBYKQL3.p8
     FIREBASE_SERVICE_ACCOUNT_JSON = "" # base64-encoded content of ixomobile-6a4b0-firebase-adminsdk-551h8-090e05f791.json
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
 }
 
-module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
- depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
- source     = "./modules/ixo_blocksync_migration"
- db_info = {
-   pgUsername  = var.pg_ixo.pg_users[3].username
-   pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[3].username])
-   pgCluster   = var.pg_ixo.pg_cluster_name
-   pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-   # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
-   # If current DB in-use is `blocksync` set to true. Else if current DB in-use is`blocksync_alt` set to false.
-   # true = pod created will run migrations on `blocksync_alt`
-   # false = pod created will run migrations on `blocksync`
-   useAlt = true
- }
- image = "ghcr.io/ixofoundation/ixo-blocksync:v2.5.0-develop.1"
- existing_blocksync_pod_label_name = "ixo-blocksync"
- env_overrides = {
-  RPC = "https://archive.devnet.ixo.earth/rpc/"
- }
- migration_pod_name                = "ixo-blocksync-migration"
- namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
-}
+# module "blocksync_migration" { # Note this will be commented in/out only for new releases to blocksync that require re-indexing the DB.
+#  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]
+#  source     = "./modules/ixo_blocksync_migration"
+#  db_info = {
+#    pgUsername  = var.pg_ixo.pg_users[3].username
+#    pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[3].username])
+#    pgCluster   = var.pg_ixo.pg_cluster_name
+#    pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+#    # This is to determine whether we are indexing blocksync or blocksync_alt for the new version. eg if we are running in `blocksync_alt` then set this to false so we index `blocksync` for the new version.
+#    # If current DB in-use is `blocksync` set to true. Else if current DB in-use is`blocksync_alt` set to false.
+#    # true = pod created will run migrations on `blocksync_alt`
+#    # false = pod created will run migrations on `blocksync`
+#    useAlt = true
+#  }
+#  image = "ghcr.io/ixofoundation/ixo-blocksync:v2.5.0-develop.1"
+#  existing_blocksync_pod_label_name = "ixo-blocksync"
+#  env_overrides = {
+#   RPC = "https://archive.devnet.ixo.earth/rpc/"
+#  }
+#  migration_pod_name                = "ixo-blocksync-migration"
+#  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
+# }
 
 # module "blocksyn_core_migration" { # Note this will be commented in/out only for new releases to blocksync-core that require re-indexing the DB.
 # #  depends_on = [module.ixo_blocksync, module.ixo_blocksync_core]

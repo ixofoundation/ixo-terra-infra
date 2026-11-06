@@ -142,8 +142,6 @@ chmod +x estimate-costs.sh
 ```bash
 # Create your own variables file
 cp terraform.tfvars my-infrastructure.tfvars
-# OR use the quickstart example
-cp quickstart.tfvars my-infrastructure.tfvars
 
 # Edit the file with your specific configuration
 nano my-infrastructure.tfvars

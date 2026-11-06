@@ -3,7 +3,7 @@ image:
 ingress:
   enabled: true
   className: nginx
-%{ if environment != "mainnet" ~}
+%{ if !startswith(environment, "mainnet") ~}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-staging
     acme.cert-manager.io/http01-edit-in-place: "true"

@@ -8,9 +8,14 @@ This repository includes comprehensive cost estimation tools for the IXO Terra i
 
 | Environment Type | Monthly Cost | What You Get |
 |------------------|-------------|--------------|
-| **Development** | ~$74/month | Basic setup with minimal resources for testing |
-| **Testing/Staging** | ~$294/month | Full stack with cross-chain validators for staging |
-| **Production** | ~$308/month | Full stack with high availability for live services |
+| **Development** | ~$112/month | Basic setup with minimal resources for testing |
+| **Testing/Staging** | ~$376/month | Full stack with cross-chain validators for staging |
+| **Production** | ~$434/month | Full stack with high availability for live services |
+
+> **Rates corrected 2026-10-20**, and these shapes are stale. See the caveats section at the top of
+> [`README-vultr-cost-estimates.md`](README-vultr-cost-estimates.md): list prices only, never
+> reconciled against a Vultr invoice, and devnet actually runs 8 nodes / 1,946 GiB of PVCs
+> (≈ $509/month, confirmed live 2026-10-20).
 
 > **Environment Naming**: You can use any environment names that make sense for your organization (e.g., `mycompany_dev`, `staging`, `production`, etc.). In our examples, we reference both generic names and IXO-specific names (`devnet`, `testnet`, `mainnet`) for reference.
 
@@ -98,28 +103,33 @@ The cost estimates include:
 ### What's Missing (Vultr Costs)
 
 Infracost doesn't include Vultr VKE costs, so we calculate them separately:
-- **Vultr VKE Control Plane**: $10/month per cluster
-- **Vultr Worker Nodes**: $24-32/month per node
-- **Vultr Block Storage**: $0.10/GB/month
+- **Vultr VKE Control Plane**: **$0** — included free with VKE (verified against Vultr's VKE pricing doc, 2026-10-20)
+- **Vultr Worker Nodes**: $48/month per `vhf-3c-8gb` node
+- **Vultr Block Storage**: $0.10/GiB/month (NVMe) or $0.025/GiB/month (HDD)
 
 > **Important**: Always check `README-vultr-cost-estimates.md` for the complete picture!
 
 ## 📊 Cost Breakdown by Environment Type
 
-### Development Environment (~$74/month)
+### Development Environment (~$112/month)
 - **Infracost Results**: $6.22/month (GCP services only)
-- **Vultr VKE**: $10/month (control plane) + $48/month (2 nodes) + $20/month (storage)
-- **Total**: ~$74/month
+- **Vultr VKE**: $0 (control plane) + $96/month (2 nodes @ $48) + $10/month (100GB NVMe)
+- **Total**: ~$112/month
 
-### Testing/Staging Environment (~$294/month)
+### Testing/Staging Environment (~$376/month)
 - **Infracost Results**: $201.64/month (includes AWS Hyperlane validators)
-- **Vultr VKE**: $10/month (control plane) + $72/month (3 nodes) + $30/month (storage)
-- **Total**: ~$294/month
+- **Vultr VKE**: $0 (control plane) + $144/month (3 nodes @ $48) + $30/month (300GB NVMe)
+- **Total**: ~$376/month
 
-### Production Environment (~$308/month)
+### Production Environment (~$434/month)
 - **Infracost Results**: $201.64/month (includes AWS Hyperlane validators)
-- **Vultr VKE**: $10/month (control plane) + $96/month (4 nodes) + $40/month (storage)
-- **Total**: ~$308/month
+- **Vultr VKE**: $0 (control plane) + $192/month (4 nodes @ $48) + $40/month (400GB NVMe)
+- **Total**: ~$434/month
+
+> **Why these differ from `README-vultr-cost-estimates.md`** ($112 / $355 / $413): that document
+> prices the non-Vultr side by hand (GCS KMS $6.24 + Hyperlane $175 = $181.24) where this one uses
+> the Infracost figure ($201.64), a $20.40/month gap on testing and production. The Vultr side is
+> identical in both. Neither has been reconciled against a real invoice.
 
 ## 🎯 Cost Optimization Features
 
@@ -136,7 +146,11 @@ Already implemented in GCS buckets:
 - **Google Cloud**: Managed storage with lifecycle policies
 - **AWS**: Available as alternative (higher cost)
 
-**Savings**: 28-36% compared to AWS-only infrastructure
+**Savings**: ~39% compared to AWS-only infrastructure (at the corrected $48/node Vultr rate and $0
+control plane) — **on AWS on-demand pricing at a 2-node shape**. AWS EKS on Spot is ~47–56% cheaper
+per node, which reverses this at devnet's real size (EKS-on-Spot ≈$443/month vs Vultr ≈$509/month).
+See `~/Documents/ixo-devops/projects/aws-devnet-rebuild.md` §3 for the measured comparison, and the
+caveat under the Vultr vs AWS table in `README-vultr-cost-estimates.md`.
 
 ### 3. Automated Monitoring
 - Prometheus metrics for resource utilization

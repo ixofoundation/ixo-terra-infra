@@ -1,5 +1,11 @@
 useDeploy: true
 
+# The data volume is ReadWriteOnce: a RollingUpdate starts the new pod before stopping the old one,
+# and if it lands on another node it can never attach the volume, so the rollout hangs forever.
+strategy:
+  type: Recreate
+  rollingUpdate: null # clears the server-side-applied RollingUpdate params, which Recreate rejects
+
 image:
   tag: "2.4.0"
 

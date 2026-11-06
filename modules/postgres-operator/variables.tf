@@ -66,6 +66,17 @@ variable "clusters" {
         memory_request  = optional(string, "512Mi")
         memory_limit    = optional(string, "2Gi")
       }))
+
+      # Run as a read-only standby replaying WAL from this repo (e.g. "repo1"). The repos
+      # must then point at the source cluster's bucket with no schedules.
+      standby_repo = optional(string, "")
+      # Overrides var.gcs_key for this cluster (a read-only key while it is a standby).
+      gcs_key = optional(string)
+      # Schedule the instances and repo host on the tainted ixo.world/pool=db nodes.
+      db_pool = optional(bool, false)
+      # pgBackRest process-max and compress-type. Unset keeps pgBackRest's defaults (1, gz).
+      process_max   = optional(number)
+      compress_type = optional(string)
     }
     )
   )
@@ -73,4 +84,9 @@ variable "clusters" {
 
 variable "gcs_key" {
   type = string
+}
+
+variable "network_name" {
+  type        = string
+  description = "Chain environment name (root local.network_name): devnet_dev renders devnet."
 }

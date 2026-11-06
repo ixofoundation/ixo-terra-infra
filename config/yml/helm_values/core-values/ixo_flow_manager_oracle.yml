@@ -103,10 +103,10 @@ service:
   port: 4000
 resources:
   requests:
-    memory: 950Mi
+    memory: ${memory_request}
     cpu: "50m"
   limits:
-    memory: 1024Mi
+    memory: ${memory_limit}
 autoscaling:
   enabled: true
   minReplicas: 1
@@ -115,5 +115,3 @@ autoscaling:
 persistentVolume:
   storageClass: ${storage_class}
   size: ${storage_size}
-verticalPodAutoscaler:
-  enabled: true

@@ -38,6 +38,11 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
+podSecurityContext:
+  fsGroup: 1000
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
 persistentVolume:
   storageClass: ${storage_class}
   size: ${storage_size}

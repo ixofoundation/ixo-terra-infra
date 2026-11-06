@@ -78,7 +78,7 @@ repoServer:
 configs:
   rbac:
     policy.csv: |
-      g, ${org}:${environment}-devsecops, role:admin
+      g, ${org}:${oidc_team_segment}-devsecops, role:admin
   cm:
     create: true
     dex.config: |

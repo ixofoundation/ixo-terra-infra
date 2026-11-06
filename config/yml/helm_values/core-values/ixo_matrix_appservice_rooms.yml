@@ -25,10 +25,10 @@ env:
     value: "8081"
 resources:
   requests:
-    memory: 500Mi
+    memory: ${memory_request}
     cpu: "40m"
   limits:
-    memory: 650Mi
+    memory: ${memory_limit}
 autoscaling:
   enabled: true
   minReplicas: 1
@@ -43,5 +43,3 @@ backup:
       memory: 256Mi
   gcs:
     bucket: ${gcs_bucket}
-verticalPodAutoscaler:
-  enabled: true

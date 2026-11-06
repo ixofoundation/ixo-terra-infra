@@ -4,25 +4,34 @@ metadata:
   name: ${name}
   namespace: ${argo_namespace}
 spec:
+%{ if ignoreDifferences != "[]" ~}
   ignoreDifferences:
     ${indent(4, ignoreDifferences)}
+%{ endif ~}
   project: default
   syncPolicy:
     syncOptions:
       - ServerSideApply=true
+%{ if respectIgnoreDifferences ~}
+      - RespectIgnoreDifferences=true
+%{ endif ~}
     automated:
       prune: true
       selfHeal: true
+  # Render only non-default fields; ArgoCD drops the rest, which shows as plan drift.
   source:
     chart: ${chart}
     repoURL: ${repository}
-    enableOCI: ${isOci}
     targetRevision: ${revision}
     helm:
       releaseName: ${chart}
-      skipCrds: ${skipCrds}
+%{ if skipCrds ~}
+      skipCrds: true
+%{ endif ~}
+%{ if helm_values != "" ~}
       values: |
         ${indent(8, helm_values)}
+%{ endif ~}
   destination:
     server: "https://kubernetes.default.svc"
     namespace: ${namespace}
