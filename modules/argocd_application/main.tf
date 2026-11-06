@@ -21,47 +21,22 @@ resource "vault_kv_secret_v2" "this" {
   }
 }
 
-# # Create ArgoCD repository Secret for OCI registries
-# resource "kubernetes_secret_v1" "oci_repository_secret" {
-#   count = local.isHelm && var.application.helm.isOci ? 1 : 0
-  
-#   metadata {
-#     name      = "${var.application.name}-oci-repo"
-#     namespace = var.argo_namespace
-#     labels = {
-#       "argocd.argoproj.io/secret-type" = "repository"
-#     }
-#   }
-  
-#   type = "Opaque"
-  
-#   data = {
-#     url       = var.application.repository
-#     name      = "${var.application.name}-oci"
-#     type      = "helm"
-#     enableOCI = "true"
-#     username  = var.oci_repository_credentials.username != null ? var.oci_repository_credentials.username : ""
-#     password  = var.oci_repository_credentials.password != null ? var.oci_repository_credentials.password : ""
-#   }
-# }
-
 # Create Argo Git Application
 resource "kubectl_manifest" "application" {
-  # depends_on = [kubernetes_secret_v1.oci_repository_secret]
-  
   yaml_body = local.isHelm == true ? templatefile("${path.module}/crds/argo-application-helm.yml",
     {
-      name              = var.application.name
-      namespace         = var.application.namespace
-      argo_namespace    = var.argo_namespace
-      workspace         = terraform.workspace
-      isOci             = var.application.helm.isOci
-      chart             = var.application.helm.chart
-      revision          = var.application.helm.revision
-      ignoreDifferences = var.application.helm.ignoreDifferences != null ? var.application.helm.ignoreDifferences : "[]"
-      skipCrds          = var.application.helm.skipCrds
-      repository        = var.application.repository
-      helm_values       = var.application.values_override != null ? var.application.values_override : ""
+      name                     = var.application.name
+      namespace                = var.application.namespace
+      argo_namespace           = var.argo_namespace
+      workspace                = terraform.workspace
+      isOci                    = var.application.helm.isOci
+      chart                    = var.application.helm.chart
+      revision                 = var.application.helm.revision
+      ignoreDifferences        = var.application.helm.ignoreDifferences != null ? var.application.helm.ignoreDifferences : "[]"
+      skipCrds                 = var.application.helm.skipCrds
+      respectIgnoreDifferences = var.application.helm.respectIgnoreDifferences
+      repository               = var.application.repository
+      helm_values              = var.application.values_override != null ? var.application.values_override : ""
     }
     ) : templatefile("${path.module}/crds/argo-application.yml",
     {
@@ -72,6 +47,7 @@ resource "kubectl_manifest" "application" {
       repository     = var.application.repository
       helm_values    = var.application.values_override != null ? var.application.values_override : ""
       path           = var.application.path
+      auto_sync      = var.application.auto_sync
     }
   )
 }

@@ -94,8 +94,6 @@ env:
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#SENTRY_TRACES_SAMPLE_RATE>"
   - name: "SERVICE_API_KEY"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#SERVICE_API_KEY>"
-  - name: "BRIDGE_API_KEY"
-    value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#BRIDGE_API_KEY>"
   - name: "NETWORK"
     value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#NETWORK>"
 %{ endif ~}
@@ -141,8 +139,6 @@ autoscaling:
 matrix-bridge-api:
   enabled: true
   env:
-    - name: "BRIDGE_API_KEY"
-      value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#BRIDGE_API_KEY>"
     - name: "MATRIX_BASE_URL"
       value: "<path:${vault_mount}/data/ixo-memory-engine-graphiti#MATRIX_BASE_URL>"
     - name: "MATRIX_HOMESERVER_NAME"
@@ -167,5 +163,10 @@ matrix-bridge-api:
       memory: 750Mi
     limits:
       memory: 1Gi
-verticalPodAutoscaler:
-  enabled: true
+%{ if environment == "devnet" || environment == "testnet" || environment == "mainnet" ~}
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}
+legacy:
+  enabled: false
+%{ endif ~}

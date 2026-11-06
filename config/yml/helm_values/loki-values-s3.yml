@@ -1,0 +1,149 @@
+## Loki on AWS: chunks in S3, gp3 volume for WAL + index cache.
+deploymentMode: SingleBinary # TODO migrate to SimpleScalable or Distributed for HA when load increases
+
+# IRSA role from main_loki_s3.tf; no static S3 credentials.
+serviceAccount:
+  create: true
+  name: loki
+  annotations:
+    eks.amazonaws.com/role-arn: ${loki_role_arn}
+
+loki:
+  commonConfig:
+    replication_factor: 1
+  auth_enabled: false
+  memberlistConfig:
+    join_members:
+      - loki-memberlist.loki.svc.cluster.local
+  ingester:
+    lifecycler:
+      ring:
+        kvstore:
+          store: inmemory
+        replication_factor: 1
+  distributor:
+    ring:
+      kvstore:
+        store: inmemory
+  compactor:
+    retention_enabled: true
+    compaction_interval: 10m
+    working_directory: /var/loki/data/retention
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 10
+    # Delete requests live in S3 alongside the chunks, not on the local volume — the
+    # volume is disposable here, which is the point of moving chunks off it.
+    delete_request_store: s3
+  ruler:
+    ring:
+      kvstore:
+        store: inmemory
+  storage:
+    type: s3
+    bucketNames:
+      chunks: ${s3_bucket}
+      ruler: ${s3_bucket}
+      admin: ${s3_bucket}
+    s3:
+      region: ${s3_region}
+      s3ForcePathStyle: false
+      # No access key or secret: the SDK picks up the IRSA web-identity token from the
+      # projected volume the EKS pod identity webhook mounts.
+  podSecurityContext:
+    fsGroupChangePolicy: "OnRootMismatch"
+  limits_config:
+    max_label_names_per_series: 20
+    # Prevent ingestion drops for occasional huge lines (stack traces, JSON blobs).
+    # Prefer fixing at the source, but truncation is safer than losing the entire line.
+    max_line_size: 262144
+    max_line_size_truncate: true
+    ingestion_rate_mb: 8
+    ingestion_burst_size_mb: 16
+    # 30 days.
+    retention_period: 720h
+  schemaConfig:
+    configs:
+      # Schema start date; must not precede the first write.
+      - from: "2026-10-21"
+        object_store: s3
+        store: tsdb
+        schema: v13
+        index:
+          prefix: "index_"
+          period: 24h
+memberlist:
+  service:
+    publishNotReadyAddresses: true
+chunksCache:
+  enabled: true
+  allocatedMemory: 512
+compactor:
+  replicas: 0
+singleBinary:
+  replicas: 1
+  persistence:
+    enableStatefulSetAutoDeletePVC: false
+    enableStatefulSetRecreationForSizeChange: true
+    storageClass: ${storage_class}
+    # WAL, index cache and compactor only (chunks are in S3). gp3 grows but never shrinks.
+    size: 30Gi
+  extraEnv:
+    # Tell Go's GC to start collecting at 3.5Gi so it doesn't get OOMKilled at the 4Gi limit
+    - name: GOMEMLIMIT
+      value: "3758096384" # 3.5Gi in bytes
+  resources:
+    requests:
+      memory: 2Gi
+      cpu: 100m
+    limits:
+      memory: 4Gi
+read:
+  persistence:
+    storageClass: ${storage_class}
+    size: 40Gi
+  replicas: 0 #TODO * DISTRIBUTED deployment setup.
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 150m
+    limits:
+      memory: 256Mi
+backend:
+  persistence:
+    storageClass: ${storage_class}
+    size: 40Gi
+  replicas: 0
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+write:
+  persistence:
+    storageClass: ${storage_class}
+    size: 40Gi
+  replicas: 0
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 150m
+    limits:
+      memory: 256Mi
+sidecar:
+  skipTlsVerify: true
+monitoring:
+  rules:
+    alerting: false
+  selfMonitoring:
+    enabled: true
+    grafanaAgent:
+      installOperator: true
+      resources:
+        limits:
+          memory: 200Mi
+        requests:
+          cpu: 50m
+          memory: 100Mi
+    podLogs:
+      additionalPipelineStages: []

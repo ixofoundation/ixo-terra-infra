@@ -2,10 +2,6 @@ terraform {
   required_version = ">= 1.2.0"
 
   required_providers {
-    vultr = {
-      source  = "vultr/vultr"
-      version = "2.19.0"
-    }
     kubectl = {
       source  = "alekc/kubectl"
       version = "~> 2.0"
@@ -58,19 +54,22 @@ provider "helm" {
   }
 }
 
-provider "vultr" {
-  api_key     = var.vultr_api_key
-  rate_limit  = 100
-  retry_limit = 3
-}
 
-# Mock AWS provider to avoid authentication issues during billing suspension
 provider "aws" {
-  region                      = var.environments[terraform.workspace].aws_region
-  skip_credentials_validation = true
+  region = var.environments[terraform.workspace].aws_region
+  # Pin the AWS account so credentials for another account fail the plan.
+  allowed_account_ids         = local.env.aws_account_id != null ? [local.env.aws_account_id] : null
+  skip_credentials_validation = local.env.aws_account_id == null
   skip_metadata_api_check     = true
   skip_region_validation      = true
-  skip_requesting_account_id  = true
+  skip_requesting_account_id  = local.env.aws_account_id == null
+
+  dynamic "default_tags" {
+    for_each = length(local.env.aws_default_tags) > 0 ? [1] : []
+    content {
+      tags = local.env.aws_default_tags
+    }
+  }
 }
 
 # For Initial Cluster Setup, This userpass needs to be manually created.
@@ -92,6 +91,31 @@ resource "kubernetes_namespace_v1" "ixo_core" {
   metadata {
     name = "core"
   }
+
+  # Fails the plan if an enabled app renders another env's live hostname (dns_guard_* in locals.tf).
+  lifecycle {
+    precondition {
+      condition = length(local.dns_guard_violations) == 0
+      error_message = join("\n", concat([
+        "Cross-environment DNS hostname(s) on workspace '${terraform.workspace}'.",
+        "",
+        "These enabled apps render a hostname that does not carry this workspace's DNS",
+        "segment (${coalesce(local.dns_guard_segment, "none")}), so they name another",
+        "environment's live records. external-dns on this cluster runs registry: noop",
+        "with no ownership TXT records, so applying this would OVERWRITE those live",
+        "records with this cluster's load balancer and move live traffic.",
+        "",
+        "Offending apps (app = rendered host):",
+        ], local.dns_guard_violations, [
+        "",
+        "Fix: give each one a literal dns_endpoint carrying this workspace's own segment",
+        "in the workspace var-file (the prometheus_stack precedent), or a dns_prefix,",
+        "which has the segment spliced in automatically. Do not disable this guard to",
+        "get a plan through. Taking over the live hostname deliberately at cutover is a",
+        "per-app line in dns_cutover_apps in the workspace var-file.",
+      ]))
+    }
+  }
 }
 
 resource "kubernetes_namespace_v1" "ixo-postgres" {
@@ -101,12 +125,6 @@ resource "kubernetes_namespace_v1" "ixo-postgres" {
   }
 }
 
-#resource "kubernetes_namespace_v1" "hummingbot" {
-#  depends_on = [module.kubernetes_cluster]
-#  metadata {
-#    name = "hummingbot"
-#  }
-#}
 
 # TODO Migrate Vault to OIDC issuer for root token to have Terraform create Mounts securely when moving to CI/CD.
 resource "vault_mount" "ixo" {
@@ -121,26 +139,28 @@ resource "vault_mount" "ixo" {
 }
 
 resource "kubernetes_persistent_volume_claim_v1" "common" {
+  count      = local.live_overrides.common_storage_enabled ? 1 : 0
   depends_on = [module.argocd]
   metadata {
-    name      = "${var.org}-core-common-storage"
+    name      = local.live_overrides.common_storage.name
     namespace = kubernetes_namespace_v1.ixo_core.metadata[0].name
     labels = {
-      "app.kubernetes.io/name" = "${var.org}-core-common-storage"
+      "app.kubernetes.io/name" = local.live_overrides.common_storage.name
     }
   }
   spec {
     access_modes = ["ReadWriteMany"]
     resources {
       requests = {
-        storage = "100Gi"
+        storage = local.live_overrides.common_storage.size
       }
     }
-    storage_class_name = var.storage_classes["shared"]
+    storage_class_name = local.live_overrides.common_storage.storage_class
   }
 }
 
 resource "kubernetes_persistent_volume_claim_v1" "common_matrix" {
+  count      = local.live_overrides.common_matrix_storage ? 1 : 0
   depends_on = [module.argocd]
   metadata {
     name      = "${var.org}-core-common-matrix-storage"
@@ -161,6 +181,7 @@ resource "kubernetes_persistent_volume_claim_v1" "common_matrix" {
 }
 
 resource "kubernetes_pod_v1" "filebrowser" {
+  count      = local.live_overrides.devops_filebrowser ? 1 : 0
   depends_on = [kubernetes_persistent_volume_claim_v1.common]
   metadata {
     name      = "devops-filebrowser"
@@ -206,13 +227,14 @@ resource "kubernetes_pod_v1" "filebrowser" {
     volume {
       name = "common-storage"
       persistent_volume_claim {
-        claim_name = kubernetes_persistent_volume_claim_v1.common.metadata[0].name
+        claim_name = kubernetes_persistent_volume_claim_v1.common[0].metadata[0].name
       }
     }
   }
 }
 
 resource "kubernetes_pod_v1" "filebrowser_matrix" {
+  count      = local.live_overrides.devops_filebrowser ? 1 : 0
   depends_on = [kubernetes_persistent_volume_claim_v1.common_matrix]
   metadata {
     name      = "devops-filebrowser-matrix"
@@ -258,7 +280,7 @@ resource "kubernetes_pod_v1" "filebrowser_matrix" {
     volume {
       name = "common-matrix-storage"
       persistent_volume_claim {
-        claim_name = kubernetes_persistent_volume_claim_v1.common_matrix.metadata[0].name
+        claim_name = kubernetes_persistent_volume_claim_v1.common_matrix[0].metadata[0].name
       }
     }
   }
@@ -280,8 +302,9 @@ resource "kubernetes_namespace_v1" "external_dns_cloudflare" {
   }
 }
 
+# Disabled: its AWS account was closed.
 resource "aws_iam_openid_connect_provider" "github_oidc" {
-  count = terraform.workspace == "mainnet" ? 1 : 0
+  count = 0
   url   = "https://token.actions.githubusercontent.com"
 
   client_id_list = ["sts.amazonaws.com"]
@@ -292,7 +315,7 @@ resource "aws_iam_openid_connect_provider" "github_oidc" {
 resource "google_storage_bucket" "postgres_backups" {
   count         = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].enabled ? 1 : 0
   location      = "US"
-  name          = "${var.org}-${terraform.workspace}-core-postgres"
+  name          = "${var.org}-${local.global_resource_name}-core-postgres"
   storage_class = "COLDLINE"
   versioning {
     enabled = true
@@ -339,7 +362,7 @@ resource "google_storage_bucket" "postgres_backups" {
     condition {
       # pgBackRest expire deletes files, which versioning then keeps as noncurrent
       # versions. See the matrix bucket for why ARCHIVE is excluded.
-      days_since_noncurrent_time = 7
+      days_since_noncurrent_time = 30
       matches_storage_class      = ["STANDARD", "NEARLINE", "COLDLINE"]
     }
   }
@@ -348,7 +371,7 @@ resource "google_storage_bucket" "postgres_backups" {
 resource "google_storage_bucket" "matrix_backups" {
   count         = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
   location      = "US"
-  name          = "${var.org}-${terraform.workspace}-matrix"
+  name          = "${var.org}-${local.global_resource_name}-matrix"
   storage_class = "COLDLINE"
   versioning {
     enabled = true
@@ -392,40 +415,40 @@ resource "google_storage_bucket" "matrix_backups" {
       # Versioning keeps every overwritten or deleted object as a noncurrent version, and
       # nothing removed them: the old in-container Synapse zip backup re-uploaded the
       # day's zip on every OOM restart, leaving ~20TB of noncurrent versions across the
-      # matrix buckets. Seven days still covers an accidental overwrite. ARCHIVE is
+      # matrix buckets. 30 days is free under COLDLINE's 90-day minimum. ARCHIVE is
       # excluded because its 365-day minimum is billed whether it is deleted early or not,
       # so deleting it early would lose the copy and save nothing.
-      days_since_noncurrent_time = 7
+      days_since_noncurrent_time = 30
       matches_storage_class      = ["STANDARD", "NEARLINE", "COLDLINE"]
     }
   }
 }
 
-resource "google_storage_bucket" "supamoto_backups" {
-  count         = terraform.workspace == "mainnet" ? 1 : 0
-  location      = "US"
-  name          = "${var.org}-${terraform.workspace}-supamoto-backups"
-  storage_class = "COLDLINE"
+# Vault raft snapshots, in their own bucket.
+resource "google_storage_bucket" "vault_snapshots" {
+  count = local.vault_snapshot_enabled ? 1 : 0
+  # Not "US" like the buckets above it; see vault_snapshot_location in variables.tf.
+  location = var.environments[terraform.workspace].application_configs["vault"].vault_snapshot_location
+  name     = "${var.org}-${local.global_resource_name}-vault-snapshots"
+  # Small objects, short retention.
+  storage_class = "STANDARD"
+
+  # Every object is timestamped, so nothing is ever overwritten. Versioning is here only
+  # so an accidental delete is recoverable for a week.
   versioning {
     enabled = true
   }
 
+  # No per-object ACLs, no public access.
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+
   lifecycle_rule {
     action {
       type = "Delete"
     }
     condition {
-      age = 365 # Objects older than 365 days will be deleted
-    }
-  }
-
-  lifecycle_rule {
-    action {
-      type          = "SetStorageClass"
-      storage_class = "ARCHIVE"
-    }
-    condition {
-      age = 60 # Objects older than 60 days will be moved to ARCHIVE storage class to save on costs.
+      age = var.environments[terraform.workspace].application_configs["vault"].vault_snapshot_retention_days
     }
   }
 
@@ -434,17 +457,27 @@ resource "google_storage_bucket" "supamoto_backups" {
       type = "Delete"
     }
     condition {
-      # See the matrix bucket for why noncurrent versions are expired and ARCHIVE is not.
       days_since_noncurrent_time = 7
-      matches_storage_class      = ["STANDARD", "NEARLINE", "COLDLINE"]
     }
   }
+}
+
+# Snapshot job SA: create + read, no delete (rclone lists the destination before upload).
+resource "google_storage_bucket_iam_member" "vault_snapshots_writer" {
+  for_each = local.vault_snapshot_enabled && local.vault_snapshot_writer_sa_email != null ? toset([
+    "roles/storage.objectCreator",
+    "roles/storage.objectViewer",
+  ]) : toset([])
+
+  bucket = google_storage_bucket.vault_snapshots[0].name
+  role   = each.value
+  member = "serviceAccount:${local.vault_snapshot_writer_sa_email}"
 }
 
 resource "google_storage_bucket" "loki_logs_backups" {
   count    = var.environments[terraform.workspace].application_configs["loki"].enabled ? 1 : 0
   location = "US"
-  name     = "${var.org}-${terraform.workspace}-loki-logs"
+  name     = "${var.org}-${local.global_resource_name}-loki-logs"
   versioning {
     enabled = true
   }
@@ -523,28 +556,28 @@ resource "kubernetes_secret_v1" "ghost_mysql_secret" {
 }
 
 resource "kubernetes_ingress_v1" "neo4j" {
-  count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled || local.live_overrides.neo4j_ingress ? 1 : 0
   depends_on = [module.neo4j]
   metadata {
     name      = "neo4j"
     namespace = kubernetes_namespace_v1.neo4j.metadata[0].name
-    annotations = {
+    annotations = merge({
       "cert-manager.io/cluster-issuer"            = "letsencrypt-staging"
       "acme.cert-manager.io/http01-edit-in-place" = "true"
       "nginx.org/proxy-read-timeout"              = "3600"
       "nginx.org/proxy-send-timeout"              = "3600"
       "nginx.org/proxy-connect-timeout"           = "3600"
       "nginx.org/websocket-services"              = "neo4j"
-    }
+    }, local.live_overrides.neo4j_ssl_redirect_annotation ? { "ingress.kubernetes.io/ssl-redirect" = "false" } : {})
   }
   spec {
     ingress_class_name = "nginx"
     tls {
-      hosts       = ["${local.dns_for_environment[terraform.workspace]["neo4j"]}"]
+      hosts       = [local.neo4j_host]
       secret_name = "neo4j-tls"
     }
     rule {
-      host = local.dns_for_environment[terraform.workspace]["neo4j"]
+      host = local.neo4j_host
       http {
         path {
           path = "/"
@@ -567,7 +600,7 @@ resource "kubernetes_ingress_v1" "neo4j" {
 # See: https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/
 # Note: This must be applied AFTER neo4j ingress is applied & certificate is created (neo4j-tls). (same goes for neo4j bolt tls config).
 resource "kubectl_manifest" "neo4j_bolt_transport_server" {
-  count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled ? 1 : 0
+  count      = var.environments[terraform.workspace].application_configs["neo4j"].enabled || local.live_overrides.neo4j_bolt_transport ? 1 : 0
   depends_on = [module.ingress_nginx, module.neo4j]
 
   yaml_body = <<-YAML
@@ -610,7 +643,7 @@ resource "kubectl_manifest" "prometheus_stack_virtual_server" {
         cert-manager:
           cluster-issuer: letsencrypt-staging
         redirect:
-          enable: false
+          enable: ${local.live_overrides.grafana_tls_redirect}
       upstreams:
       - name: grafana
         service: ${kubernetes_namespace_v1.prometheus_stack.metadata[0].name}/kube-prometheus-stack-grafana
@@ -678,6 +711,90 @@ resource "kubectl_manifest" "grafana_virtual_server_route" {
   YAML
 }
 
+# Redirect host for blockscan.devnet.ixo.earth (rewrites in f5-nginx-ingress-controller-values.yml).
+# ssl-redirect off so the HTTP-01 challenge is not bounced to https.
+resource "kubectl_manifest" "blockscan_devnet_ingress" {
+  count = terraform.workspace == "devnet" ? 1 : 0
+
+  depends_on = [module.ingress_nginx]
+
+  yaml_body = <<-YAML
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: blockscan-rerouting
+      namespace: ${kubernetes_namespace_v1.ingress_nginx.metadata[0].name}
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-staging
+        acme.cert-manager.io/http01-edit-in-place: "true"
+        ingress.kubernetes.io/ssl-redirect: "false"
+    spec:
+      ingressClassName: nginx
+      tls:
+      - hosts:
+        - blockscan.devnet.ixo.earth
+        secretName: blockscan-devnet-tls
+      rules:
+      - host: blockscan.devnet.ixo.earth
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-ingress-controller
+                port:
+                  number: 80
+  YAML
+}
+
+# Same for testnet: blockscan.testnet.ixo.earth and blockscan-pandora.ixo.earth.
+resource "kubectl_manifest" "blockscan_testnet_ingress" {
+  count = terraform.workspace == "testnet" ? 1 : 0
+
+  depends_on = [module.ingress_nginx]
+
+  yaml_body = <<-YAML
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: blockscan-rerouting
+      namespace: ${kubernetes_namespace_v1.ingress_nginx.metadata[0].name}
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-staging
+        acme.cert-manager.io/http01-edit-in-place: "true"
+        ingress.kubernetes.io/ssl-redirect: "false"
+    spec:
+      ingressClassName: nginx
+      tls:
+      - hosts:
+        - blockscan.testnet.ixo.earth
+        - blockscan-pandora.ixo.earth
+        secretName: blockscan-testnet-tls
+      rules:
+      - host: blockscan.testnet.ixo.earth
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-ingress-controller
+                port:
+                  number: 80
+      - host: blockscan-pandora.ixo.earth
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-ingress-controller
+                port:
+                  number: 80
+  YAML
+}
+
 # SLACK WEBHOOK URL SECRETS
 resource "kubernetes_secret_v1" "slack_webhook_url" {
   metadata {
@@ -696,6 +813,26 @@ resource "kubernetes_secret_v1" "slack_webhook_url_matrix" {
   }
   data = {
     webhook-url = ""
+  }
+}
+
+# Grafana admin credentials, for environments that opt in with grafana_admin_secret (see
+# variables.tf). Read: kubectl -n prometheus get secret grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d
+resource "random_password" "grafana_admin" {
+  count   = local.env.grafana_admin_secret ? 1 : 0
+  length  = 32
+  special = false
+}
+
+resource "kubernetes_secret_v1" "grafana_admin" {
+  count = local.env.grafana_admin_secret ? 1 : 0
+  metadata {
+    name      = "grafana-admin"
+    namespace = kubernetes_namespace_v1.prometheus_stack.metadata[0].name
+  }
+  data = {
+    admin-user     = "admin"
+    admin-password = random_password.grafana_admin[0].result
   }
 }
 

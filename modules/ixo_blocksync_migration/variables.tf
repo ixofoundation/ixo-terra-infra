@@ -11,7 +11,7 @@ variable "namespace" {
 }
 
 variable "image" {
-  type = string
+  type    = string
   default = "null"
 }
 

@@ -1,9 +1,15 @@
+locals {
+  oidc_team_segment = coalesce(var.oidc_team_segment, terraform.workspace)
+}
+
 resource "time_sleep" "wait_for_vault_creation" {
   create_duration = "20s"
 }
 
 # NB vault-1 (dependent on replicas) may need to be manually unsealed on after initialization
 resource "null_resource" "init" {
+  # Skipped where Vault was initialized by a snapshot restore.
+  count      = var.vault_already_initialized ? 0 : 1
   depends_on = [time_sleep.wait_for_vault_creation]
   provisioner "local-exec" {
     command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault operator init -format=json > cluster-keys-for-kms-vault.json"
@@ -34,16 +40,9 @@ resource "vault_policy" "argocd" {
   policy = var.argo_policy
 }
 
-# Create Vault -> Kubernetes Auth
-#resource "null_resource" "vault_kubernetes_config" {
-#  depends_on = [vault_auth_backend.kubernetes]
-#  provisioner "local-exec" {
-#    command = "KUBECONFIG=${var.kube_config_path} kubectl exec -n ${var.namespace} ${var.name}-0 -- vault login -method=userpass username=terraform password=$TERRAFORM_VAULT_PASSWORD && vault write auth/kubernetes/config token_reviewer_jwt=${kubernetes_secret_v1.repo_server.data.token} kubernetes_host=https://${var.kubernetes_host}:6443 kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-#  }
-#}
-
 resource "vault_kubernetes_auth_backend_config" "vault_kubernetes_config" {
-  kubernetes_host    = "https://${var.kubernetes_host}:6443"
+  # A bare host gets the scheme and :6443; EKS's endpoint already carries both.
+  kubernetes_host    = startswith(var.kubernetes_host, "https://") ? var.kubernetes_host : "https://${var.kubernetes_host}:6443"
   backend            = vault_auth_backend.kubernetes.path
   kubernetes_ca_cert = kubernetes_secret_v1.repo_server.data["ca.crt"]
   token_reviewer_jwt = kubernetes_secret_v1.repo_server.data.token
@@ -85,6 +84,25 @@ resource "vault_kubernetes_auth_backend_role" "external_secrets_role" {
   token_policies                   = [vault_policy.external_secrets.name]
   token_ttl                        = 3600
   token_max_ttl                    = 86400
+}
+
+# Policy and Kubernetes auth role for the raft snapshot CronJob. Short TTL, no renewal.
+resource "vault_policy" "raft_snapshot" {
+  count  = var.raft_snapshot_enabled ? 1 : 0
+  name   = "raft-snapshot"
+  policy = file("${path.root}/config/vault/raft_snapshot_policy.hcl")
+}
+
+resource "vault_kubernetes_auth_backend_role" "raft_snapshot_role" {
+  count                            = var.raft_snapshot_enabled ? 1 : 0
+  bound_service_account_names      = ["vault-raft-snapshot"]
+  bound_service_account_namespaces = [var.namespace]
+  role_name                        = "raft-snapshot"
+  # [0] is safe: this resource carries the same count as the policy, so it exists only
+  # when the policy does.
+  token_policies = [vault_policy.raft_snapshot[0].name]
+  token_ttl      = 900
+  token_max_ttl  = 900
 }
 
 # Vault -> Dex OIDC
@@ -132,7 +150,7 @@ resource "vault_jwt_auth_backend_role" "admin" {
   groups_claim   = "groups"
   oidc_scopes    = ["groups"]
   bound_claims = {
-    groups = "${var.org}:${terraform.workspace}-devsecops"
+    groups = "${var.org}:${local.oidc_team_segment}-devsecops"
   }
   user_claim            = "sub"
   role_type             = "oidc"
@@ -153,7 +171,7 @@ resource "vault_identity_group_alias" "devops" {
   depends_on     = [vault_auth_backend.kubernetes, vault_kubernetes_auth_backend_role.vault_argocd_role]
   canonical_id   = vault_identity_group.devops.id
   mount_accessor = vault_jwt_auth_backend.oidc.accessor
-  name           = "${var.org}:${terraform.workspace}-devsecops"
+  name           = "${var.org}:${local.oidc_team_segment}-devsecops"
 }
 # Config Editors Team
 # Write access to non-sensitive app config (ixo_core/config/*) without read on
@@ -177,5 +195,5 @@ resource "vault_identity_group_alias" "config_editors" {
   depends_on     = [vault_auth_backend.kubernetes, vault_kubernetes_auth_backend_role.vault_argocd_role]
   canonical_id   = vault_identity_group.config_editors.id
   mount_accessor = vault_jwt_auth_backend.oidc.accessor
-  name           = "${var.org}:${terraform.workspace}-config"
+  name           = "${var.org}:${local.oidc_team_segment}-config"
 }

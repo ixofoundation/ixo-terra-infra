@@ -142,4 +142,9 @@ variable "enable_tls" {
   type        = bool
   default     = false
   description = "Whether to enable TLS for ingress"
-} 
+}
+variable "enable_deployment" {
+  type        = bool
+  default     = true
+  description = "Whether to run the embedding Deployment. False keeps the namespace, config, PVC (model cache), service and ingress but no workload."
+}

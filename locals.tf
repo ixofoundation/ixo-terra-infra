@@ -1,4 +1,57 @@
 locals {
+  # Per-environment differences that match what is live on each cluster.
+  live_overrides = {
+    devops_filebrowser            = false
+    nomic_deployment              = true
+    nomic_ingress                 = true
+    neo4j_ingress                 = true # neo4j is disabled everywhere but its ingress is still live
+    neo4j_bolt_transport          = true
+    neo4j_ssl_redirect_annotation = false
+    common_matrix_storage         = false
+    common_storage_enabled        = var.cloud_provider != "aws" # RWX; EBS has no ReadWriteMany backing
+    graphiti_image_updater        = false                       # re-enable once an image-updater writer exists
+    grafana_tls_redirect          = false
+    argocd_image_updater_app      = terraform.workspace != "mainnet" # mainnet pins image tags by hand
+    digihub_tunnel                = false
+    unprobed_apps                 = []
+    # Immutable on an existing PVC.
+    common_storage = {
+      name          = "${var.org}-core-common-storage"
+      size          = "100Gi"
+      storage_class = var.storage_classes["shared"]
+    }
+  }
+
+  # Environment identity, decoupled from terraform.workspace (see var.environments).
+  # cloud_resource_name: AWS names that cannot be renamed (EKS cluster, IAM roles, SGs).
+  env                  = var.environments[terraform.workspace]
+  cloud_resource_name  = coalesce(local.env.cloud_resource_name, terraform.workspace)
+  global_resource_name = coalesce(local.env.global_resource_name, terraform.workspace)
+  # Keeps a renamed workspace's old name where it renders; see variables.tf.
+  legacy_workspace_name = coalesce(local.env.legacy_workspace_name, terraform.workspace)
+  kubeconfig_name       = coalesce(local.env.kubeconfig_name, local.cloud_resource_name)
+
+  # DNS hostname segment; dns_segment overrides keys that are not valid DNS labels.
+  dns_segment_overrides = {
+    for env, cfg in var.environments : env => cfg.dns_segment if cfg.dns_segment != null
+  }
+
+  dns_segment_for_environment = {
+    for env, _ in var.environments : env => lookup(local.dns_segment_overrides, env, env)
+  }
+
+  # GitHub team slug for Vault OIDC (ixofoundation:<segment>-devsecops); not a DNS label.
+  vault_oidc_team_segment = coalesce(local.env.vault_oidc_team, terraform.workspace)
+
+  # charts/<tree>/ in ixo-helm-charts that ArgoCD Applications read.
+  chart_tree = coalesce(local.env.chart_tree, terraform.workspace)
+
+  # The chain environment this workspace serves, where it differs from the workspace name.
+  network_name = coalesce(local.env.network_name, terraform.workspace)
+
+  # dns_for_environment is null for disabled apps.
+  neo4j_host = "neo4j.${local.dns_segment_for_environment[terraform.workspace]}.${var.domains[var.environments[terraform.workspace].application_configs["neo4j"].domain]}"
+
   # Extract all unique domain keys used in application configs
   used_domain_keys = toset(flatten([
     for env, env_config in var.environments : [
@@ -6,18 +59,18 @@ locals {
       if config.domain != null
     ]
   ]))
-  
+
   # Validate that all used domain keys exist in the domains variable
   domain_validation = {
     for key in local.used_domain_keys : key => lookup(var.domains, key, null) != null
   }
-  
+
   synthetic_monitoring_endpoints = concat(
     compact([
       for app, config in var.environments[terraform.workspace].application_configs :
-      contains(local.excluded_synthetic_monitoring, app) || !config.enabled ? null : (
+      contains(local.excluded_synthetic_monitoring, app) || contains(local.live_overrides.unprobed_apps, app) || !config.enabled ? null : (
         config.dns_prefix != null ? (
-          terraform.workspace == "mainnet" ? "https://${config.dns_prefix}.${var.domains[config.domain]}" : "https://${config.dns_prefix}.${terraform.workspace}.${var.domains[config.domain]}"
+          "https://${config.dns_prefix}.${local.dns_segment_for_environment[terraform.workspace]}.${var.domains[config.domain]}"
         ) : config.dns_endpoint != null ? "https://${config.dns_endpoint}" : null
       )
     ]),
@@ -31,12 +84,12 @@ locals {
     "searxng",
     # Infrastructure services that shouldn't be monitored via blackbox
     "cert_manager",
-    "ingress_nginx", 
+    "ingress_nginx",
     "postgres_operator_crunchydata",
     "prometheus_stack",
     "external_dns",
     "dex",
-    "vault", 
+    "vault",
     "loki",
     "prometheus_blackbox_exporter",
     "tailscale",
@@ -59,7 +112,8 @@ locals {
     "supamoto_matrix_state_bot",
     "supamoto_matrix_appservice_rooms",
     "nomic_embedding",
-    "vault_argocd_watcher"
+    "vault_argocd_watcher",
+    "ixo_flow_manager_oracle"
   ]
 
   # Vault ArgoCD Watcher - derived from application_configs where create_kv = true and enabled.
@@ -70,8 +124,8 @@ locals {
     compact([
       for key, config in var.environments[terraform.workspace].application_configs :
       config.enabled && config.create_kv && !contains(local.excluded_vault_watched_apps, replace(key, "_", "-"))
-        ? replace(key, "_", "-")
-        : null
+      ? replace(key, "_", "-")
+      : null
     ]),
     lookup(var.additional_manual_vault_watched_apps, terraform.workspace, [])
   ))
@@ -82,17 +136,67 @@ locals {
   ]
 
   vault_mount_path = var.vault_core_mount
-  
+
+  # Vault raft snapshot backup: the bucket, the ServiceAccount and the CronJob are one
+  # unit, so they share a single condition.
+  vault_snapshot_enabled = (
+    var.environments[terraform.workspace].application_configs["vault"].enabled &&
+    var.environments[terraform.workspace].application_configs["vault"].vault_snapshot_enabled
+  )
+
+  # Null until the service account behind the hand-placed gcp-key-secret is recorded in
+  # tfvars; see vault_snapshot_writer_sa_email in variables.tf.
+  vault_snapshot_writer_sa_email = var.environments[terraform.workspace].application_configs["vault"].vault_snapshot_writer_sa_email
+
   # IXO DNS Entries - extract from application configs
   dns_for_environment = {
     for env, env_config in var.environments : env => {
       for service, config in env_config.application_configs : service => config.enabled ? (
         config.dns_prefix != null ? (
-          env == "mainnet" ? "${config.dns_prefix}.${var.domains[config.domain]}" : "${config.dns_prefix}.${env}.${var.domains[config.domain]}"
+          "${config.dns_prefix}.${local.dns_segment_for_environment[env]}.${var.domains[config.domain]}"
         ) : config.dns_endpoint != null ? config.dns_endpoint : null
       ) : null
     }
   }
+
+  # DNS cross-env guard: a workspace with a dns_segment override must not render another
+  # env's live hostname (dns_endpoint is used verbatim). Inert where no override is set.
+  dns_guard_segment = lookup(local.dns_segment_overrides, terraform.workspace, null)
+
+  # Hyphens stripped on both sides so "testnet-test" matches "testnettest".
+  dns_guard_normalise = { for k, v in local.dns_segment_overrides : k => replace(v, "-", "") }
+
+  # Hosts built outside dns_for_environment, which external-dns publishes just the same.
+  dns_guard_extra_hosts = {
+    ixo_registry_server = local.registry_server_tls
+    ixo_cellnode        = local.cellnode_tls_hostnames
+    neo4j               = [local.neo4j_host]
+  }
+
+  # Enabled apps only: dns_for_environment already yields null for a disabled app, and 25
+  # disabled blocks carrying a stale endpoint are the normal state of this file.
+  dns_guard_hosts = {
+    for app, config in var.environments[terraform.workspace].application_configs : app => distinct(compact(concat(
+      [local.dns_for_environment[terraform.workspace][app]],
+      try(local.dns_guard_extra_hosts[app], []),
+    ))) if config.enabled
+  }
+
+  # var.dns_cutover_apps is the per-app opt-in to take over another environment's live
+  # hostname at cutover. A name that is not an app here fails too, so a typo cannot pass.
+  dns_guard_violations = local.dns_guard_segment == null ? [] : sort(concat(
+    [
+      for app in var.dns_cutover_apps : "${app} = (in dns_cutover_apps but not an app on this workspace)"
+      if !contains(keys(var.environments[terraform.workspace].application_configs), app)
+    ],
+    flatten([
+      for app, hosts in local.dns_guard_hosts : [
+        for host in hosts : "${app} = ${host}"
+        if !contains(var.dns_cutover_apps, app) && !strcontains(replace(host, "-", ""), local.dns_guard_normalise[terraform.workspace])
+      ]
+    ]),
+  ))
+  # --- end DNS cross-environment guard ---------------------------------------------
 
   # Helper function to get domain from application config
   get_domain = {
@@ -162,22 +266,7 @@ locals {
       }]
   }]
 
-  registry_server_hosts = terraform.workspace == "testnet" ? [
-    {
-      host = local.dns_for_environment[terraform.workspace]["ixo_registry_server"]
-      paths = [{
-        path     = "/"
-        pathType = "Prefix"
-      }]
-    },
-    {
-      host = "${terraform.workspace}.api.${var.domains[var.environments[terraform.workspace].application_configs["ixo_registry_server"].domain]}"
-      paths = [{
-        path     = "/"
-        pathType = "Prefix"
-      }]
-    }
-    ] : terraform.workspace == "mainnet" ? [
+  registry_server_hosts = terraform.workspace == "mainnet" ? [
     {
       host = local.dns_for_environment[terraform.workspace]["ixo_registry_server"]
       paths = [{
@@ -201,7 +290,9 @@ locals {
       }]
     },
     {
-      host = "${terraform.workspace}.api.${var.domains[var.environments[terraform.workspace].application_configs["ixo_registry_server"].domain]}"
+      # testnet's dns_segment is still "testnet-test", so the lookup keeps testnet.api.<domain>;
+      # drop it when the segment becomes "testnet".
+      host = "${lookup({ testnet = "testnet" }, terraform.workspace, local.dns_segment_for_environment[terraform.workspace])}.api.${var.domains[var.environments[terraform.workspace].application_configs["ixo_registry_server"].domain]}"
       paths = [{
         path     = "/"
         pathType = "Prefix"
@@ -210,30 +301,10 @@ locals {
   ]
   cellnode_tls_hostnames = [for host in local.cellnode_hosts : host.host]
   registry_server_tls    = [for host in local.registry_server_hosts : host.host]
-  
-  # Vultr
-  region_ids = { for city, id in var.region_ids : id => city }
 
-  # IXO-3541: match a VKE node by its label prefix (VKE doesn't tag nodes) to find its VPC subnet
-  vke_node_label_prefix = terraform.workspace == "mainnet" ? "ixo-main" : "ixo-${terraform.workspace}"
-  vke_nodes_matched = [
-    for i in data.vultr_instances.vke_nodes.instances :
-    i if startswith(i.label, "${local.vke_node_label_prefix}-")
-  ]
-  vke_node_probe = length(local.vke_nodes_matched) > 0 ? local.vke_nodes_matched[0] : null
-  vke_private_subnet = length(data.vultr_vpc.vke_network) > 0 ? (
-    "${data.vultr_vpc.vke_network[0].v4_subnet}/${data.vultr_vpc.vke_network[0].v4_subnet_mask}"
-  ) : "0.0.0.0/0" # fallback if the lookup ever comes back empty; narrow this manually if it fires
-
-  # IXO-3541: PROXY protocol rollout gate — devnet first, then testnet, then mainnet.
-  proxy_protocol_environments = ["devnet", "testnet", "mainnet"]
-  enable_proxy_protocol       = contains(local.proxy_protocol_environments, terraform.workspace)
-  # Published in the ingress Service status INSTEAD of the LB IP (vultr-loadbalancer-hostname
-  # annotation) so kube-proxy stops short-circuiting in-cluster traffic to the nginx pods;
-  # hairpin traffic must egress via the real LB to get a PROXY protocol header prepended.
-  ingress_lb_hostname = terraform.workspace == "mainnet" ? "lb.ixo.earth" : "lb.${terraform.workspace}.ixo.earth"
-  # The LB IP itself is looked up via data.vultr_load_balancer.ingress (see modules.tf) — the
-  # Service status stops exposing it once the hostname annotation is set.
+  # IXO-3541: PROXY protocol on the AWS Classic ELB; trust the VPC CIDR.
+  aws_proxy_protocol_environments = ["mainnet"]
+  enable_aws_proxy_protocol       = var.cloud_provider == "aws" && contains(local.aws_proxy_protocol_environments, terraform.workspace)
 
   # Helm
   helm_values_config_path = "${path.root}/config/yml/helm_values"
@@ -314,7 +385,8 @@ locals {
     ]
   )
 
-  prometheus_stack_host = var.environments[terraform.workspace].application_configs["prometheus_stack"].enabled ? var.environments[terraform.workspace].application_configs["prometheus_stack"].dns_endpoint : null
+  # Via dns_for_environment (null when disabled) so dns_prefix works too.
+  prometheus_stack_host = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
 
   # Argo Helm Ignore Differences
   prometheus_stack_ignore_differences = <<EOT
@@ -384,8 +456,7 @@ EOT
     - /spec/template/spec/containers/0/resources
 EOT
   nginx_ignore_differences            = <<EOT
-- group: ""
-  kind: Service
+- kind: Service
   jsonPointers:
     - /spec/ports
 - group: admissionregistration.k8s.io
@@ -393,9 +464,18 @@ EOT
   jsonPointers:
     - /webhooks
 EOT
-  matrix_ignore_differences = <<EOT
-- group: ""
-  kind: Secret
+  # cert-manager http01-edit-in-place edits spec.rules during ACME challenges.
+  edit_in_place_ignore_differences = <<EOT
+- kind: Secret
+  jsonPointers:
+    - /data
+- group: networking.k8s.io
+  kind: Ingress
+  jqPathExpressions:
+    - .spec.rules
+EOT
+  matrix_ignore_differences        = <<EOT
+- kind: Secret
   name: matrix-synapse
   namespace: matrix-synapse
   jsonPointers:

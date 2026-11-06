@@ -24,7 +24,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "public" {
   count             = length(local.azs)
   vpc_id            = aws_vpc.main.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, var.subnet_bits, count.index)
+  cidr_block        = var.subnet_cidrs != null ? var.subnet_cidrs.public[count.index] : cidrsubnet(var.vpc_cidr, var.subnet_bits, count.index)
   availability_zone = local.azs[count.index]
 
   map_public_ip_on_launch = true
@@ -41,7 +41,7 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   count             = length(local.azs)
   vpc_id            = aws_vpc.main.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, var.subnet_bits, count.index + length(local.azs))
+  cidr_block        = var.subnet_cidrs != null ? var.subnet_cidrs.private[count.index] : cidrsubnet(var.vpc_cidr, var.subnet_bits, count.index + length(local.azs))
   availability_zone = local.azs[count.index]
 
   tags = {
@@ -66,9 +66,11 @@ resource "aws_internet_gateway" "main" {
 # NAT Instance (used when nat_gateway_enabled = false, e.g. dev to save cost)
 # AL2023 Nitro instances use ens5 not eth0 — interface is detected dynamically.
 resource "aws_instance" "nat" {
-  count         = var.env_config.nat_gateway_enabled ? 0 : 1
-  ami           = data.aws_ami.nat_instance[0].id
-  instance_type = "t3.nano"
+  count = var.env_config.nat_gateway_enabled ? 0 : 1
+  ami   = data.aws_ami.nat_instance[0].id
+
+  # t3.micro minimum: on t3.nano dnf is OOM-killed and MASQUERADE is never set.
+  instance_type = "t3.small"
   subnet_id     = aws_subnet.public[0].id
 
   source_dest_check           = false
@@ -147,7 +149,7 @@ resource "aws_security_group" "nat_instance" {
 
 # Elastic IP for NAT Gateway
 resource "aws_eip" "nat" {
-  count = var.env_config.nat_gateway_enabled ? 1 : 0
+  count  = var.env_config.nat_gateway_enabled ? 1 : 0
   domain = "vpc"
 
   tags = {
@@ -229,11 +231,11 @@ resource "aws_route_table_association" "private" {
 
 # VPC Flow Logs
 resource "aws_flow_log" "main" {
-  count                = var.env_config.flow_logs_enabled ? 1 : 0
-  iam_role_arn         = aws_iam_role.vpc_flow_logs[0].arn
-  log_destination      = aws_cloudwatch_log_group.vpc_flow_logs[0].arn
-  traffic_type         = "ALL"
-  vpc_id               = aws_vpc.main.id
+  count                    = var.env_config.flow_logs_enabled ? 1 : 0
+  iam_role_arn             = aws_iam_role.vpc_flow_logs[0].arn
+  log_destination          = aws_cloudwatch_log_group.vpc_flow_logs[0].arn
+  traffic_type             = "ALL"
+  vpc_id                   = aws_vpc.main.id
   max_aggregation_interval = 60
 
   tags = {

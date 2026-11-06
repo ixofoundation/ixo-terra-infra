@@ -6,10 +6,14 @@ image:
   base: ""
 
 chromadb:
+%{ if api_version != "" ~}
+  # Image tag pin. The chart reads chromadb.apiVersion, not image.apiVersion above (that key is ignored).
+  apiVersion: "${api_version}"
+%{ endif ~}
   auth:
     enabled: false
   data:
-    volumeSize: 40Gi
+    volumeSize: ${volume_size}
     storageClass: ${storage_class}
     retentionPolicyOnDelete: Retain
 

@@ -17,6 +17,12 @@ ingress:
           pathType: Prefix
 service:
   port: 8082
+%{ if cloud_provider == "aws" ~}
+# The chart defaults to vultr-block-storage-hdd, which AWS lacks. AWS only: a PVC's class is immutable on Vultr.
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}
+%{ endif ~}
 %{ if eso_enabled ~}
 externalSecret:
   enabled: true

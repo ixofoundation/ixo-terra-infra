@@ -25,11 +25,6 @@ variable "domain" {
   default     = "ixo.earth"
 }
 
-variable "namespace" {
-  description = "Kubernetes namespace to deploy the cloudflared access proxy into"
-  type        = string
-}
-
 variable "partner_name" {
   description = "Short identifier for the partner (e.g. supamoto, digihub) — used in cloud resource names and K8s service names"
   type        = string
@@ -44,4 +39,10 @@ variable "docker_postgres_service" {
   description = "Docker Swarm DNS service name for the partner's Postgres (resolved inside their cloudflared container)"
   type        = string
   default     = "matrix_postgres"
+}
+
+variable "warp_routing_enabled" {
+  description = "Enable WARP routing on the tunnel (private-network routes reachable from WARP clients)."
+  type        = bool
+  default     = false
 }

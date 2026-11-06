@@ -72,7 +72,7 @@ resource "kubernetes_secret_v1" "gcs_secret_key" {
     namespace = each.value.pg_cluster_namespace
   }
   data = {
-    "gcs-key.json" : var.gcs_key
+    "gcs-key.json" : coalesce(each.value.gcs_key, var.gcs_key)
   }
 }
 
@@ -106,7 +106,15 @@ resource "kubectl_manifest" "cluster" {
       repo2_retention_type        = each.value.repo2_retention_type != null ? each.value.repo2_retention_type : "time"
       repo2_retention_full        = each.value.repo2_retention_full != null ? each.value.repo2_retention_full : 365
       upgrade_name                = try(each.value.upgrade.name, "")
-      environment                 = terraform.workspace
+      standby_repo                = each.value.standby_repo
+      # GCS repos only; a repo1-gcs-key without a GCS repo1 breaks --repo=2.
+      gcs_repos     = [for r in yamldecode(each.value.pgbackrest_repos) : r.name if try(r.gcs, null) != null]
+      db_pool       = each.value.db_pool
+      process_max   = each.value.process_max != null ? each.value.process_max : 0
+      compress_type = each.value.compress_type != null ? each.value.compress_type : ""
+      # Tailscale device name <cluster>-db-<environment>; "_" is not valid in a hostname, hence
+      # network_name, not the workspace.
+      environment = var.network_name
     }
   )
 }

@@ -87,6 +87,18 @@ env:
   - name: "ORACLE_ENTITY_DID"
     value: "<path:${vault_mount}/data/ixo-pathgen-oracle#ORACLE_ENTITY_DID>"
 %{ endif ~}
+%{ if storage_size != "" ~}
+# Own RWO volume instead of the shared RWX ixofoundation-core-common-storage (set storage_size per env).
+persistentVolume:
+  useExisting: false
+  size: ${storage_size}
+  storageClass: ${storage_class}
+  accessModes:
+    - ReadWriteOnce
+# RWO volume: the old pod must release it before the new one starts.
+strategy:
+  type: Recreate
+%{ endif ~}
 service:
   port: 3000
 resources:
@@ -100,5 +112,3 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
-verticalPodAutoscaler:
-  enabled: true

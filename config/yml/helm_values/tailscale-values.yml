@@ -21,7 +21,7 @@ operatorConfig:
   defaultTags:
     - "tag:k8s-operator-${environment}"
 
-  hostname: "k8cluster-${environment}"
+  hostname: "${hostname}"
 
   resources:
     requests:

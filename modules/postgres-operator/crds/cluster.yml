@@ -16,6 +16,11 @@ spec:
   shutdown: ${shutdown}
   image: ${pg_image}:${pg_image_tag}
   postgresVersion: ${pg_version}
+%{ if standby_repo != "" ~}
+  standby:
+    enabled: true
+    repoName: ${standby_repo}
+%{ endif ~}
   service:
     metadata:
       annotations:
@@ -80,15 +85,45 @@ spec:
   backups:
     pgbackrest:
       image: ${pgbackrest_image}:${pgbackrest_image_tag}
+%{ if db_pool ~}
+      repoHost:
+        tolerations:
+          - key: ixo.world/pool
+            operator: Equal
+            value: db
+            effect: NoSchedule
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: ixo.world/pool
+                      operator: In
+                      values: ["db"]
+%{ endif ~}
       global:
+%{ if contains(gcs_repos, "repo1") ~}
         repo1-gcs-key: /etc/pgbackrest/conf.d/gcs-key.json
+%{ endif ~}
         repo1-retention-full-type: "${retention_type}"
         repo1-retention-full: "${retention_full}"
-%{ if gcs_repo2_bucket != "" ~}
+%{ if contains(gcs_repos, "repo2") ~}
         repo2-gcs-key: /etc/pgbackrest/conf.d/gcs-key.json
+%{ endif ~}
+%{ if gcs_repo2_bucket != "" ~}
         repo2-path: /pgbackrest/repo2
         repo2-retention-full-type: "${repo2_retention_type}"
         repo2-retention-full: "${repo2_retention_full}"
+%{ endif ~}
+%{ if process_max > 0 ~}
+        process-max: "${process_max}"
+%{ endif ~}
+%{ if compress_type != "" ~}
+        compress-type: ${compress_type}
+%{ endif ~}
+%{ if gcs_repo2_bucket == "" && standby_repo == "repo2" ~}
+        # Standby from another env's repo2 (Tier 3 U-M0): only the read side, no retention (no backups run here).
+        repo2-path: /pgbackrest/repo2
 %{ endif ~}
       configuration:
         - secret:

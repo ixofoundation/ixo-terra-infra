@@ -1,8 +1,3 @@
-variable "vultr_api_key" {
-  description = "Vultr API Key" # Set locally TF_VAR_vultr_api_key
-  default     = ""
-}
-
 variable "cloudflare_api_token" {
   description = "CloudFlare Api Token" # TF_VAR_cloudflare_api_token
   default     = ""
@@ -64,16 +59,23 @@ variable "storage_classes" {
   }
 }
 
+variable "dns_cutover_apps" {
+  description = "Apps allowed to carry another environment's live hostname past the DNS guard in locals.tf. Set only in the var-file of a workspace taking that environment over."
+  type        = list(string)
+  default     = []
+}
+
 # IXO Infra Defaults
 variable "environments" {
   description = "Environment specific configurations"
   type = map(object({
-    cluster_firewall     = bool
-    is_development       = optional(bool) # If true, this environment is treated as a development environment.
-    aws_region           = string
-    aws_iam_users        = list(string)
-    rpc_url              = optional(string)
-    ipfs_service_mapping = optional(string)
+    cluster_firewall      = bool
+    is_development        = optional(bool) # If true, this environment is treated as a development environment.
+    aws_eks_public_access = optional(bool) # Defaults to is_development.
+    aws_region            = string
+    aws_iam_users         = list(string)
+    rpc_url               = optional(string)
+    ipfs_service_mapping  = optional(string)
     aws_vpc_config = object({
       nat_gateway_enabled = bool
       flow_logs_enabled   = bool
@@ -86,6 +88,94 @@ variable "environments" {
       min_capacity        = number
       max_capacity        = number
       disk_size           = number
+    }))
+    # EKS auth mode (CONFIG_MAP, API_AND_CONFIG_MAP or API); null = unmanaged. Leaving CONFIG_MAP is one-way.
+    aws_eks_authentication_mode = optional(string)
+    # Cluster-admin access entries. Do not list the cluster creator (EKS adds it).
+    aws_eks_cluster_admin_arns = optional(list(string), [])
+    # AWS account ID; sets allowed_account_ids.
+    aws_account_id = optional(string)
+    vpc_cidr       = optional(string, "10.0.0.0/16")
+    # Environment identity; each defaults to the workspace name.
+    #   cloud_resource_name   AWS names that cannot be renamed (EKS cluster, IAM roles, SGs, VPC tag)
+    #   global_resource_name  names in namespaces shared with other environments: GCS buckets,
+    #                         GCP KMS key rings (never deletable), Cloudflare and Lambda names
+    #   kubeconfig_name       the generated kubeconfig file; must be unique per workspace
+    #   dns_segment           hostname segment; setting it also arms the cross-environment DNS guard
+    #   vault_oidc_team       GitHub team slug segment for Vault OIDC (ixofoundation:<x>-devsecops)
+    #   chart_tree            charts/<tree>/ in ixo-helm-charts
+    #   network_name          the chain environment a workspace serves: Tailscale tags and device
+    #                         names, the Workers DB tunnel name and pg CNAME
+    cloud_resource_name  = optional(string)
+    global_resource_name = optional(string)
+    # The old workspace name, kept where it leaked into live values (tailscale operator hostname, faucet
+    # PROJECT_NAME, claims-credentials NETWORK) so a workspace rename plans 0 changes. Drop it per site on purpose.
+    legacy_workspace_name = optional(string)
+    kubeconfig_name       = optional(string)
+    dns_segment           = optional(string)
+    vault_oidc_team       = optional(string)
+    chart_tree            = optional(string)
+    network_name          = optional(string)
+    # Seal key of the snapshot's source env, for a restored Vault. Null = own gcp_kms_vault key.
+    vault_seal = optional(object({
+      key_ring   = string
+      crypto_key = string
+    }))
+    vault_restored_from_snapshot = optional(bool, false)
+    # Vault replicas; 1 during a snapshot restore.
+    vault_replicas        = optional(number, 2)
+    grafana_max_open_conn = optional(number, 1)
+    # Grafana admin credentials from a Terraform-managed Secret.
+    grafana_admin_secret = optional(bool, false)
+    # AWS-only settings.
+    #   aws_profile        profile in the generated kubeconfig's exec env
+    #   aws_cli_path       command the kubeconfig execs for a token
+    #   aws_default_tags   provider default_tags; empty = none
+    #   loki_bucket_name   S3 bucket name override (S3 names are global)
+    #   aws_subnet_cidrs   per-AZ subnets; null = /24s from vpc_cidr
+    #   aws_service_ipv4_cidr  EKS service CIDR; null = EKS default
+    #   aws_storage_class_parameters  extra EBS StorageClass parameters (immutable)
+    #   aws_node_groups    node group sizes; null = single default group
+    aws_profile                  = optional(string)
+    aws_cli_path                 = optional(string, "/usr/local/bin/aws")
+    aws_default_tags             = optional(map(string), {})
+    loki_bucket_name             = optional(string)
+    aws_service_ipv4_cidr        = optional(string)
+    aws_storage_class_parameters = optional(map(string), {})
+    aws_subnet_cidrs = optional(object({
+      public  = list(string)
+      private = list(string)
+    }))
+    # Node launch template: tags instances, root volumes and ENIs, but attaching it REPLACES
+    # both node groups. Off by default.
+    aws_node_launch_template = optional(bool, false)
+    # Keep the original node groups. false (after the -lt groups took over) destroys them.
+    aws_node_legacy_groups = optional(bool, true)
+    aws_node_groups = optional(object({
+      desired                  = number
+      min                      = number
+      max                      = number
+      instance_types           = optional(list(string)) # Main group; defaults by is_development.
+      on_demand_count          = optional(number, 0)
+      on_demand_instance_types = optional(list(string), ["t3a.xlarge"])
+    }))
+    # ON_DEMAND database nodes on the launch template, one group per AZ (EBS is AZ-bound),
+    # labelled and tainted ixo.world/pool=db. Needs aws_node_launch_template.
+    aws_db_node_group = optional(object({
+      per_az         = number
+      instance_types = list(string)
+    }))
+    # Build the Postgres clusters as standbys of another env's pgBackRest repos (no schedules).
+    # A cluster is a standby only while its bucket is set.
+    pg_standby = optional(object({
+      ixo_bucket    = optional(string)
+      matrix_bucket = optional(string)
+      gcs_key_file  = optional(string)
+    }))
+    # pgBackRest tuning for both Postgres clusters; unset renders pgBackRest's defaults.
+    pg_backrest = optional(object({
+      process_max   = optional(number)
+      compress_type = optional(string)
     }))
     hyperlane = object({
       chain_names     = list(string)
@@ -100,6 +190,9 @@ variable "environments" {
       dns_prefix    = optional(string)
       storage_class = optional(string)
       storage_size  = optional(string)
+      # Optional per-env memory request/limit (falls back to the module default).
+      memory_request = optional(string)
+      memory_limit   = optional(string)
       # postgres_operator_crunchydata only: run the OpenTelemetry collector instead of the
       # pgmonitor exporter. Required before upgrading that environment to Postgres 18.
       use_otel = optional(bool, false)
@@ -126,6 +219,18 @@ variable "environments" {
       # The matrix cluster's repo1 is a fixed-size PersistentVolume, so it is bounded by a
       # count of full backups rather than by age.
       matrix_backup_retention_full = optional(number, 2)
+      # Size of that repo1 volume. Fixed at creation in practice (gp3 grows, never shrinks).
+      matrix_repo1_storage_size = optional(string, "200Gi")
+      # vault only: daily raft snapshot to a per-env GCS bucket.
+      vault_snapshot_enabled = optional(bool, false)
+      # Daily, offset from the 02:30 matrix media backup and the pgBackRest window.
+      vault_snapshot_schedule = optional(string, "15 1 * * *")
+      # Snapshot retention, enforced by the bucket lifecycle rule.
+      vault_snapshot_retention_days = optional(number, 30)
+      # Bucket location. Immutable: changing it replaces the bucket.
+      vault_snapshot_location = optional(string, "EU")
+      # SA held in the vault namespace's gcp-key-secret; granted create + read on the snapshot bucket.
+      vault_snapshot_writer_sa_email = optional(string)
     }))
   }))
 
@@ -234,10 +339,9 @@ variable "gcp_project_ids" {
   description = "Project IDs for GCP"
   type        = map(string)
   default = {
-    devnet     = "devsecops-415617"
-    testnet    = "devsecops-415617"
-    mainnet    = "devsecops-415617"
-    devnet_aws = "devsecops-415617"
+    devnet  = "devsecops-415617"
+    testnet = "devsecops-415617"
+    mainnet = "devsecops-415617"
   }
 }
 
@@ -253,10 +357,10 @@ variable "org" {
 variable "cloud_provider" {
   type        = string
   description = "Cloud provider to use for the kubernetes cluster and configurations involved"
-  default     = "vultr"
+  default     = "aws"
   validation {
-    condition     = contains(["vultr", "aws"], var.cloud_provider)
-    error_message = "Invalid cloud provider. Must be one of: vultr, aws"
+    condition     = contains(["aws"], var.cloud_provider)
+    error_message = "Invalid cloud provider. Must be: aws (Vultr removed in mainnet-final-cleanup)"
   }
 }
 
@@ -306,6 +410,9 @@ variable "pg_matrix" {
       pgbackrest_image_tag   = string
       pgmonitoring_image     = optional(string)
       pgmonitoring_image_tag = optional(string)
+      # Database container resources.
+      memory_request = optional(string, "750Mi")
+      memory_limit   = optional(string, "1Gi")
     }
   )
 }
@@ -341,44 +448,6 @@ variable "additional_prometheus_scrape_metrics" {
     devnet  = null
     testnet = null
     mainnet = null
-  }
-}
-
-variable "region_ids" {
-  type = map(string)
-  default = {
-    ams = "Amsterdam"
-    atl = "Atlanta"
-    blr = "Bangalore"
-    bom = "Mumbai"
-    cdg = "Paris"
-    del = "Delhi NCR"
-    dfw = "Dallas"
-    ewr = "New Jersey"
-    fra = "Frankfurt"
-    hnl = "Honolulu"
-    icn = "Seoul"
-    itm = "Osaka"
-    jnb = "Johannesburg"
-    lax = "Los Angeles"
-    lhr = "London"
-    mad = "Madrid"
-    man = "Manchester"
-    mel = "Melbourne"
-    mex = "Mexico City"
-    mia = "Miami"
-    nrt = "Tokyo"
-    ord = "Chicago"
-    sao = "São Paulo"
-    scl = "Santiago"
-    sea = "Seattle"
-    sgp = "Singapore"
-    sjc = "Silicon Valley"
-    sto = "Stockholm"
-    syd = "Sydney"
-    tlv = "Tel Aviv"
-    waw = "Warsaw"
-    yto = "Toronto"
   }
 }
 
@@ -423,4 +492,11 @@ variable "ixo_ghost_mailgun_password" {
   type        = string
   default     = ""
   sensitive   = true
+}
+
+# True only for the first argocd apply on a new cluster (before cert-manager exists);
+# it turns off the argocd-server Certificate.
+variable "argocd_bootstrap" {
+  type    = bool
+  default = false
 }

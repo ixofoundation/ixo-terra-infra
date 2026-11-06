@@ -79,3 +79,8 @@ variable "image_updater_enabled" {
   type        = bool
   default     = false
 }
+# GitHub team slug segment for the admin group (ixofoundation:<x>-devsecops). Not necessarily the
+# workspace name (same as Vault, local.vault_oidc_team_segment).
+variable "oidc_team_segment" {
+  type = string
+}

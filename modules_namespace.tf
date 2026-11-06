@@ -137,6 +137,7 @@ resource "kubernetes_namespace_v1" "descheduler" {
 }
 
 resource "kubernetes_namespace_v1" "searxng" {
+  count = var.environments[terraform.workspace].application_configs["searxng"].enabled ? 1 : 0
   metadata {
     name = "searxng"
   }

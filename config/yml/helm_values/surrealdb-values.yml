@@ -60,9 +60,9 @@ ingress:
 resources:
   requests:
     cpu: 100m
-    memory: 256Mi
+    memory: ${memory_request}
   limits:
-    memory: 512Mi
+    memory: ${memory_limit}
 
 # Persistence configuration
 persistence:
@@ -73,6 +73,12 @@ persistence:
 
 # Replica count
 replicaCount: 1
+%{ if recreate ~}
+
+# RWO volume: the old pod must release it before the new one starts.
+strategy:
+  type: Recreate
+%{ endif ~}
 
 # Pod security context (pod-level)
 podSecurityContext:
