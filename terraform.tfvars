@@ -15,10 +15,10 @@ cloud_provider = "aws"
 
 # Storage classes
 storage_classes = {
-  "standard" = "vultr-block-storage"     # Standard storage (SSD)
-  "fast"     = "vultr-block-storage"     # Fast storage (SSD)
-  "bulk"     = "vultr-block-storage-hdd" # Slower, Cheaper, Bulk storage (HDD)
-  "shared"   = "vultr-vfs-storage"       # NVME shared storage, slower than block storage, but faster than bulk storage.
+  "standard" = "gp3"
+  "fast"     = "gp3-fast"
+  "bulk"     = "gp3"
+  "shared"   = "efs"
 }
 
 # Repository configuration
