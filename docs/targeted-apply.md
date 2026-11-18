@@ -59,26 +59,24 @@ terraform init
 
 ## Running
 
+Example for devnet. Swap the profile, Vault host, workspace and var-file for other environments.
+
 ```bash
-scripts/tf-target.sh devnet "module.matrix" plan
-scripts/tf-target.sh devnet "module.matrix" apply
+export AWS_PROFILE=ixo-dev
+export VAULT_ADDR=https://vault.devnet.ixo.earth
+export TF_VAR_vault_userpass_login=false
+terraform workspace select devnet
+terraform plan  -var-file=terraform-aws-devnet-dev.tfvars -target=module.matrix
+terraform apply -var-file=terraform-aws-devnet-dev.tfvars -target=module.matrix
 ```
 
-The script does the following:
+`TF_VAR_vault_userpass_login=false` makes the Vault provider use your own token instead of the shared `terraform` user. The AWS provider refuses to run against the wrong account, and `required_version` pins Terraform to 1.15.8.
 
-- maps the environment to its workspace, var-file and AWS profile, and checks the account;
-- unsets the shared-secret variables and sets `vault_userpass_login=false`, so the Vault provider uses your token;
-- checks your Vault token;
-- refuses untargeted runs and the forbidden targets listed below;
-- puts the previous workspace back when it is done.
-
-`apply` always shows the plan and waits for `yes`.
-
-| Workspace | Var-file                             |
-|-----------|--------------------------------------|
-| `devnet`  | `terraform-aws-devnet-dev.tfvars`    |
-| `testnet` | `terraform-aws-testnet-test.tfvars`  |
-| `mainnet` | `terraform-aws-mainnet-main.tfvars`  |
+| Profile    | Vault host                  | Workspace | Var-file                             |
+|------------|-----------------------------|-----------|--------------------------------------|
+| `ixo-dev`  | `vault.devnet.ixo.earth`    | `devnet`  | `terraform-aws-devnet-dev.tfvars`    |
+| `ixo-test` | `vault.testnet.ixo.earth`   | `testnet` | `terraform-aws-testnet-test.tfvars`  |
+| `ixo-prod` | `vault.mainnet.ixo.earth`   | `mainnet` | `terraform-aws-mainnet-main.tfvars`  |
 
 ## Rules
 

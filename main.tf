@@ -1,6 +1,6 @@
 terraform {
-  # S3 backend locking (use_lockfile) needs 1.10+.
-  required_version = ">= 1.10.0"
+  # State is written by 1.15.8; older versions cannot read it.
+  required_version = "= 1.15.8"
 
   # State per workspace at ixo-terra-infra/<workspace>/terraform.tfstate in the ixo-devops account.
   backend "s3" {
