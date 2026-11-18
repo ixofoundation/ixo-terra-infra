@@ -1312,9 +1312,9 @@ module "vault_init" {
   oidc_team_segment         = local.vault_oidc_team_segment
 }
 
+# Only writes the Vault KV secret; no depends_on so -target=module.matrix_init stays isolated.
 module "matrix_init" {
-  depends_on = [module.argocd, module.matrix]
-  source     = "./modules/matrix"
+  source = "./modules/matrix"
 
   kube_config_path = module.kubernetes_cluster.kubeconfig_path
   namespace        = kubernetes_namespace_v1.matrix.metadata[0].name

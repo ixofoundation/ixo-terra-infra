@@ -82,7 +82,7 @@ terraform apply -var-file=terraform-aws-devnet-dev.tfvars -target=module.matrix
 
 - **Always use `-target`.** Every workspace carries unrelated drift, so a full plan is never safe.
 - **Never target these modules:**
-  - `module.matrix_init` replaces the Synapse signing/macaroon key, which logs everyone out.
+  - `module.matrix_init` on testnet or mainnet: its Vault secret is not in state there yet, so a plan creates it and replaces the macaroon key, which logs everyone out. Devnet is imported and safe.
   - `gcp_kms_*`: destroying a key version makes Vault unrecoverable.
   - `cloudflare_workers_db_tunnel` is cutover-only.
 - **Targets that depend on `module.argocd`** (most modules with `depends_on = [module.argocd]`, including `module.postgres-operator`) pull in the ArgoCD helm release. That release needs the ArgoCD GitHub OIDC secret, which you don't have. Without it the plan stops at a precondition rather than blanking the SSO client. Ask the infra lead to run those targets.

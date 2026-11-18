@@ -13,8 +13,10 @@ resource "random_password" "macaroon" {
 }
 
 resource "vault_kv_secret_v2" "matrix" {
+  # Any update rewrites the secret, and a destroy deletes every version (logs everyone out).
   lifecycle {
-    ignore_changes = [data_json]
+    ignore_changes  = [data_json, cas, delete_all_versions, disable_read]
+    prevent_destroy = true
   }
   mount               = var.vault_mount_path
   name                = "matrix"
