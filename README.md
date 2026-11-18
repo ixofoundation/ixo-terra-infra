@@ -1,6 +1,9 @@
 # ixo-terra-infra
 
 ## Documentation
+
+- [Targeted plan/apply with your own identities](docs/targeted-apply.md)
+
 ![Terraform](https://img.shields.io/badge/Terraform-%23623CE4.svg?style=for-the-badge&logo=Terraform&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazonaws&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-%23326CE5.svg?style=for-the-badge&logo=Kubernetes&logoColor=white)

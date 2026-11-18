@@ -1,0 +1,92 @@
+# Targeted plan/apply with your own identities
+
+This is how to run `terraform plan` / `apply` against one module (for example `module.matrix`) using only your own logins:
+
+- AWS SSO,
+- a Vault OIDC token,
+- gcloud application-default credentials.
+
+You do not need `credentials.json`, the shared Vault `terraform` password or any OIDC client secret.
+
+## One-time setup
+
+### AWS SSO profiles
+
+The kubeconfig and the state backend hardcode these profile names, so name your profiles exactly like this:
+
+| Profile      | Account      | Used for                          |
+|--------------|--------------|-----------------------------------|
+| `ixo-dev`    | 896358490078 | devnet cluster                    |
+| `ixo-test`   | 536202635008 | testnet cluster                   |
+| `ixo-prod`   | 361082683495 | mainnet cluster                   |
+| `ixo-devops` | 665549645984 | Terraform state (S3 backend)      |
+
+Use the `AWSAdministratorAccess` permission set. It is the role the EKS access entries trust. Ask the infra lead for the SSO start URL.
+
+```bash
+aws sso login --profile ixo-dev
+```
+
+### Vault
+
+Log in with GitHub through OIDC, once per environment. You need to be in the `<env>-devsecops` GitHub team.
+
+```bash
+VAULT_ADDR=https://vault.devnet.ixo.earth vault login -method=oidc role=admin
+```
+
+`~/.vault-token` holds one token only, so log in again when you switch environment.
+
+### GCP
+
+```bash
+gcloud auth application-default login
+```
+
+Your Google account needs read access to the environment's GCS buckets in the GCP project. Project Viewer is enough for `module.matrix`.
+
+### Terraform
+
+Use Terraform 1.15.8 (`tfenv use 1.15.8`). The state is written by this version.
+
+### Init
+
+Once per clone, after `aws sso login --profile ixo-devops`:
+
+```bash
+terraform init
+```
+
+## Running
+
+```bash
+scripts/tf-target.sh devnet "module.matrix" plan
+scripts/tf-target.sh devnet "module.matrix" apply
+```
+
+The script does the following:
+
+- maps the environment to its workspace, var-file and AWS profile, and checks the account;
+- unsets the shared-secret variables and sets `vault_userpass_login=false`, so the Vault provider uses your token;
+- checks your Vault token;
+- refuses untargeted runs and the forbidden targets listed below;
+- puts the previous workspace back when it is done.
+
+`apply` always shows the plan and waits for `yes`.
+
+| Workspace | Var-file                             |
+|-----------|--------------------------------------|
+| `devnet`  | `terraform-aws-devnet-dev.tfvars`    |
+| `testnet` | `terraform-aws-testnet-test.tfvars`  |
+| `mainnet` | `terraform-aws-mainnet-main.tfvars`  |
+
+## Rules
+
+- **Always use `-target`.** Every workspace carries unrelated drift, so a full plan is never safe.
+- **Never target these modules:**
+  - `module.matrix_init` replaces the Synapse signing/macaroon key, which logs everyone out.
+  - `gcp_kms_*`: destroying a key version makes Vault unrecoverable.
+  - `cloudflare_workers_db_tunnel` is cutover-only.
+- **Targets that depend on `module.argocd`** (most modules with `depends_on = [module.argocd]`, including `module.postgres-operator`) pull in the ArgoCD helm release. That release needs the ArgoCD GitHub OIDC secret, which you don't have. Without it the plan stops at a precondition rather than blanking the SSO client. Ask the infra lead to run those targets.
+- **Targets that need `credentials.json`:** `module.postgres-operator` refuses to plan without the file, rather than blank the pgBackRest key.
+- **Fresh cluster:** apply `module.argocd` before `module.matrix`. Matrix no longer depends on the argocd release.

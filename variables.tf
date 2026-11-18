@@ -527,3 +527,9 @@ variable "argocd_bootstrap" {
   type    = bool
   default = false
 }
+
+# false: the vault provider uses VAULT_TOKEN / ~/.vault-token instead of the shared "terraform" userpass.
+variable "vault_userpass_login" {
+  type    = bool
+  default = true
+}

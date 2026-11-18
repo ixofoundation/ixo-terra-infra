@@ -36,6 +36,14 @@ module "argocd_release" {
 resource "time_sleep" "wait_for_argocd" {
   depends_on      = [module.argocd_release]
   create_duration = "10s"
+
+  # Any plan that includes the argocd release must carry TF_VAR_oidc_argo, or it blanks the GitHub SSO secret.
+  lifecycle {
+    precondition {
+      condition     = var.github_client_id != "" && var.github_client_secret != ""
+      error_message = "oidc_argo is empty: this plan would blank the ArgoCD GitHub SSO client. Set TF_VAR_oidc_argo, or target only modules that do not depend on module.argocd."
+    }
+  }
 }
 
 resource "kubernetes_secret_v1" "repo_server" {

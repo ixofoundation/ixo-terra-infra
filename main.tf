@@ -84,18 +84,23 @@ provider "aws" {
   }
 }
 
-# For Initial Cluster Setup, This userpass needs to be manually created.
+# Userpass "terraform" (password from TERRAFORM_VAULT_PASSWORD) is created manually at bootstrap.
+# vault_userpass_login=false uses VAULT_TOKEN / ~/.vault-token instead (e.g. `vault login -method=oidc`).
 provider "vault" {
-  auth_login_userpass {
-    username = "terraform"
+  dynamic "auth_login_userpass" {
+    for_each = var.vault_userpass_login ? [1] : []
+    content {
+      username = "terraform"
+    }
   }
   address         = "https://${local.dns_for_environment[terraform.workspace]["vault"]}/"
   skip_tls_verify = true
 }
 
+# Without credentials.json the provider falls back to ADC / GOOGLE_APPLICATION_CREDENTIALS.
 provider "google" {
   project     = var.gcp_project_ids[terraform.workspace]
-  credentials = file("${path.root}/credentials.json") #TODO don't use a file and use another method for future CD.
+  credentials = fileexists("${path.root}/credentials.json") ? file("${path.root}/credentials.json") : null
 }
 
 resource "kubernetes_namespace_v1" "ixo_core" {

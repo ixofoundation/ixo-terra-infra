@@ -83,7 +83,8 @@ variable "clusters" {
 }
 
 variable "gcs_key" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "network_name" {

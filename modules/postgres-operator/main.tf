@@ -72,7 +72,14 @@ resource "kubernetes_secret_v1" "gcs_secret_key" {
     namespace = each.value.pg_cluster_namespace
   }
   data = {
-    "gcs-key.json" : coalesce(each.value.gcs_key, var.gcs_key)
+    "gcs-key.json" : try(coalesce(each.value.gcs_key, var.gcs_key), "")
+  }
+
+  lifecycle {
+    precondition {
+      condition     = each.value.gcs_key != null || var.gcs_key != null
+      error_message = "No pgBackRest GCS key: credentials.json is missing from the repo root. Refusing to plan postgres-operator rather than blank the key."
+    }
   }
 }
 

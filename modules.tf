@@ -712,10 +712,11 @@ module "tailscale" {
   vault_mount_path = local.vault_mount_path
 }
 
+# No depends_on module.argocd: it would pull the argocd helm release (and its GitHub secret) into
+# -target=module.matrix. Ordering comes from argo_namespace; on a fresh cluster apply argocd first.
 module "matrix" {
-  depends_on = [module.argocd]
-  count      = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
-  source     = "./modules/argocd_application"
+  count  = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
+  source = "./modules/argocd_application"
   application = {
     name      = "matrix"
     namespace = kubernetes_namespace_v1.matrix.metadata[0].name
@@ -1201,7 +1202,8 @@ module "postgres-operator" { # Sets up Cluster Instances
     # A Synapse standby can exist while Matrix itself is off.
     try(local.env.pg_standby.matrix_bucket, null) != null
   ]
-  gcs_key = file("${path.root}/credentials.json")
+  # null without the file; the module's precondition then fails the plan instead of blanking the key.
+  gcs_key = fileexists("${path.root}/credentials.json") ? file("${path.root}/credentials.json") : null
 }
 
 # IRSA role on the PGO-created pgBackRest ServiceAccounts. Running pods only pick it up on restart.
