@@ -1,7 +1,7 @@
 ## Loki on AWS: chunks in S3, gp3 volume for WAL + index cache.
 deploymentMode: SingleBinary # TODO migrate to SimpleScalable or Distributed for HA when load increases
 
-# IRSA role from main_loki_s3.tf; no static S3 credentials.
+# IRSA role from modules/aws/loki_storage; no static S3 credentials.
 serviceAccount:
   create: true
   name: loki
