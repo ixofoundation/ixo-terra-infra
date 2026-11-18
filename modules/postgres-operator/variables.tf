@@ -44,7 +44,7 @@ variable "clusters" {
       retention_type = optional(string, "count")
       retention_full = optional(number, 4)
 
-      # When set, adds a GCS repo2 as a durable off-cluster copy alongside repo1.
+      # When set, adds an object-storage repo2 (GCS or S3) as a durable off-cluster copy alongside repo1.
       # Note archive-push writes WAL to ALL repos, so WAL is duplicated to repo2.
       gcs_repo2_bucket     = optional(string, "")
       repo2_retention_type = optional(string, "time")

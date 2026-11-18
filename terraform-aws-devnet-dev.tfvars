@@ -29,7 +29,7 @@ additional_manual_vault_watched_apps = {
 }
 
 # Apps that serve the real devnet hostnames.
-dns_cutover_apps = ["ixo_did_resolver", "ixo_registry_server", "ixo_faucet", "ixo_yoma_agent_oracle", "ixo_domain_creator_oracle", "ixo_qi_agents_builder", "ixo_minerva_oracle", "ixo_minerva_livekit", "ixo_website_bot_oracle", "ixo_memory_engine_graphiti", "ixo_blocksync", "ixo_blocksync_api", "ixo_blocksync_core", "ixo_cellnode", "ixo_feegrant_nest", "ixo_message_relayer", "ixo_ussd_supamoto", "ixo_matrix_supamoto_bot", "ixo_matrix_supamoto_onboarding_server", "ixo_matrix_supamoto_claims_bot", "ixo_pathgen_oracle", "ixo_domain_indexer", "matrix", "matrix_admin", "matrix_livekit", "ixo_matrix_appservice_rooms", "claims_credentials_carbon", "claims_credentials_ecs", "claims_credentials_prospect", "claims_credentials_umuzi", "prometheus_stack"]
+dns_cutover_apps = ["ixo_did_resolver", "ixo_registry_server", "ixo_faucet", "ixo_yoma_agent_oracle", "ixo_domain_creator_oracle", "ixo_qi_agents_builder", "ixo_minerva_oracle", "ixo_minerva_livekit", "ixo_website_bot_oracle", "ixo_blocksync", "ixo_blocksync_api", "ixo_blocksync_core", "ixo_cellnode", "ixo_feegrant_nest", "ixo_message_relayer", "ixo_ussd_supamoto", "ixo_matrix_supamoto_bot", "ixo_matrix_supamoto_onboarding_server", "ixo_matrix_supamoto_claims_bot", "ixo_pathgen_oracle", "ixo_domain_indexer", "matrix", "matrix_admin", "matrix_livekit", "ixo_matrix_appservice_rooms", "claims_credentials_carbon", "claims_credentials_ecs", "claims_credentials_prospect", "claims_credentials_umuzi", "prometheus_stack"]
 
 versions = {
   kubernetes_cluster       = "1.36"
@@ -92,11 +92,26 @@ environments = {
     # Keeps the GCS bucket, GCP KMS ring and agent-images Lambda names. A KMS ring can never be
     # replaced or destroyed.
     global_resource_name = "devnet_dev"
-    # Old workspace name, kept where it renders: faucet PROJECT_NAME, claims-credentials NETWORK
-    # (carbon, prospect, ecs, umuzi) and the tailscale operator hostname. Dropping it is a live change.
+    # Tailscale operator hostname only (a MagicDNS name in use); remove to rename the device.
     legacy_workspace_name = "devnet_dev"
     kubeconfig_name       = "devnet_dev"
     loki_bucket_name      = "ixofoundation-devnet-dev-loki-chunks"
+    backup_s3 = {
+      bucket_name          = "ixofoundation-devnet-backups"
+      vault_retention_days = 14
+    }
+    pg_backrest = {
+      compress_type = "zst"
+    }
+    # Gate 4 RDS, Single-AZ on devnet. force_ssl off until every client negotiates TLS.
+    aws_rds = {
+      engine_version        = "18.6"
+      instance_class        = "db.t4g.medium"
+      allocated_storage     = 64
+      max_allocated_storage = 200
+      backup_retention_days = 14
+      force_ssl             = false
+    }
     # Platform hosts dex.devnet / vault.devnet. Also arms the DNS guard.
     dns_segment     = "devnet"
     vault_oidc_team = "devnet"
@@ -129,8 +144,14 @@ environments = {
       desired                  = 3
       min                      = 3
       max                      = 4
-      on_demand_count          = 1
+      on_demand_count          = 2
       on_demand_instance_types = ["t3a.xlarge"]
+      # Per AZ: 1 ON_DEMAND + 1-2 Spot across several 4 vCPU / 16 GiB pools.
+      per_az = {
+        spot_instance_types = ["t3a.xlarge", "t3.xlarge", "m5a.xlarge", "m5.xlarge", "m6a.xlarge", "m6i.xlarge"]
+      }
+      # Step 2, once the per_az nodes are Ready: false removes the multi-AZ groups above.
+      lt_groups = false
     }
     # 2 x t3a.large ON_DEMAND, one per AZ, tainted ixo.world/pool=db.
     aws_db_node_group = {
@@ -151,6 +172,7 @@ environments = {
       flow_logs_enabled   = false
       retention_days      = 7
       az_count            = 2
+      s3_gateway_endpoint = true
     }
     application_configs = {
       # Core Infrastructure
@@ -220,7 +242,7 @@ environments = {
       }
       loki = {
         # Deployed through module.loki_s3, not module.loki: chunks in S3 over IRSA with a
-        # 30Gi gp3 volume for WAL + index. See main_loki_s3.tf and config/yml/helm_values/loki-values-s3.yml.
+        # 30Gi gp3 volume for WAL + index. See modules/aws/loki_storage and config/yml/helm_values/loki-values-s3.yml.
         enabled   = true
         create_kv = false
         domain    = "ixoearth"
@@ -823,15 +845,6 @@ environments = {
         create_kv     = true
         domain        = "ixoearth"
         storage_class = "fast"
-        storage_size  = "40Gi"
-      }
-      ixo_memory_engine_graphiti = {
-        enabled       = true
-        create_kv     = false
-        use_eso       = true
-        domain        = "ixoearth"
-        dns_endpoint  = "memory-engine.devnet.ixo.earth"
-        storage_class = "standard"
         storage_size  = "40Gi"
       }
       ixo_companion = {

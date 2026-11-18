@@ -11,7 +11,7 @@ controller:
   autoscaling:
     enabled: true
     create: true
-    minReplicas: 1
+    minReplicas: 2
     maxReplicas: 3
     targetCPUUtilizationPercentage: 50
     targetMemoryUtilizationPercentage: 70
@@ -45,19 +45,20 @@ controller:
   # ---- Topology spread (optional; not enabled by default in F5 chart) ----
   # Spreads controller pods across zones and nodes (useful for HA with externalTrafficPolicy: Local).
   # Default in F5 chart is {} (no spread). Keep this if you want same behaviour as community ingress-nginx.
-  # Adjust matchLabels to your release (e.g. app.kubernetes.io/instance: <release-name>).
+  # The F5 chart sets no component label on pods, so select on name only.
+  # pod-template-hash: count only the new ReplicaSet during a rollout.
   topologySpreadConstraints:
     - labelSelector:
         matchLabels:
           app.kubernetes.io/name: nginx-ingress
-          app.kubernetes.io/component: controller
+      matchLabelKeys: [pod-template-hash]
       topologyKey: topology.kubernetes.io/zone
       maxSkew: 1
       whenUnsatisfiable: ScheduleAnyway
     - labelSelector:
         matchLabels:
           app.kubernetes.io/name: nginx-ingress
-          app.kubernetes.io/component: controller
+      matchLabelKeys: [pod-template-hash]
       topologyKey: kubernetes.io/hostname
       maxSkew: 1
       whenUnsatisfiable: ScheduleAnyway
@@ -81,14 +82,7 @@ controller:
       # AWS only: tags for the ELB the Service creates (provider default_tags never reach it).
       service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "${aws_lb_tags}"
 %{ endif ~}
-%{ if enable_proxy_protocol }
-      # IXO-3541: LB prepends PROXY protocol; hostname annotation publishes a hostname
-      # instead of the LB IP in the Service status so kube-proxy stops short-circuiting
-      # in-cluster traffic (it must hairpin via the real LB to get PROXY headers).
-      # The A record for lb_hostname is managed in modules.tf (cloudflare_record.ingress_lb).
-      service.beta.kubernetes.io/vultr-loadbalancer-proxy-protocol: "true"
-      service.beta.kubernetes.io/vultr-loadbalancer-hostname: "${lb_hostname}"
-%{ endif }
+
 %{ if enable_aws_proxy_protocol ~}
       # IXO-3541 (AWS): the Classic ELB prepends PROXY v1 on every backend port. Must flip
       # together with proxy-protocol in config.entries below.
@@ -123,7 +117,7 @@ controller:
     entries:
       ssl-redirect: "true"
       http2: "true"
-%{ if enable_proxy_protocol || enable_aws_proxy_protocol }
+%{ if enable_aws_proxy_protocol }
       # IXO-3541: real client IP via PROXY protocol; trust the LB subnet.
       # Flip together with the *-proxy-protocol Service annotation.
       proxy-protocol: "True"
@@ -182,8 +176,7 @@ controller:
             rewrite ^/ixo/blocks/(.*)$ https://explorer.ixo.earth/devnet-ixo/block/$1 redirect;
             rewrite ^/ixo/proposals/(.*)$ https://explorer.ixo.earth/devnet-ixo/gov/$1 redirect;
             rewrite ^/ixo/accounts/(.*)$ https://explorer.ixo.earth/devnet-ixo/account/$1 redirect;
-            # Lookahead lets cert-manager's HTTP-01 challenge through: on Vultr this catch-all ate it
-            # and the blockscan.devnet cert expired 2026-04-03 (found phase F1, 2026-10-29).
+            # Lookahead lets cert-manager's HTTP-01 challenge through.
             rewrite ^/(?!\.well-known/acme-challenge/)(.*)$ https://explorer.ixo.earth/devnet-ixo redirect;
         }
         if ($host = "blockscan.testnet.ixo.earth") {

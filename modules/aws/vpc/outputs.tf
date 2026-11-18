@@ -36,4 +36,13 @@ output "nat_gateway_public_ip" {
 output "vpc_flow_logs_group_name" {
   description = "Name of the CloudWatch Log Group for VPC Flow Logs"
   value       = var.env_config.flow_logs_enabled ? aws_cloudwatch_log_group.vpc_flow_logs[0].name : null
-} 
+}
+
+output "private_route_table_id" {
+  description = "ID of the private route table"
+  value       = aws_route_table.private.id
+}
+output "nat_instance_id" {
+  description = "ID of the NAT instance (null when a NAT Gateway is used)"
+  value       = var.env_config.nat_gateway_enabled ? null : aws_instance.nat[0].id
+}

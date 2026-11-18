@@ -81,6 +81,8 @@ variable "environments" {
       flow_logs_enabled   = bool
       retention_days      = number
       az_count            = number
+      # S3 gateway endpoint (with a restrictive policy) on the private route table.
+      s3_gateway_endpoint = optional(bool, false)
     })
     aws_eks_config = optional(object({
       node_instance_types = list(string)
@@ -108,8 +110,7 @@ variable "environments" {
     #                         names, the Workers DB tunnel name and pg CNAME
     cloud_resource_name  = optional(string)
     global_resource_name = optional(string)
-    # The old workspace name, kept where it leaked into live values (tailscale operator hostname, faucet
-    # PROJECT_NAME, claims-credentials NETWORK) so a workspace rename plans 0 changes. Drop it per site on purpose.
+    # Old workspace name, used only for the tailscale operator hostname (a MagicDNS name people use).
     legacy_workspace_name = optional(string)
     kubeconfig_name       = optional(string)
     dns_segment           = optional(string)
@@ -132,6 +133,7 @@ variable "environments" {
     #   aws_cli_path       command the kubeconfig execs for a token
     #   aws_default_tags   provider default_tags; empty = none
     #   loki_bucket_name   S3 bucket name override (S3 names are global)
+    #   backup_s3          S3 backup bucket for pgBackRest, Vault snapshots and Synapse media
     #   aws_subnet_cidrs   per-AZ subnets; null = /24s from vpc_cidr
     #   aws_service_ipv4_cidr  EKS service CIDR; null = EKS default
     #   aws_storage_class_parameters  extra EBS StorageClass parameters (immutable)
@@ -142,6 +144,11 @@ variable "environments" {
     loki_bucket_name             = optional(string)
     aws_service_ipv4_cidr        = optional(string)
     aws_storage_class_parameters = optional(map(string), {})
+    # S3 backup bucket (modules/aws/backup_storage); null = no bucket. vault_retention_days expires snapshots.
+    backup_s3 = optional(object({
+      bucket_name          = string
+      vault_retention_days = optional(number, 30)
+    }))
     aws_subnet_cidrs = optional(object({
       public  = list(string)
       private = list(string)
@@ -158,12 +165,32 @@ variable "environments" {
       instance_types           = optional(list(string)) # Main group; defaults by is_development.
       on_demand_count          = optional(number, 0)
       on_demand_instance_types = optional(list(string), ["t3a.xlarge"])
+      # Spot + ON_DEMAND groups pinned to one AZ each, so zonal EBS pods always have a node in their AZ.
+      per_az = optional(object({
+        spot_min                 = optional(number, 1)
+        spot_max                 = optional(number, 2)
+        spot_instance_types      = list(string)
+        on_demand                = optional(number, 1)
+        on_demand_instance_types = optional(list(string), ["t3a.xlarge", "t3.xlarge"])
+      }))
+      # false destroys the multi-AZ main/on-demand groups; only once the per_az groups have taken over.
+      lt_groups = optional(bool, true)
     }))
     # ON_DEMAND database nodes on the launch template, one group per AZ (EBS is AZ-bound),
     # labelled and tainted ixo.world/pool=db. Needs aws_node_launch_template.
     aws_db_node_group = optional(object({
       per_az         = number
       instance_types = list(string)
+    }))
+    # RDS for PostgreSQL (modules/aws/rds_postgres); null = none.
+    aws_rds = optional(object({
+      engine_version        = string
+      instance_class        = string
+      multi_az              = optional(bool, false)
+      allocated_storage     = number
+      max_allocated_storage = number
+      backup_retention_days = optional(number, 14)
+      force_ssl             = optional(bool, true)
     }))
     # Build the Postgres clusters as standbys of another env's pgBackRest repos (no schedules).
     # A cluster is a standby only while its bucket is set.
@@ -360,7 +387,7 @@ variable "cloud_provider" {
   default     = "aws"
   validation {
     condition     = contains(["aws"], var.cloud_provider)
-    error_message = "Invalid cloud provider. Must be: aws (Vultr removed in mainnet-final-cleanup)"
+    error_message = "Invalid cloud provider. Must be: aws"
   }
 }
 

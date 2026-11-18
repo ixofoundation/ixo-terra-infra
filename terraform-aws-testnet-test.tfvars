@@ -25,13 +25,13 @@ additional_manual_vault_watched_apps = {
     "auto-approve-offset", "claims-credentials-carbon", "claims-credentials-did", "claims-credentials-ecs",
     "claims-credentials-prospect", "ixo-blocksync", "ixo-blocksync-core", "ixo-cellnode", "ixo-domain-creator-oracle",
     "ixo-domain-indexer", "ixo-ecs-oracle", "ixo-faucet", "ixo-feegrant-nest", "ixo-kyc-oracle", "ixo-kyc-server",
-    "ixo-memory-engine-graphiti", "ixo-message-relayer", "ixo-payments-nest", "ixo-ussd-supamoto",
+    "ixo-message-relayer", "ixo-payments-nest", "ixo-ussd-supamoto",
     "ixo-website-bot-oracle", "ixo-yellowcard-oracle", "ixo-yoma-agent-oracle", "matrix-livekit",
   ]
 }
 
 # Apps that serve the real testnet hostnames.
-dns_cutover_apps = ["ixo_domain_indexer", "auto_approve_offset", "prometheus_stack", "ixo_did_resolver", "ixo_registry_server", "ixo_faucet", "matrix", "matrix_admin", "matrix_livekit", "ixo_matrix_appservice_rooms", "ixo_matrix_supamoto_bot", "ixo_matrix_supamoto_onboarding_server", "ixo_matrix_supamoto_claims_bot", "ixo_yoma_agent_oracle", "ixo_domain_creator_oracle", "ixo_kyc_oracle", "ixo_yellowcard_oracle", "ixo_memory_engine_graphiti", "ixo_ecs_oracle", "ixo_website_bot_oracle", "ixo_cellnode", "ixo_blocksync_api", "ixo_blocksync_core", "ixo_message_relayer", "ixo_payments_nest", "ixo_blocksync", "ixo_feegrant_nest", "ixo_ussd_supamoto", "ixo_kyc_server", "claims_credentials_ecs", "claims_credentials_prospect", "claims_credentials_carbon", "claims_credentials_did", "vault", "dex"]
+dns_cutover_apps = ["ixo_domain_indexer", "auto_approve_offset", "prometheus_stack", "ixo_did_resolver", "ixo_registry_server", "ixo_faucet", "matrix", "matrix_admin", "matrix_livekit", "ixo_matrix_appservice_rooms", "ixo_matrix_supamoto_bot", "ixo_matrix_supamoto_onboarding_server", "ixo_matrix_supamoto_claims_bot", "ixo_yoma_agent_oracle", "ixo_domain_creator_oracle", "ixo_kyc_oracle", "ixo_yellowcard_oracle", "ixo_ecs_oracle", "ixo_website_bot_oracle", "ixo_cellnode", "ixo_blocksync_api", "ixo_blocksync_core", "ixo_message_relayer", "ixo_payments_nest", "ixo_blocksync", "ixo_feegrant_nest", "ixo_ussd_supamoto", "ixo_kyc_server", "claims_credentials_ecs", "claims_credentials_prospect", "claims_credentials_carbon", "claims_credentials_did", "vault", "dex"]
 
 # Standalone: nothing is inherited from other var-files. kubernetes_cluster is the EKS version.
 versions = {
@@ -73,8 +73,7 @@ environments = {
   testnet = {
     # Keeps the GCS bucket and KMS key ring names.
     global_resource_name = "testnet_test"
-    # Old workspace name, kept where it renders: claims-credentials NETWORK, faucet PROJECT_NAME, kyc-server
-    # IXO_NETWORK, auto-approve-offset NETWORK. Dropping it is a live change.
+    # Tailscale operator hostname only (a MagicDNS name in use); remove to rename the device.
     legacy_workspace_name = "testnet_test"
     cluster_firewall      = true
     is_development        = true
@@ -122,6 +121,12 @@ environments = {
       max                      = 4
       on_demand_count          = 1
       on_demand_instance_types = ["t3a.xlarge"]
+      # Per AZ: 1 ON_DEMAND + 1-2 Spot across several 4 vCPU / 16 GiB pools.
+      per_az = {
+        spot_instance_types = ["t3a.xlarge", "t3.xlarge", "m5a.xlarge", "m5.xlarge", "m6a.xlarge", "m6i.xlarge"]
+      }
+      # Step 2, once the per_az nodes are Ready: false removes the multi-AZ groups above.
+      lt_groups = false
     }
     aws_db_node_group = {
       per_az         = 1
@@ -238,7 +243,7 @@ environments = {
         domain    = "ixoearth"
       }
       tailscale = {
-        enabled   = false
+        enabled   = true
         create_kv = false
         domain    = "ixoearth"
       }
@@ -828,15 +833,6 @@ environments = {
         create_kv     = true
         domain        = "ixoearth"
         storage_class = "fast"
-        storage_size  = "40Gi"
-      }
-      ixo_memory_engine_graphiti = {
-        enabled       = true # legacy off via the values gate
-        create_kv     = false
-        use_eso       = true # env secrets via external-secrets-operator
-        domain        = "ixoearth"
-        dns_endpoint  = "memory-engine.testnet.ixo.earth" # listed in dns_cutover_apps
-        storage_class = "standard"                        # gp3
         storage_size  = "40Gi"
       }
       ixo_companion = {

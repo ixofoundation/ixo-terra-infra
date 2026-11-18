@@ -2,11 +2,11 @@
 # Postgres DBs via Cloudflare Zero Trust, with no inbound ports or VPN required.
 # Mainnet only.
 
-# The Cloudflare half of the supamoto tunnel. environment stays "mainnet" because the
-# tunnel and Access app names carry it, and renaming the tunnel is not safe (the partner's cloudflared holds its token).
-module "cloudflare_supamoto_tunnel_cf" {
+# environment stays "mainnet": the tunnel and Access app names carry it, and renaming the
+# tunnel is not safe (the partner's cloudflared holds its token).
+module "cloudflare_supamoto_tunnel" {
   count  = terraform.workspace == "mainnet" ? 1 : 0
-  source = "./modules/cloudflare-partner-tunnel-cf"
+  source = "./modules/cloudflare-partner-tunnel"
 
   cloudflare_account_id   = var.cloudflare_account_id
   cloudflare_api_token    = var.cloudlfare_supamoto_ecs_tunnel
@@ -16,23 +16,14 @@ module "cloudflare_supamoto_tunnel_cf" {
   pg_cname                = "supamoto-pg"
   docker_postgres_service = "matrix_postgres"
   warp_routing_enabled    = true
+  namespace               = "supamoto-tunnel"
+  # Only with the operator, else the Service never gets an LB.
+  tailscale_hostname = var.environments[terraform.workspace].application_configs["tailscale"].enabled ? "supamoto-postgres-mainnet" : null
 
   providers = {
     cloudflare     = cloudflare
     cloudflare.dns = cloudflare.dns
   }
-}
-
-# AWS mainnet: client half only.
-module "cloudflare_supamoto_tunnel_client" {
-  count  = terraform.workspace == "mainnet" ? 1 : 0
-  source = "./modules/cloudflare-partner-tunnel-client"
-
-  namespace    = "supamoto-tunnel"
-  partner_name = "supamoto"
-  hostname     = "supamoto-pg.ixo.earth"
-  # Only with the operator, else the Service never gets an LB.
-  tailscale_hostname = var.environments[terraform.workspace].application_configs["tailscale"].enabled ? "supamoto-postgres-mainnet" : null
 }
 
 # Reverse direction of the partner tunnels: cloudflared runs in our cluster and
@@ -81,6 +72,43 @@ module "aws_vpc" {
   ]
 }
 
+# Kept out of module.aws_vpc: kubernetes_cluster depends_on that module, so any change in it defers the cluster's data reads.
+module "s3_gateway_endpoint" {
+  count           = var.cloud_provider == "aws" && try(var.environments[terraform.workspace].aws_vpc_config.s3_gateway_endpoint, false) ? 1 : 0
+  source          = "./modules/aws/s3_gateway_endpoint"
+  vpc_id          = module.aws_vpc[0].vpc_id
+  route_table_ids = [module.aws_vpc[0].private_route_table_id]
+  project_name    = var.org
+  environment     = local.cloud_resource_name
+}
+
+# Own root module: a change inside module.aws_vpc would cascade into the node groups.
+module "nat_instance_eip" {
+  count        = var.cloud_provider == "aws" && try(!var.environments[terraform.workspace].aws_vpc_config.nat_gateway_enabled, false) ? 1 : 0
+  source       = "./modules/aws/nat_instance_eip"
+  instance_id  = module.aws_vpc[0].nat_instance_id
+  project_name = var.org
+  environment  = local.cloud_resource_name
+}
+
+# Own root module: a change inside module.aws_vpc would cascade into the node groups.
+module "rds_postgres" {
+  count                 = var.cloud_provider == "aws" && local.env.aws_rds != null ? 1 : 0
+  source                = "./modules/aws/rds_postgres"
+  project_name          = var.org
+  environment           = local.cloud_resource_name
+  cluster_name          = "ixo-cluster-${local.cloud_resource_name}"
+  vpc_id                = module.aws_vpc[0].vpc_id
+  subnet_ids            = module.aws_vpc[0].private_subnet_ids
+  engine_version        = local.env.aws_rds.engine_version
+  instance_class        = local.env.aws_rds.instance_class
+  multi_az              = local.env.aws_rds.multi_az
+  allocated_storage     = local.env.aws_rds.allocated_storage
+  max_allocated_storage = local.env.aws_rds.max_allocated_storage
+  backup_retention_days = local.env.aws_rds.backup_retention_days
+  force_ssl             = local.env.aws_rds.force_ssl
+}
+
 module "kubernetes_cluster" {
   source         = "./modules/kubernetes_cluster"
   cloud_provider = var.cloud_provider
@@ -118,6 +146,8 @@ module "kubernetes_cluster" {
     node_legacy_groups            = local.env.aws_node_legacy_groups
     on_demand_node_count          = local.env.aws_node_groups != null ? local.env.aws_node_groups.on_demand_count : 0
     on_demand_node_instance_types = local.env.aws_node_groups != null ? local.env.aws_node_groups.on_demand_instance_types : ["t3a.xlarge"]
+    per_az_node_groups            = local.env.aws_node_groups != null ? local.env.aws_node_groups.per_az : null
+    lt_node_groups                = local.env.aws_node_groups != null ? local.env.aws_node_groups.lt_groups : true
     db_nodes_per_az               = local.env.aws_db_node_group != null ? local.env.aws_db_node_group.per_az : 0
     db_node_instance_types        = local.env.aws_db_node_group != null ? local.env.aws_db_node_group.instance_types : ["t3a.large"]
   }
@@ -228,9 +258,7 @@ module "ingress_nginx" {
     values_override = templatefile("${local.helm_values_config_path}/f5-nginx-ingress-controller-values.yml",
       {
         host                      = local.dns_for_environment[terraform.workspace]["prometheus_stack"]
-        enable_proxy_protocol     = false # non-AWS PROXY path, unused
         enable_aws_proxy_protocol = local.enable_aws_proxy_protocol
-        lb_hostname               = "" # read only when enable_proxy_protocol
         aws_lb_tags               = join(",", [for k, v in local.env.aws_default_tags : "${k}=${v}"])
         set_real_ip_from          = local.enable_aws_proxy_protocol ? local.env.vpc_cidr : "0.0.0.0/0"
       }
@@ -408,12 +436,13 @@ module "vault" {
 resource "kubernetes_service_account_v1" "vault_raft_snapshot" {
   count = local.vault_snapshot_enabled ? 1 : 0
   metadata {
-    name      = "vault-raft-snapshot"
-    namespace = kubernetes_namespace_v1.vault.metadata[0].name
+    name        = "vault-raft-snapshot"
+    namespace   = kubernetes_namespace_v1.vault.metadata[0].name
+    annotations = local.backup_to_s3 ? { "eks.amazonaws.com/role-arn" = module.backup_storage[0].role_arns["vault"] } : {}
   }
 }
 
-# Daily Vault raft snapshot to GCS. The initContainer saves it from vault-active and fails on
+# Daily Vault raft snapshot to S3 (backup_s3 set) or GCS. The initContainer saves it from vault-active and fails on
 # an empty file; the main container uploads it with rclone. Retention is the bucket lifecycle rule.
 resource "kubectl_manifest" "vault_raft_snapshot" {
   count      = local.vault_snapshot_enabled ? 1 : 0
@@ -482,7 +511,11 @@ resource "kubectl_manifest" "vault_raft_snapshot" {
                   args:
                     - move
                     - /snapshot
+                    %{~if local.backup_to_s3}
+                    - "s3:${local.backup_s3_bucket}/vault/raft/"
+                    %{~else}
                     - "gcs:${google_storage_bucket.vault_snapshots[0].name}/vault/raft/"
+                    %{~endif}
                     - --include
                     - "*.snap"
                     - --stats=1m
@@ -491,6 +524,9 @@ resource "kubectl_manifest" "vault_raft_snapshot" {
                     # the job logs a single line and you cannot tell what it uploaded.
                     - --stats-log-level=NOTICE
                   env:
+                    %{~if local.backup_to_s3}
+                    ${indent(20, chomp(local.rclone_s3_env))}
+                    %{~else}
                     - name: RCLONE_CONFIG_GCS_TYPE
                       value: "google cloud storage"
                     - name: RCLONE_CONFIG_GCS_SERVICE_ACCOUNT_FILE
@@ -498,6 +534,7 @@ resource "kubectl_manifest" "vault_raft_snapshot" {
                     # Bucket has uniform access, so rclone must not send an ACL.
                     - name: RCLONE_CONFIG_GCS_BUCKET_POLICY_ONLY
                       value: "true"
+                    %{~endif}
                   resources:
                     requests:
                       cpu: 20m
@@ -507,20 +544,24 @@ resource "kubectl_manifest" "vault_raft_snapshot" {
                   volumeMounts:
                     - name: snapshot
                       mountPath: /snapshot
+                    %{~if !local.backup_to_s3}
                     - name: gcp
                       mountPath: /gcp
                       readOnly: true
+                    %{~endif}
               volumes:
                 # Disk-backed, not memory: a memory-medium emptyDir counts against the
                 # pod's memory limit, and the snapshot is far larger than it.
                 - name: snapshot
                   emptyDir:
                     sizeLimit: 2Gi
+                %{~if !local.backup_to_s3}
                 - name: gcp
                   secret:
                     # Same hand-placed service-account key the Vault server uses for its
                     # gcpckms seal. It must also have object-write on the snapshot bucket.
                     secretName: ${module.gcp_kms_vault.gcp_key_secret_name}
+                %{~endif}
   YAML
 }
 
@@ -547,34 +588,58 @@ module "vault_argocd_watcher" {
   vault_mount_path = local.vault_mount_path
 }
 
-# Loki on non-AWS clusters (filesystem storage).
-module "loki" {
-  depends_on = [module.argocd, module.prometheus_stack]
-  count      = var.environments[terraform.workspace].application_configs["loki"].enabled && var.cloud_provider != "aws" ? 1 : 0
-  source     = "./modules/argocd_application"
-  application = {
-    name      = "loki"
-    namespace = kubernetes_namespace_v1.loki.metadata[0].name
-    helm = {
-      isOci             = false
-      chart             = "loki"
-      revision          = var.versions["loki"]
-      ignoreDifferences = local.loki_ignore_differences
-    }
-    repository = "https://grafana.github.io/helm-charts"
-    values_override = templatefile("${local.helm_values_config_path}/loki-values.yml",
-      {
-        service_account = indent(8, module.gcp_kms_loki.gcp_key_secret_data["key.json"])
-        gcs_bucket      = google_storage_bucket.loki_logs_backups[0].name
-        storage_class   = var.storage_classes["bulk"]
-      }
-    )
-  }
-  argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = local.vault_mount_path
+locals {
+  loki_s3_enabled = var.environments[terraform.workspace].application_configs["loki"].enabled
 }
 
-# Loki on AWS: chunks in S3 (main_loki_s3.tf) via IRSA.
+module "loki_storage" {
+  count             = local.loki_s3_enabled ? 1 : 0
+  source            = "./modules/aws/loki_storage"
+  bucket_name       = coalesce(local.env.loki_bucket_name, "${var.org}-${local.cloud_resource_name}-loki-chunks")
+  bucket_tag_name   = "${var.org}-${local.cloud_resource_name}-loki-chunks"
+  role_name         = "ixo-${local.cloud_resource_name}-loki-s3"
+  environment       = local.global_resource_name
+  oidc_provider_arn = module.kubernetes_cluster.oidc_provider_arn
+  oidc_provider_url = module.kubernetes_cluster.oidc_provider_url
+  namespace         = kubernetes_namespace_v1.loki.metadata[0].name
+}
+
+# Env backup bucket on S3; one IRSA role per writer, each limited to its prefix.
+module "backup_storage" {
+  count             = local.env.backup_s3 != null ? 1 : 0
+  source            = "./modules/aws/backup_storage"
+  bucket_name       = local.env.backup_s3.bucket_name
+  environment       = local.global_resource_name
+  role_name_prefix  = "ixo-${local.cloud_resource_name}-backup"
+  oidc_provider_arn = module.kubernetes_cluster.oidc_provider_arn
+  oidc_provider_url = module.kubernetes_cluster.oidc_provider_url
+  write_vpce_id     = one(module.s3_gateway_endpoint[*].id)
+  writers = {
+    ixo-postgres = {
+      namespace        = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
+      service_accounts = [for s in ["instance", "pgbackrest", "repohost"] : "${var.pg_ixo.pg_cluster_name}-${s}"]
+      prefix           = "pgbackrest/${var.pg_ixo.pg_cluster_name}"
+    }
+    synapse = {
+      namespace        = kubernetes_namespace_v1.matrix.metadata[0].name
+      service_accounts = [for s in ["instance", "pgbackrest", "repohost"] : "${var.pg_matrix.pg_cluster_name}-${s}"]
+      prefix           = "pgbackrest/${var.pg_matrix.pg_cluster_name}"
+    }
+    vault = {
+      namespace        = kubernetes_namespace_v1.vault.metadata[0].name
+      service_accounts = ["vault-raft-snapshot"]
+      prefix           = "vault/raft"
+      expiration_days  = local.env.backup_s3.vault_retention_days
+    }
+    matrix-media = {
+      namespace        = kubernetes_namespace_v1.matrix.metadata[0].name
+      service_accounts = ["matrix-media-backup"]
+      prefix           = "matrix/media"
+    }
+  }
+}
+
+# Loki with chunks in S3 (module.loki_storage) via IRSA.
 module "loki_s3" {
   depends_on = [module.argocd, module.prometheus_stack]
   count      = local.loki_s3_enabled ? 1 : 0
@@ -591,9 +656,9 @@ module "loki_s3" {
     repository = "https://grafana.github.io/helm-charts"
     values_override = templatefile("${local.helm_values_config_path}/loki-values-s3.yml",
       {
-        s3_bucket     = aws_s3_bucket.loki_chunks[0].bucket
+        s3_bucket     = module.loki_storage[0].bucket_name
         s3_region     = var.environments[terraform.workspace].aws_region
-        loki_role_arn = aws_iam_role.loki_s3[0].arn
+        loki_role_arn = module.loki_storage[0].role_arn
         storage_class = var.storage_classes["bulk"]
       }
     )
@@ -701,9 +766,19 @@ module "matrix" {
 # `copy` not `sync`, deliberately: copy never deletes, so a failed or empty mount cannot
 # clear the backup. Synapse media is content-addressed and immutable, so the destination
 # is always a superset of every earlier state.
+# IRSA identity for the media backup when it writes to S3.
+resource "kubernetes_service_account_v1" "matrix_media_backup" {
+  count = var.environments[terraform.workspace].application_configs["matrix"].enabled && local.backup_to_s3 ? 1 : 0
+  metadata {
+    name        = "matrix-media-backup"
+    namespace   = kubernetes_namespace_v1.matrix.metadata[0].name
+    annotations = { "eks.amazonaws.com/role-arn" = module.backup_storage[0].role_arns["matrix-media"] }
+  }
+}
+
 resource "kubectl_manifest" "matrix_media_backup" {
   count      = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
-  depends_on = [module.matrix]
+  depends_on = [module.matrix, kubernetes_service_account_v1.matrix_media_backup]
 
   yaml_body = <<-YAML
     apiVersion: batch/v1
@@ -729,6 +804,9 @@ resource "kubectl_manifest" "matrix_media_backup" {
                 app.kubernetes.io/part-of: ixo
             spec:
               restartPolicy: Never
+              %{~if local.backup_to_s3}
+              serviceAccountName: ${kubernetes_service_account_v1.matrix_media_backup[0].metadata[0].name}
+              %{~endif}
               affinity:
                 podAffinity:
                   requiredDuringSchedulingIgnoredDuringExecution:
@@ -743,7 +821,14 @@ resource "kubectl_manifest" "matrix_media_backup" {
                   args:
                     - copy
                     - /data
+                    %{~if local.backup_to_s3}
+                    - "s3:${local.backup_s3_bucket}/matrix/media/"
+                    # Size-only skips the per-object HEAD for modtime, a billed request on GLACIER_IR.
+                    - --size-only
+                    - --s3-storage-class=GLACIER_IR
+                    %{~else}
                     - "gcs:${google_storage_bucket.matrix_backups[0].name}/matrix/data/"
+                    %{~endif}
                     - --transfers=4
                     - --checkers=8
                     - --buffer-size=0
@@ -757,6 +842,9 @@ resource "kubectl_manifest" "matrix_media_backup" {
                     # default log level is NOTICE, so they are silently dropped.
                     - --stats-log-level=NOTICE
                   env:
+                    %{~if local.backup_to_s3}
+                    ${indent(20, chomp(local.rclone_s3_env))}
+                    %{~else}
                     - name: RCLONE_CONFIG_GCS_TYPE
                       value: "google cloud storage"
                     - name: RCLONE_CONFIG_GCS_SERVICE_ACCOUNT_FILE
@@ -765,6 +853,7 @@ resource "kubectl_manifest" "matrix_media_backup" {
                       value: private
                     - name: RCLONE_CONFIG_GCS_BUCKET_ACL
                       value: private
+                    %{~endif}
                   resources:
                     requests:
                       cpu: 20m
@@ -776,17 +865,21 @@ resource "kubectl_manifest" "matrix_media_backup" {
                     - name: media
                       mountPath: /data
                       readOnly: true
+                    %{~if !local.backup_to_s3}
                     - name: gcp
                       mountPath: /gcp
                       readOnly: true
+                    %{~endif}
               volumes:
                 - name: media
                   persistentVolumeClaim:
                     claimName: matrix-synapse
                     readOnly: true
+                %{~if !local.backup_to_s3}
                 - name: gcp
                   secret:
                     secretName: gcp-key-secret
+                %{~endif}
   YAML
 }
 
@@ -1034,6 +1127,8 @@ module "postgres-operator" { # Sets up Cluster Instances
           }) : templatefile("${local.postgres_operator_config_path}/matrix-postgres-backups-repos.yml", {
           repo1_storage = var.environments[terraform.workspace].application_configs["postgres_operator_crunchydata"].matrix_repo1_storage_size
           gcs_bucket    = try(google_storage_bucket.matrix_backups[0].name, "")
+          s3_bucket     = local.backup_to_s3 ? module.backup_storage[0].bucket_name : ""
+          s3_region     = var.environments[terraform.workspace].aws_region
         })
         pgmonitoring_image     = var.pg_matrix.pgmonitoring_image
         pgmonitoring_image_tag = var.pg_matrix.pgmonitoring_image_tag
@@ -1042,16 +1137,17 @@ module "postgres-operator" { # Sets up Cluster Instances
         enable_otel            = local.pg_enable_otel
         retention_full         = local.pg_retention_full_matrix
         retention_type         = "count"
-        gcs_repo2_bucket       = try(google_storage_bucket.matrix_backups[0].name, "")
-        repo2_retention_type   = "time"
-        repo2_retention_full   = local.pg_retention_days
-        shutdown               = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].shutdown
-        upgrade                = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].upgrade
-        standby_repo           = try(local.env.pg_standby.matrix_bucket, null) != null ? "repo2" : ""
-        gcs_key                = try(local.env.pg_standby.matrix_bucket, null) != null && try(local.env.pg_standby.gcs_key_file, null) != null ? file(local.env.pg_standby.gcs_key_file) : null
-        db_pool                = local.env.aws_db_node_group != null
-        process_max            = try(local.env.pg_backrest.process_max, null)
-        compress_type          = try(local.env.pg_backrest.compress_type, null)
+        # Non-empty enables repo2 retention; the S3 bucket when backups go to S3.
+        gcs_repo2_bucket     = local.backup_to_s3 ? module.backup_storage[0].bucket_name : try(google_storage_bucket.matrix_backups[0].name, "")
+        repo2_retention_type = "time"
+        repo2_retention_full = local.pg_retention_days
+        shutdown             = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].shutdown
+        upgrade              = local.pg_upgrade_for[var.pg_matrix.pg_cluster_name].upgrade
+        standby_repo         = try(local.env.pg_standby.matrix_bucket, null) != null ? "repo2" : ""
+        gcs_key              = try(local.env.pg_standby.matrix_bucket, null) != null && try(local.env.pg_standby.gcs_key_file, null) != null ? file(local.env.pg_standby.gcs_key_file) : null
+        db_pool              = local.env.aws_db_node_group != null
+        process_max          = try(local.env.pg_backrest.process_max, null)
+        compress_type        = try(local.env.pg_backrest.compress_type, null)
       },
       {
         # IXO Cluster
@@ -1076,6 +1172,8 @@ module "postgres-operator" { # Sets up Cluster Instances
           }) : templatefile("${local.postgres_operator_config_path}/ixo-postgres-backups-repos.yml",
           {
             gcs_bucket = google_storage_bucket.postgres_backups[0].name
+            s3_bucket  = local.backup_to_s3 ? module.backup_storage[0].bucket_name : ""
+            s3_region  = var.environments[terraform.workspace].aws_region
           }
         )
         pgmonitoring_image     = var.pg_ixo.pgmonitoring_image
@@ -1104,6 +1202,27 @@ module "postgres-operator" { # Sets up Cluster Instances
     try(local.env.pg_standby.matrix_bucket, null) != null
   ]
   gcs_key = file("${path.root}/credentials.json")
+}
+
+# IRSA role on the PGO-created pgBackRest ServiceAccounts. Running pods only pick it up on restart.
+# No depends_on module.postgres-operator: the SAs must be annotated before the repo swap is applied.
+resource "kubernetes_annotations" "pgbackrest_irsa" {
+  for_each = local.backup_to_s3 ? merge([
+    for key, c in {
+      ixo-postgres = { name = var.pg_ixo.pg_cluster_name, namespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name }
+      synapse      = { name = var.pg_matrix.pg_cluster_name, namespace = kubernetes_namespace_v1.matrix.metadata[0].name }
+    } : { for sa in ["instance", "pgbackrest", "repohost"] : "${c.name}-${sa}" => merge(c, { writer = key }) }
+    if key != "synapse" || var.environments[terraform.workspace].application_configs["matrix"].enabled
+  ]...) : {}
+  api_version = "v1"
+  kind        = "ServiceAccount"
+  metadata {
+    name      = each.key
+    namespace = each.value.namespace
+  }
+  annotations = {
+    "eks.amazonaws.com/role-arn" = module.backup_storage[0].role_arns[each.value.writer]
+  }
 }
 
 # module "hyperlane_validator" {

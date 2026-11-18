@@ -109,6 +109,7 @@ resource "kubectl_manifest" "cluster" {
       standby_repo                = each.value.standby_repo
       # GCS repos only; a repo1-gcs-key without a GCS repo1 breaks --repo=2.
       gcs_repos     = [for r in yamldecode(each.value.pgbackrest_repos) : r.name if try(r.gcs, null) != null]
+      s3_repos      = [for r in yamldecode(each.value.pgbackrest_repos) : r.name if try(r.s3, null) != null]
       db_pool       = each.value.db_pool
       process_max   = each.value.process_max != null ? each.value.process_max : 0
       compress_type = each.value.compress_type != null ? each.value.compress_type : ""

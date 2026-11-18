@@ -33,6 +33,8 @@ module "aws_cluster" {
   node_root_volume_type         = var.aws.node_root_volume_type
   on_demand_node_count          = var.aws.on_demand_node_count
   on_demand_node_instance_types = var.aws.on_demand_node_instance_types
+  per_az_node_groups            = var.aws.per_az_node_groups
+  lt_node_groups                = var.aws.lt_node_groups
   db_nodes_per_az               = var.aws.db_nodes_per_az
   db_node_instance_types        = var.aws.db_node_instance_types
   env_config                    = var.aws.env_config

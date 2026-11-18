@@ -36,8 +36,16 @@ variable "aws" {
     node_root_volume_type         = optional(string, "gp3")
     on_demand_node_count          = optional(number, 0)
     on_demand_node_instance_types = optional(list(string), ["t3a.xlarge"])
-    db_nodes_per_az               = optional(number, 0)
-    db_node_instance_types        = optional(list(string), ["t3a.large"])
+    per_az_node_groups = optional(object({
+      spot_min                 = number
+      spot_max                 = number
+      spot_instance_types      = list(string)
+      on_demand                = number
+      on_demand_instance_types = list(string)
+    }))
+    lt_node_groups         = optional(bool, true)
+    db_nodes_per_az        = optional(number, 0)
+    db_node_instance_types = optional(list(string), ["t3a.large"])
     env_config = optional(object({
       node_instance_types = list(string)
       desired_capacity    = number

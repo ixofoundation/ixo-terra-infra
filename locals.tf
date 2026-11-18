@@ -9,7 +9,6 @@ locals {
     neo4j_ssl_redirect_annotation = false
     common_matrix_storage         = false
     common_storage_enabled        = var.cloud_provider != "aws" # RWX; EBS has no ReadWriteMany backing
-    graphiti_image_updater        = false                       # re-enable once an image-updater writer exists
     grafana_tls_redirect          = false
     argocd_image_updater_app      = terraform.workspace != "mainnet" # mainnet pins image tags by hand
     digihub_tunnel                = false
@@ -27,7 +26,7 @@ locals {
   env                  = var.environments[terraform.workspace]
   cloud_resource_name  = coalesce(local.env.cloud_resource_name, terraform.workspace)
   global_resource_name = coalesce(local.env.global_resource_name, terraform.workspace)
-  # Keeps a renamed workspace's old name where it renders; see variables.tf.
+  # Pins the tailscale operator hostname to the old workspace name; see variables.tf.
   legacy_workspace_name = coalesce(local.env.legacy_workspace_name, terraform.workspace)
   kubeconfig_name       = coalesce(local.env.kubeconfig_name, local.cloud_resource_name)
 
@@ -101,7 +100,6 @@ locals {
     "chromadb",
     "matrix_admin",
     "matrix_livekit",
-    "memory_engine_graphiti",
     "falco_security",
     "ixo_matrix_whatsapp",
     "ixo_sygnal",
@@ -136,6 +134,18 @@ locals {
   ]
 
   vault_mount_path = var.vault_core_mount
+
+  # Backups go to the env S3 bucket (module.backup_storage) instead of GCS.
+  backup_to_s3     = local.env.backup_s3 != null
+  backup_s3_bucket = try(module.backup_storage[0].bucket_name, "")
+  # rclone "s3" remote for the backup CronJobs: IRSA creds; the writer roles cannot create buckets.
+  rclone_s3_env = yamlencode([
+    { name = "RCLONE_CONFIG_S3_TYPE", value = "s3" },
+    { name = "RCLONE_CONFIG_S3_PROVIDER", value = "AWS" },
+    { name = "RCLONE_CONFIG_S3_ENV_AUTH", value = "true" },
+    { name = "RCLONE_CONFIG_S3_REGION", value = local.env.aws_region },
+    { name = "RCLONE_CONFIG_S3_NO_CHECK_BUCKET", value = "true" },
+  ])
 
   # Vault raft snapshot backup: the bucket, the ServiceAccount and the CronJob are one
   # unit, so they share a single condition.

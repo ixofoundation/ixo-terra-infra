@@ -155,39 +155,6 @@ module "ixo_blocksync_core" {
   }
 }
 
-module "ixo_memory_engine_graphiti" {
-  count  = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].enabled ? 1 : 0
-  source = "./modules/argocd_application"
-  application = {
-    name       = "ixo-memory-engine-graphiti"
-    namespace  = kubernetes_namespace_v1.ixo_core.metadata[0].name
-    repository = var.ixo_helm_chart_repository
-    path       = "charts/${local.chart_tree}/ixoworld/memory-engine-graphiti"
-    values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_memory_engine_graphiti.yml",
-      {
-        eso_enabled    = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].use_eso
-        environment    = terraform.workspace
-        vault_mount    = local.vault_mount_path
-        neo4j_uri      = "neo4j://neo4j.neo4j.svc.cluster.local"
-        neo4j_port     = "7687"
-        neo4j_user     = "neo4j"
-        neo4j_password = random_password.neo4j_password.result
-        host           = local.dns_for_environment[terraform.workspace]["ixo_memory_engine_graphiti"]
-        storage_class  = local.storage_class_for_environment[terraform.workspace]["ixo_memory_engine_graphiti"]
-        storage_size   = local.storage_size_for_environment[terraform.workspace]["ixo_memory_engine_graphiti"]
-      }
-    )
-  }
-  create_kv        = var.environments[terraform.workspace].application_configs["ixo_memory_engine_graphiti"].create_kv
-  argo_namespace   = module.argocd.argo_namespace
-  vault_mount_path = local.vault_mount_path
-  image_updater = local.live_overrides.graphiti_image_updater ? {
-    image               = "ghcr.io/ixoworld/memory-engine-graphiti-api-server"
-    strategy            = "newest-build"
-    allow_tags_override = "regexp:^main-"
-  } : null
-}
-
 module "ixo_companion" {
   count  = var.environments[terraform.workspace].application_configs["ixo_companion"].enabled ? 1 : 0
   source = "./modules/argocd_application"
@@ -284,7 +251,7 @@ module "credentials_prospect" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_prospect.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_prospect"].use_eso
-        environment = local.legacy_workspace_name
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_prospect"]
         vault_mount = local.vault_mount_path
@@ -310,7 +277,7 @@ module "ecs" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_ecs.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_ecs"].use_eso
-        environment = local.legacy_workspace_name
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_ecs"]
         vault_mount = local.vault_mount_path
@@ -340,7 +307,7 @@ module "carbon" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_carbon.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_carbon"].use_eso
-        environment = local.legacy_workspace_name
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_carbon"]
         vault_mount = local.vault_mount_path
@@ -367,7 +334,7 @@ module "claimformprotocol" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_claimformprotocol.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_claimformprotocol"].use_eso
-        environment = local.legacy_workspace_name # rename pin: renders NETWORK
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_claimformprotocol"]
         vault_mount = local.vault_mount_path
@@ -394,7 +361,7 @@ module "umuzi" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_umuzi.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_umuzi"].use_eso
-        environment = local.legacy_workspace_name
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_umuzi"]
         vault_mount = local.vault_mount_path
@@ -420,7 +387,7 @@ module "did" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/claims_credentials_did.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["claims_credentials_did"].use_eso
-        environment = local.legacy_workspace_name
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["claims_credentials_did"]
         vault_mount = local.vault_mount_path
@@ -546,7 +513,7 @@ module "ixo_faucet" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_faucet.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_faucet"].use_eso
-        environment = local.legacy_workspace_name
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_faucet"] #"faucet.${terraform.workspace}.${var.environments[terraform.workspace].domain}"
         vault_mount = local.vault_mount_path
@@ -610,14 +577,10 @@ module "ixo_kyc_server" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/ixo_kyc_server.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["ixo_kyc_server"].use_eso
-        environment = local.legacy_workspace_name
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["ixo_kyc_server"]
         vault_mount = local.vault_mount_path
-        pgCluster   = var.pg_ixo.pg_cluster_name
-        pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
-        pgUsername  = var.pg_ixo.pg_users[5].username
-        pgPassword  = urlencode(module.postgres-operator[0].database_password[var.pg_ixo.pg_users[5].username])
       }
     )
   }
@@ -626,6 +589,7 @@ module "ixo_kyc_server" {
     AUTHORIZATION               = ""
     COMPLYCUBE_API_KEY          = ""
     COMPLYCUBE_WEBHOOK_SECRET   = ""
+    DATABASE_URL                = ""
     WEBVIEW_BASE_URL            = ""
     ORACLE_DID                  = ""
     CREDENTIALS_WORKER_API_KEY  = ""
@@ -645,16 +609,16 @@ module "ixo_kyc_server" {
 # Redirect-only hosts per workspace; each also needs a $host block in f5-nginx-ingress-controller-values.yml.
 locals {
   redirect_hosts = {
-    mainnet_main = { hosts = ["blockscan.ixo.world", "chronicle.impacts.network"], tls_secret_name = "blockscan-mainnet-tls" }
+    mainnet = { hosts = ["blockscan.ixo.world", "chronicle.impacts.network"], tls_secret_name = "blockscan-mainnet-tls" }
   }
 }
 
 module "ixo_redirects" {
-  count           = contains(keys(local.redirect_hosts), local.legacy_workspace_name) ? 1 : 0 # keyed by the rename pin
+  count           = contains(keys(local.redirect_hosts), terraform.workspace) ? 1 : 0
   source          = "./modules/ixo_redirects"
   nginx_namespace = kubernetes_namespace_v1.ingress_nginx.metadata[0].name
-  hosts           = try(local.redirect_hosts[local.legacy_workspace_name].hosts, [])
-  tls_secret_name = try(local.redirect_hosts[local.legacy_workspace_name].tls_secret_name, "")
+  hosts           = try(local.redirect_hosts[terraform.workspace].hosts, [])
+  tls_secret_name = try(local.redirect_hosts[terraform.workspace].tls_secret_name, "")
 
   depends_on = [module.ingress_nginx]
 }
@@ -969,14 +933,9 @@ module "ixo_domain_indexer" {
 # Source IPs allowed to reach both firecrawl hosts; workspaces not listed stay open. Needs PROXY
 # protocol on the LB (enable_aws_proxy_protocol), else nginx sees only the ELB's VPC addresses.
 locals {
-  firecrawl_allowed_ips = {
-    mainnet_main = [
-      "54.73.133.123",  # NAT EIP eipalloc-012b6219779e891b9: in-cluster oracles call the public hosts
-      "95.179.136.147", # blackbox probe (old; likely dead)
-      "54.228.122.84",  # testnet NAT EIP eipalloc-017ade176cd4926ab (ixo-test)
-      "54.154.45.24",   # devnet NAT INSTANCE auto-assigned IP (ixo-dev): changes if the instance is replaced
-    ]
-  }
+  # Empty until IXO-6598 is approved; then set mainnet = ["54.73.133.123", "95.179.136.147",
+  # "54.228.122.84", "34.248.19.104"] (mainnet/testnet/devnet NAT EIPs + old blackbox probe).
+  firecrawl_allowed_ips = {}
 }
 
 module "ixo_firecrawl" {
@@ -992,7 +951,7 @@ module "ixo_firecrawl" {
         environment = terraform.workspace
         host        = local.dns_for_environment[terraform.workspace]["ixo_firecrawl"]
         vault_mount = local.vault_mount_path
-        allowed_ips = try(local.firecrawl_allowed_ips[local.legacy_workspace_name], []) # keyed by the rename pin
+        allowed_ips = try(local.firecrawl_allowed_ips[terraform.workspace], [])
         pgCluster   = var.pg_ixo.pg_cluster_name
         pgNamespace = kubernetes_namespace_v1.ixo-postgres.metadata[0].name
         pgUsername  = var.pg_ixo.pg_users[20].username
@@ -2035,7 +1994,7 @@ module "ixo_offset_auto_approve" {
     values_override = templatefile("${local.helm_values_config_path}/core-values/auto_approve_offset.yml",
       {
         eso_enabled = var.environments[terraform.workspace].application_configs["auto_approve_offset"].use_eso
-        environment = local.legacy_workspace_name
+        environment = terraform.workspace
         rpc_url     = var.environments[terraform.workspace].rpc_url
         host        = local.dns_for_environment[terraform.workspace]["auto_approve_offset"]
         vault_mount = local.vault_mount_path
@@ -2381,5 +2340,3 @@ module "ixo_sygnal" {
 #  namespace                         = kubernetes_namespace_v1.ixo_core.metadata[0].name
 # }
 
-#DATABASE_URL : postgresql://cellnode:p^mv%7Bv|+^C^vkXlNoYRuBA)@ixo-postgres-primary.ixo-postgres.svc.cluster.local/cellnode
-#DATABASE_URL : postgresql://cellnode:p%5Emv%7Bv%7C%2B%5EC%5EvkXlNoYRuBA%29@ixo-postgres-primary.ixo-postgres.svc.cluster.local/cellnode

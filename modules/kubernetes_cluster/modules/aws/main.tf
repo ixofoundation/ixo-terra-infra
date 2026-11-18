@@ -762,7 +762,7 @@ resource "kubernetes_storage_class" "gp2_csi" {
 
 # Template-based twins of "main" and "on_demand" (same types, capacity, AMI type, sizes).
 resource "aws_eks_node_group" "main_lt" {
-  count           = length(aws_launch_template.nodes)
+  count           = var.lt_node_groups ? length(aws_launch_template.nodes) : 0
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.cluster_name}-nodes-lt"
   node_role_arn   = aws_iam_role.node_group.arn
@@ -805,7 +805,7 @@ resource "aws_eks_node_group" "main_lt" {
 }
 
 resource "aws_eks_node_group" "on_demand_lt" {
-  count           = length(aws_launch_template.nodes) > 0 && var.on_demand_node_count > 0 ? 1 : 0
+  count           = var.lt_node_groups && length(aws_launch_template.nodes) > 0 && var.on_demand_node_count > 0 ? 1 : 0
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.cluster_name}-ondemand-lt"
   node_role_arn   = aws_iam_role.node_group.arn
@@ -847,6 +847,94 @@ resource "aws_eks_node_group" "on_demand_lt" {
 data "aws_subnet" "private" {
   for_each = toset(data.aws_subnets.private.ids)
   id       = each.value
+}
+
+locals {
+  per_az_subnets = length(aws_launch_template.nodes) > 0 && var.per_az_node_groups != null ? { for s in data.aws_subnet.private : s.availability_zone => s.id } : {}
+}
+
+resource "aws_eks_node_group" "spot_az" {
+  for_each        = local.per_az_subnets
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "${var.cluster_name}-spot-${each.key}"
+  node_role_arn   = aws_iam_role.node_group.arn
+  subnet_ids      = [each.value]
+
+  instance_types = var.per_az_node_groups.spot_instance_types
+  ami_type       = var.node_ami_type
+  capacity_type  = var.node_capacity_type
+
+  launch_template {
+    id      = aws_launch_template.nodes[0].id
+    version = aws_launch_template.nodes[0].latest_version
+  }
+
+  scaling_config {
+    desired_size = var.per_az_node_groups.spot_min
+    max_size     = var.per_az_node_groups.spot_max
+    min_size     = var.per_az_node_groups.spot_min
+  }
+
+  update_config {
+    max_unavailable = 1
+  }
+
+  tags = {
+    Name        = "${var.cluster_name}-spot-${each.key}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.node_group_worker_policy,
+    aws_iam_role_policy_attachment.node_group_cni_policy,
+    aws_iam_role_policy_attachment.node_group_registry_policy,
+  ]
+
+  # cluster-autoscaler owns desired_size.
+  lifecycle {
+    ignore_changes = [scaling_config[0].desired_size]
+  }
+}
+
+resource "aws_eks_node_group" "on_demand_az" {
+  for_each        = var.per_az_node_groups != null && var.per_az_node_groups.on_demand > 0 ? local.per_az_subnets : {}
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "${var.cluster_name}-ondemand-${each.key}"
+  node_role_arn   = aws_iam_role.node_group.arn
+  subnet_ids      = [each.value]
+
+  # Listed in priority order; the second type covers an ON_DEMAND capacity shortage of the first.
+  instance_types = var.per_az_node_groups.on_demand_instance_types
+  ami_type       = var.node_ami_type
+  capacity_type  = "ON_DEMAND"
+
+  launch_template {
+    id      = aws_launch_template.nodes[0].id
+    version = aws_launch_template.nodes[0].latest_version
+  }
+
+  scaling_config {
+    desired_size = var.per_az_node_groups.on_demand
+    max_size     = var.per_az_node_groups.on_demand
+    min_size     = var.per_az_node_groups.on_demand
+  }
+
+  update_config {
+    max_unavailable = 1
+  }
+
+  tags = {
+    Name        = "${var.cluster_name}-ondemand-${each.key}"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.node_group_worker_policy,
+    aws_iam_role_policy_attachment.node_group_cni_policy,
+    aws_iam_role_policy_attachment.node_group_registry_policy,
+  ]
 }
 
 resource "aws_eks_node_group" "db_lt" {

@@ -178,6 +178,24 @@ variable "on_demand_node_instance_types" {
   default     = ["t3a.xlarge"]
 }
 
+variable "per_az_node_groups" {
+  description = "Spot and ON_DEMAND node groups, one of each per AZ (launch template only). null = none."
+  type = object({
+    spot_min                 = number
+    spot_max                 = number
+    spot_instance_types      = list(string)
+    on_demand                = number
+    on_demand_instance_types = list(string)
+  })
+  default = null
+}
+
+variable "lt_node_groups" {
+  description = "Keep the multi-AZ main_lt and on_demand_lt groups. false destroys them."
+  type        = bool
+  default     = true
+}
+
 variable "db_nodes_per_az" {
   description = "ON_DEMAND database nodes per AZ (tainted ixo.world/pool=db, launch template only). 0 = no DB groups."
   type        = number

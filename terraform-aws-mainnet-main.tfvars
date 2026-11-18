@@ -20,7 +20,7 @@ ixo_terra_infra_repository = "https://github.com/ixofoundation/ixo-terra-infra"
 vault_core_mount           = "ixo_core"
 
 # Apps that serve the real mainnet hostnames (no dns_segment).
-dns_cutover_apps = ["prometheus_stack", "dex", "vault", "auto_approve_offset", "ixo_stake_reward_claimer", "ixo_did_resolver", "ixo_registry_server", "matrix_livekit", "ixo_minerva_livekit", "uptime_kuma", "ghost", "ixo_domain_indexer", "ixo_matrix_recording_bot", "ixo_diagnostic_oracle", "ixo_ecs_oracle", "ixo_minerva_oracle", "ixo_website_bot_oracle", "ixo_kyc_oracle", "ixo_memory_engine_graphiti", "ixo_domain_creator_oracle", "ixo_cellnode", "ixo_blocksync", "ixo_blocksync_api", "ixo_blocksync_core", "ixo_coin_server", "ixo_deeplink_server", "ixo_feegrant_nest", "ixo_firecrawl", "ixo_iot_data", "ixo_kyc_server", "ixo_message_relayer", "ixo_notification_server", "ixo_observable_framework_builder", "ixo_payments_nest", "ixo_trading_bot_server", "claims_credentials_ecs", "claims_credentials_carbon", "claims_credentials_claimformprotocol", "claims_credentials_did", "matrix", "matrix_admin", "ixo_matrix_appservice_rooms", "ixo_matrix_whatsapp", "ixo_sygnal", "digihub_matrix_state_bot", "digihub_matrix_appservice_rooms", "digihub_matrix_bids_bot", "digihub_ixo_matrix_claims_bot", "supamoto_matrix_appservice_rooms", "ixo_matrix_supamoto_bot", "ixo_matrix_supamoto_onboarding_server", "ixo_matrix_supamoto_claims_bot"]
+dns_cutover_apps = ["prometheus_stack", "dex", "vault", "auto_approve_offset", "ixo_stake_reward_claimer", "ixo_did_resolver", "ixo_registry_server", "matrix_livekit", "ixo_minerva_livekit", "uptime_kuma", "ghost", "ixo_domain_indexer", "ixo_matrix_recording_bot", "ixo_diagnostic_oracle", "ixo_ecs_oracle", "ixo_minerva_oracle", "ixo_website_bot_oracle", "ixo_kyc_oracle", "ixo_domain_creator_oracle", "ixo_cellnode", "ixo_blocksync", "ixo_blocksync_api", "ixo_blocksync_core", "ixo_coin_server", "ixo_deeplink_server", "ixo_feegrant_nest", "ixo_firecrawl", "ixo_iot_data", "ixo_kyc_server", "ixo_message_relayer", "ixo_notification_server", "ixo_observable_framework_builder", "ixo_payments_nest", "ixo_trading_bot_server", "claims_credentials_ecs", "claims_credentials_carbon", "claims_credentials_claimformprotocol", "claims_credentials_did", "matrix", "matrix_admin", "ixo_matrix_appservice_rooms", "ixo_matrix_whatsapp", "ixo_sygnal", "digihub_matrix_state_bot", "digihub_matrix_appservice_rooms", "digihub_matrix_bids_bot", "digihub_ixo_matrix_claims_bot", "supamoto_matrix_appservice_rooms", "ixo_matrix_supamoto_bot", "ixo_matrix_supamoto_onboarding_server", "ixo_matrix_supamoto_claims_bot"]
 
 # No in-place major upgrade pending. Set explicitly so the auto-loaded terraform.tfvars can never
 # supply one.
@@ -69,7 +69,7 @@ environments = {
   # mainnet in the ixo-prod member account (361082683495). Run plans and applies
   # ONLY through ~/Documents/ixo-devops/scripts/mainnet.sh.
   mainnet = {
-    # Old workspace name, kept where it renders: Application names, NETWORK, tailscale host.
+    # Tailscale operator hostname only (a MagicDNS name in use); remove to rename the device.
     legacy_workspace_name = "mainnet_main"
 
     # Keeps the GCS bucket and KMS key ring names.
@@ -116,7 +116,7 @@ environments = {
     }
     aws_node_launch_template = true
     aws_node_legacy_groups   = false
-    # On-demand t3a.xlarge: firecrawl (6Gi), recording bot (3.5Gi) and graphiti (3Gi) don't fit t3.medium.
+    # On-demand t3a.xlarge: firecrawl (6Gi) and recording bot (3.5Gi) don't fit t3.medium.
     aws_node_groups = {
       instance_types           = ["t3a.xlarge"]
       desired                  = 4
@@ -863,15 +863,6 @@ environments = {
         dns_endpoint  = "builder.observable.ixo.earth"
         storage_class = "fast"
         storage_size  = "40Gi"
-      }
-      ixo_memory_engine_graphiti = {
-        enabled       = true
-        create_kv     = false
-        use_eso       = true # env secrets via external-secrets-operator
-        domain        = "ixoearth"
-        dns_endpoint  = "memory-engine.ixo.earth"
-        storage_class = "standard" # ts PVC only, 0.4 G used
-        storage_size  = "10Gi"
       }
       ixo_companion = {
         enabled    = false
