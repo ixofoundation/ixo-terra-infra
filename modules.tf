@@ -674,6 +674,8 @@ module "matrix" {
         media_storage_size      = coalesce(local.storage_size_for_environment[terraform.workspace]["matrix"], "100Gi")
         livekit_host            = local.dns_for_environment[terraform.workspace]["matrix_livekit"]
         matrix_whatsapp_enabled = var.environments[terraform.workspace].application_configs["ixo_matrix_whatsapp"].enabled
+        synapse_image_tag       = var.environments[terraform.workspace].application_configs["matrix"].synapse_image_tag
+        synapse_v1165_config    = var.environments[terraform.workspace].application_configs["matrix"].synapse_v1165_config
       }
     )
   }

@@ -221,6 +221,14 @@ variable "environments" {
       matrix_backup_retention_full = optional(number, 2)
       # Size of that repo1 volume. Fixed at creation in practice (gp3 grows, never shrinks).
       matrix_repo1_storage_size = optional(string, "200Gi")
+      # matrix only: Synapse image tag (ghcr.io/ixoworld/synapse), so the version can be
+      # rolled out one environment at a time.
+      synapse_image_tag = optional(string, "v1.140.0-ixo.1")
+      # matrix only: config that Synapse 1.164+/1.165 needs (room version 10 pin, legacy
+      # mention push rules, MatrixRTC transports). Set to true together with a
+      # synapse_image_tag of v1.165 or later. Once every environment runs 1.165+, drop this
+      # flag and make the block in matrix-values.yml unconditional.
+      synapse_v1165_config = optional(bool, false)
       # vault only: daily raft snapshot to a per-env GCS bucket.
       vault_snapshot_enabled = optional(bool, false)
       # Daily, offset from the 02:30 matrix media backup and the pgBackRest window.

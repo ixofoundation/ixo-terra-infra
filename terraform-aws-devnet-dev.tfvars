@@ -335,10 +335,12 @@ environments = {
         domain    = "ixoearth"
       }
       matrix = {
-        enabled      = true
-        create_kv    = false
-        domain       = "ixoearth"
-        dns_endpoint = "devmx.ixo.earth"
+        enabled              = true
+        create_kv            = false
+        domain               = "ixoearth"
+        dns_endpoint         = "devmx.ixo.earth"
+        synapse_image_tag    = "v1.165.0-ixo.1"
+        synapse_v1165_config = true
       }
       matrix_admin = {
         enabled      = true

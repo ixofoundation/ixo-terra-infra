@@ -7,7 +7,7 @@
 # fullnameOverride: ""
 image:
   repository: ghcr.io/ixoworld/synapse
-  tag: v1.140.0-ixo.1
+  tag: ${synapse_image_tag}
 config:
   enableRegistration: true
   macaroonSecretKey: <path:${kv_mount}/data/${app_name}#MACAROON_SECRET_KEY>
@@ -39,6 +39,19 @@ extraConfig:
   enable_authenticated_media: false
   max_event_delay_duration: 24h
   max_upload_size: 100M
+%{ if synapse_v1165_config ~}
+  # Synapse 1.162+ defaults to room version 12, which our clients and bots do not handle
+  # yet (room ID and power-level changes). Keep new rooms on version 10.
+  default_room_version: "10"
+  # Synapse 1.165 always serves the stable /_matrix/client/v1/rtc/transports endpoint and
+  # returns an empty list unless this is set. Same LiveKit service as the .well-known
+  # rtc_foci above. No m.livekit entry: that type needs the LiveKit auth service set up as
+  # an application service, which we do not run.
+  matrix_rtc:
+    transports:
+      - type: livekit
+        livekit_service_url: "https://${livekit_host}"
+%{ endif ~}
   user_directory:
     search_all_users: true
   media_retention:
@@ -139,6 +152,11 @@ extraConfig:
     msc2697_enabled: false
     msc3814_enabled: true
     msc4069_profile_inhibit_propagation: true
+%{ if synapse_v1165_config ~}
+    # MSC4210: Synapse 1.164+ removes the legacy mention push rules by default. Our
+    # clients still rely on them for mention notifications, so keep them.
+    msc4210_enabled: false
+%{ endif ~}
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##
