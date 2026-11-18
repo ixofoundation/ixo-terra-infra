@@ -1,15 +1,19 @@
 /.idea/
 /ixo-terra-infra.iml
 /modules/kubernetes_cluster/kubeconfig.yaml
-modules/kubernetes_cluster/modules/vultr/kubeconfig_*.yaml
 **/.terraform/
 /.terraform.lock.hcl
 /terraform.tfstate.d/
 credentials.json
+# Written by modules/vault/main.tf null_resource.init: contains the Vault
+# recovery keys and the initial root token in plaintext. Never commit.
+cluster-keys-for-kms-vault.json
 
-# Cost estimation outputs
-cost-estimation/results/
-cost-estimation/reports/
-cost-estimation/results/*-costs.json
-cost-estimation/results/*-costs.txt
-cost-estimation/results/infracost-*.json
+# Written by modules/kubernetes_cluster/modules/aws: per-environment kubeconfig
+modules/kubernetes_cluster/modules/aws/kubeconfig-*
+
+# Vault init key files, including hand-renamed per-env copies
+cluster-keys*.json
+.env*
+.claude/
+.DS_Store

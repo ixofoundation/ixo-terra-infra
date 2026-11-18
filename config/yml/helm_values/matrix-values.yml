@@ -136,8 +136,9 @@ extraConfig:
     msc3266_enabled: true
     # MSC4222 needed for syncv2 state_after. This allow clients to correctly track the state of the room.
     msc4222_enabled: true
-    msc2697_enabled:  true
+    msc2697_enabled: false
     msc3814_enabled: true
+    msc4069_profile_inhibit_propagation: true
 ## The Matrix domain name, this is what will be used for the domain part in
 ## your MXIDs.
 ##
@@ -155,7 +156,7 @@ postgresql:
 #    database: synapse
 #  primary:
 #    persistence:
-#      storageClass: "vultr-block-storage-hdd"
+#      storageClass: "gp3"
 #      size: 40Gi
 
 ## An externally configured Postgres server to use for Synapse's database, note
@@ -336,9 +337,7 @@ synapse:
   # matrix service already does via its `backup:` block + gcp-backups sidecar.
   extraCommands: []
   resources:
-    # Keep request == limit: Vultr VKE nodes can spuriously OOM/NotReady at ~80-90%
-    # node memory, and an overcommitted limit is what lets them drift into that band.
-    # If Synapse needs more after the jemalloc fix, use a bigger node, not a higher limit.
+    # Keep request == limit; if Synapse needs more, use a bigger node, not a higher limit.
     limits:
       memory: 2536Mi
     requests:

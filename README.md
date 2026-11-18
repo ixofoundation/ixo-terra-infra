@@ -2,7 +2,7 @@
 
 ## Documentation
 ![Terraform](https://img.shields.io/badge/Terraform-%23623CE4.svg?style=for-the-badge&logo=Terraform&logoColor=white)
-![Vultr](https://img.shields.io/badge/Vultr-%230056D2.svg?style=for-the-badge&logo=Vultr&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazonaws&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-%23326CE5.svg?style=for-the-badge&logo=Kubernetes&logoColor=white)
 ![Helm](https://img.shields.io/badge/Helm-%23093D5E.svg?style=for-the-badge&logo=Helm&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-%23E6522C.svg?style=for-the-badge&logo=Prometheus&logoColor=white)
@@ -11,52 +11,11 @@
 
 This Terraform project provides Infrastructure as Code (IaC) for managing core services and monitoring infrastructure on Kubernetes. It automates the provisioning and management of infrastructure resources required to deploy and maintain applications with comprehensive monitoring, security, and observability tools.
 
-## 💰 Cost Estimation
-
-**Before deploying**: Understanding infrastructure costs is crucial for any project. This repository includes comprehensive cost estimation tools to help you budget and optimize your infrastructure spending.
-
-### Quick Cost Overview
-
-| Environment Type | Monthly Cost | What's Included |
-|------------------|-------------|-----------------|
-| **Development** | ~$74/month | Basic setup with minimal resources |
-| **Testing/Staging** | ~$294/month | Full stack with cross-chain validators |
-| **Production** | ~$308/month | Full stack with high availability |
-
-### 📋 Cost Documentation
-
-- **[cost-estimation/README-cost-estimation.md](cost-estimation/README-cost-estimation.md)** - Complete cost estimation guide
-  - How to run cost estimates before deployment
-  - Interactive tools for different environments
-  - Cost optimization strategies
-  - CI/CD integration for automatic cost tracking
-
-- **[cost-estimation/README-vultr-cost-estimates.md](cost-estimation/README-vultr-cost-estimates.md)** - Detailed cost breakdowns
-  - Environment-specific cost analysis
-  - Vultr vs AWS cost comparisons
-  - Infrastructure component pricing
-  - Annual cost projections
-
-### 🚀 Quick Cost Estimation
-
-```bash
-# Run cost estimate for your development environment
-./estimate-costs.sh your_dev_env
-
-# Compare costs between environments
-./estimate-costs.sh compare
-
-# Generate comprehensive cost reports
-./estimate-costs.sh report
-```
-
-**For contributors**: These tools help you understand the cost impact of infrastructure changes before proposing them. See the cost estimation documentation for detailed instructions.
-
 ## What This Project Provides
 
 This infrastructure stack automatically deploys and manages:
 
-- **Kubernetes Cluster**: Multi-cloud support (Vultr VKE or AWS EKS)
+- **Kubernetes Cluster**: AWS EKS
 - **GitOps Deployment**: ArgoCD for automated application deployment
 - **Monitoring Stack**: Prometheus, Grafana, Loki for metrics and logging
 - **Security & Authentication**: Vault for secrets management, Dex for OAuth
@@ -85,9 +44,7 @@ Install these tools on your development machine:
 You'll need accounts with the following services:
 
 #### Essential Services
-1. **Cloud Provider** (choose one):
-   - **Vultr**: For VKE (Vultr Kubernetes Engine) - Recommended for simplicity
-   - **AWS**: For EKS (Elastic Kubernetes Service) - More enterprise features
+1. **AWS**: for EKS (Elastic Kubernetes Service)
 
 2. **GitHub**:
    - Used for OAuth authentication and storing your configuration repositories
@@ -119,45 +76,25 @@ cd ixo-terra-infra
 terraform init
 ```
 
-### 2. Estimate Costs First
-
-**Important**: Before deploying, run cost estimates to understand your monthly expenses:
-
-```bash
-# Make cost estimation script executable
-chmod +x estimate-costs.sh
-
-# Estimate costs for your development environment
-./estimate-costs.sh your_dev_env
-
-# For detailed cost breakdowns, see:
-# - cost-estimation/README-cost-estimation.md (how to run estimates)
-# - cost-estimation/README-vultr-cost-estimates.md (detailed pricing)
-```
-
-### 3. Create Your Configuration
+### 2. Create Your Configuration
 
 **Important**: Don't use the existing `terraform.tfvars` file directly - it's configured for our specific infrastructure. Instead, create your own configuration files:
 
 ```bash
 # Create your own variables file
 cp terraform.tfvars my-infrastructure.tfvars
-# OR use the quickstart example
-cp quickstart.tfvars my-infrastructure.tfvars
 
 # Edit the file with your specific configuration
 nano my-infrastructure.tfvars
 ```
 
-### 4. Configure Environment Variables
+### 3. Configure Environment Variables
 
 Set these environment variables before running Terraform:
 
 #### Essential Variables
 ```bash
-# Your cloud provider API key
-export TF_VAR_vultr_api_key="your-vultr-api-key"
-# OR for AWS:
+# AWS credentials
 export AWS_ACCESS_KEY_ID="your-aws-access-key"
 export AWS_SECRET_ACCESS_KEY="your-aws-secret-key"
 
@@ -183,7 +120,7 @@ export TF_VAR_oidc_tailscale='{"clientId": "your-tailscale-client-id", "clientSe
 export TF_VAR_cloudflare_api_token="your-cloudflare-token"
 ```
 
-### 5. Understanding Environment Configuration
+### 4. Understanding Environment Configuration
 
 This project uses a flexible environment system defined in `variables.tf`. Each environment (dev, staging, prod, etc.) can have different services enabled or disabled.
 
@@ -391,7 +328,7 @@ You can enable/disable these services in any environment:
 - `metrics_server`: Kubernetes metrics
 - `external_dns_cloudflare`: Automatic DNS management
 
-### 6. Deploy Your Infrastructure
+### 5. Deploy Your Infrastructure
 
 ```bash
 # Create or select workspace (environment) - use your own naming
@@ -406,7 +343,7 @@ terraform plan -var-file="my-infrastructure.tfvars"
 terraform apply -var-file="my-infrastructure.tfvars"
 ```
 
-### 7. Post-Deployment Configuration
+### 6. Post-Deployment Configuration
 
 After successful deployment, you may need to configure:
 

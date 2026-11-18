@@ -14,7 +14,14 @@
     differential: "0 3 * * 1-6"
 # repo2: object storage, providing a copy that survives loss of the cluster.
 - name: repo2
+%{ if s3_bucket != "" ~}
+  s3:
+    bucket: ${s3_bucket}
+    endpoint: s3.${s3_region}.amazonaws.com
+    region: ${s3_region}
+%{ else ~}
   gcs:
     bucket: ${gcs_bucket}
+%{ endif ~}
   schedules:
     full: "0 4 * * 0"          # after repo1, so the two runs do not overlap

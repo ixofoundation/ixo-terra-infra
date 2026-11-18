@@ -45,3 +45,9 @@ variable "postgres_port" {
   type        = number
   default     = 5432
 }
+
+variable "additional_service_token_ids" {
+  description = "Extra Cloudflare Access service token IDs (created outside this module) allowed through the Hyperdrive policy."
+  type        = list(string)
+  default     = []
+}

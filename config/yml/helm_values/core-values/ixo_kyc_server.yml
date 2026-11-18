@@ -60,9 +60,9 @@ env:
     value: "<path:${vault_mount}/data/ixo-kyc-server#SLACK_WEBHOOK_URL>"
   - name: "SERVICE_ED25519_MNEMONIC"
     value: "<path:${vault_mount}/data/ixo-kyc-server#SERVICE_ED25519_MNEMONIC>"
-%{ endif ~}
   - name: "DATABASE_URL"
-    value: "postgresql://${pgUsername}:${pgPassword}@${pgCluster}-primary.${pgNamespace}.svc.cluster.local/${pgUsername}"
+    value: "<path:${vault_mount}/data/ixo-kyc-server#DATABASE_URL>"
+%{ endif ~}
   - name: "MIGRATE_DB_PROGRAMATICALLY"
     value: "1"
   - name: "DATABASE_USE_SSL"

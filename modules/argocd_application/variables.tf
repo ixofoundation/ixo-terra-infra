@@ -5,14 +5,16 @@ variable "application" {
       namespace  = string
       repository = string
       helm = optional(object({
-        isOci             = bool
-        chart             = string
-        revision          = string
-        ignoreDifferences = optional(string)
-        skipCrds          = optional(bool, false)
+        isOci                    = bool
+        chart                    = string
+        revision                 = string
+        ignoreDifferences        = optional(string)
+        skipCrds                 = optional(bool, false)
+        respectIgnoreDifferences = optional(bool, false)
       }))
       path            = optional(string)
       values_override = optional(string)
+      auto_sync       = optional(bool, true)
     }
   )
 }
@@ -27,7 +29,7 @@ variable "oci_repository_credentials" {
     password = null
   }
   description = "Optional: Credentials for OCI repository access. Required when using private OCI registries."
-  sensitive = true
+  sensitive   = true
 }
 
 variable "kv_defaults" {

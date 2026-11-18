@@ -1,74 +1,39 @@
-resource "kubernetes_ingress_v1" "redirect" {
-  metadata {
-    name      = "ixo-rerouting"
-    namespace = var.nginx_namespace
-    annotations = {
-      "cert-manager.io/cluster-issuer"        = "letsencrypt-staging"
-      "acme.cert-manager.io/http01-edit-in-place" = "true"
+terraform {
+  required_providers {
+    kubectl = {
+      source = "alekc/kubectl"
     }
   }
-  spec {
-    ingress_class_name = "nginx"
-    tls {
-      hosts       = lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"])
-      secret_name = "blockscan.${terraform.workspace}-tls"
-    }
-    dynamic "rule" {
-      for_each = terraform.workspace == "testnet" ? [1] : []
-      content {
-        host = element(lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"]), 1)
-        http {
-          path {
-            path      = "/"
-            path_type = "Prefix"
-            backend {
-              service {
-                name = "nginx-ingress-controller"
-                port {
-                  number = 80
-                }
-              }
-            }
-          }
-        }
+}
+
+# Ingress for redirect-only hosts (rewrites in f5-nginx-ingress-controller-values.yml).
+# ssl-redirect off so the HTTP-01 challenge is not bounced to https.
+resource "kubectl_manifest" "redirect" {
+  yaml_body = yamlencode({
+    apiVersion = "networking.k8s.io/v1"
+    kind       = "Ingress"
+    metadata = {
+      name      = var.name
+      namespace = var.nginx_namespace
+      annotations = {
+        "cert-manager.io/cluster-issuer"            = "letsencrypt-staging"
+        "acme.cert-manager.io/http01-edit-in-place" = "true"
+        "ingress.kubernetes.io/ssl-redirect"        = "false"
       }
     }
-    dynamic "rule" {
-      for_each = terraform.workspace == "mainnet" ? [1] : []
-      content {
-        host = element(lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"]), 1)
-        http {
-          path {
-            path      = "/"
-            path_type = "Prefix"
-            backend {
-              service {
-                name = "nginx-ingress-controller"
-                port {
-                  number = 80
-                }
-              }
-            }
-          }
+    spec = {
+      ingressClassName = "nginx"
+      tls              = [{ hosts = var.hosts, secretName = var.tls_secret_name }]
+      rules = [for h in var.hosts : {
+        host = h
+        http = {
+          paths = [{
+            path     = "/"
+            pathType = "Prefix"
+            backend  = { service = { name = "nginx-ingress-controller", port = { number = 80 } } }
+          }]
         }
-      }
+      }]
     }
-    rule {
-      host = element(lookup(local.hosts, terraform.workspace, ["blockscan.${terraform.workspace}.ixo.earth"]), 0)
-      http {
-        path {
-          path      = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "nginx-ingress-controller"
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  })
 }

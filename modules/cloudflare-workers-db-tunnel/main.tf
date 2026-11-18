@@ -89,7 +89,7 @@ resource "cloudflare_access_policy" "service_token_only" {
   decision       = "non_identity"
 
   include {
-    service_token = [cloudflare_access_service_token.hyperdrive.id]
+    service_token = concat([cloudflare_access_service_token.hyperdrive.id], var.additional_service_token_ids)
   }
 }
 

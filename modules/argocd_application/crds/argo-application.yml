@@ -32,6 +32,8 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - RespectIgnoreDifferences=true
+%{ if auto_sync ~}
     automated:
       prune: true
       selfHeal: true
+%{~ endif ~}

@@ -12,14 +12,14 @@ variable "env_config" {
   description = "Environment configuration"
   type = object({
     nat_gateway_enabled = bool
-    flow_logs_enabled = bool
-    retention_days = number
-    az_count = number
+    flow_logs_enabled   = bool
+    retention_days      = number
+    az_count            = number
   })
 }
 
 variable "is_development" {
-  type = bool
+  type    = bool
   default = null
 }
 
@@ -57,4 +57,17 @@ variable "flow_logs_retention_days" {
   description = "Number of days to retain VPC Flow Logs"
   type        = number
   default     = 30
-} 
+}
+variable "subnet_cidrs" {
+  description = "Explicit per-AZ subnet CIDRs (index = AZ). Null derives /subnet_bits subnets from vpc_cidr: public first, then private."
+  type = object({
+    public  = list(string)
+    private = list(string)
+  })
+  default = null
+
+  validation {
+    condition     = var.subnet_cidrs == null || length(var.subnet_cidrs.public) == length(var.subnet_cidrs.private)
+    error_message = "subnet_cidrs.public and subnet_cidrs.private need one entry per AZ each."
+  }
+}

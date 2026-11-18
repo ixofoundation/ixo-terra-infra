@@ -52,5 +52,3 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 1
   targetMemoryUtilizationPercentage: "30"
-verticalPodAutoscaler:
-  enabled: true

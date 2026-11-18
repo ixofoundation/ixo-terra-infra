@@ -36,9 +36,31 @@
     limits:
       memory: 2Gi
   dataVolumeClaimSpec:
-    storageClassName: "vultr-block-storage"
+    storageClassName: "${storage_class}"
     accessModes:
       - "ReadWriteOnce"
     resources:
       requests:
         storage: ${storage_size}
+%{ if db_pool ~}
+  tolerations:
+    - key: ixo.world/pool
+      operator: Equal
+      value: db
+      effect: NoSchedule
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: ixo.world/pool
+                operator: In
+                values: ["db"]
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: topology.kubernetes.io/zone
+          labelSelector:
+            matchLabels:
+              postgres-operator.crunchydata.com/cluster: ixo-postgres
+              postgres-operator.crunchydata.com/instance-set: ixo-postgresql-0
+%{ endif ~}

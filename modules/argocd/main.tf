@@ -20,6 +20,7 @@ module "argocd_release" {
     templatefile("${path.module}/argo-values.yml", {
       host                 = var.hostnames[terraform.workspace]
       environment          = terraform.workspace
+      oidc_team_segment    = var.oidc_team_segment
       AVP_VERSION          = "1.16.1"
       HELM_VERSION         = "3.14.2"
       github_client_id     = var.github_client_id
@@ -33,7 +34,7 @@ module "argocd_release" {
 }
 
 resource "time_sleep" "wait_for_argocd" {
-  depends_on = [module.argocd_release]
+  depends_on      = [module.argocd_release]
   create_duration = "10s"
 }
 
@@ -79,7 +80,9 @@ resource "kubernetes_secret_v1" "repository" {
 resource "vault_kv_secret_v2" "image_updater" {
   count = var.image_updater_enabled ? 1 : 0
   lifecycle {
-    ignore_changes = [data_json]
+    # cas/delete_all_versions/disable_read: an imported KV (restored Vault) has them null in state; an
+    # update would rewrite the live creds with cas=1 against a later version.
+    ignore_changes = [data_json, cas, delete_all_versions, disable_read]
   }
   mount               = var.vault_mount_path
   name                = "argocd-image-updater"

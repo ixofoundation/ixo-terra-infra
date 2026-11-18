@@ -18,8 +18,8 @@ resource "aws_iam_policy" "cloudwatch_read" {
     Version = "2012-10-17",
     Statement = [
       {
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow",
+        Action = [
           "logs:DescribeLogGroups",
           "logs:GetLogEvents",
           "logs:FilterLogEvents",

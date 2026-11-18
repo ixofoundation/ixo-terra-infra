@@ -97,4 +97,8 @@ autoscaling:
   enabled: true
   minReplicas: 1
   maxReplicas: 1
-  targetMemoryUtilizationPercentage: "30"
+  targetMemoryUtilizationPercentage: "30"%{ if storage_class != null }
+persistentVolume:
+  storageClass: ${storage_class}
+  size: ${storage_size}
+%{ endif ~}

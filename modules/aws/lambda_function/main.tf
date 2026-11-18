@@ -7,13 +7,13 @@ terraform {
 }
 
 resource "aws_lambda_function" "this" {
-  function_name    = var.function_name
-  role            = aws_iam_role.lambda_execution_role.arn
-  handler         = var.function_handler
-  runtime         = var.function_runtime
-  filename        = var.function_fileName
-  timeout = 30
-  memory_size = 256
+  function_name = var.function_name
+  role          = aws_iam_role.lambda_execution_role.arn
+  handler       = var.function_handler
+  runtime       = var.function_runtime
+  filename      = var.function_fileName
+  timeout       = 30
+  memory_size   = 256
   lifecycle {
     ignore_changes = [
       filename, environment
@@ -40,12 +40,12 @@ resource "aws_api_gateway_method" "proxy_method" {
 }
 
 resource "aws_api_gateway_integration" "lambda_integration" {
-  rest_api_id = aws_api_gateway_rest_api.lambda_api.id
-  resource_id = aws_api_gateway_resource.proxy.id
-  http_method = aws_api_gateway_method.proxy_method.http_method
+  rest_api_id             = aws_api_gateway_rest_api.lambda_api.id
+  resource_id             = aws_api_gateway_resource.proxy.id
+  http_method             = aws_api_gateway_method.proxy_method.http_method
   integration_http_method = "POST"
-  type        = "AWS_PROXY"
-  uri         = aws_lambda_function.this.invoke_arn
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.this.invoke_arn
 }
 
 resource "aws_api_gateway_deployment" "api_deployment" {

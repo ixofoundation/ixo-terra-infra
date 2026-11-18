@@ -16,8 +16,7 @@ terraform {
 }
 
 # ── Partner-side tunnel ───────────────────────────────────────────────────────
-# The partner's server runs cloudflared with this tunnel's token.
-# It connects outbound to Cloudflare and exposes their Postgres via TCP ingress.
+# The partner runs cloudflared with this tunnel's token to expose their Postgres.
 
 resource "random_id" "supamoto_secret" {
   byte_length = 32
@@ -27,6 +26,11 @@ resource "cloudflare_tunnel" "supamoto" {
   account_id = var.cloudflare_account_id
   name       = "${var.partner_name}-postgres-${var.environment}"
   secret     = random_id.supamoto_secret.b64_std
+
+  # The API never returns the secret; ignored so an imported tunnel is not replaced.
+  lifecycle {
+    ignore_changes = [secret]
+  }
 }
 
 # Exposes the partner's Postgres as a TCP service at <pg_cname>.<domain>.
@@ -41,14 +45,14 @@ resource "cloudflare_tunnel_config" "supamoto" {
       service  = "tcp://${var.docker_postgres_service}:5432"
 
       origin_request {
-        tcp_keep_alive         = "60s"
+        tcp_keep_alive         = "1m0s" # Cloudflare normalises 60s to 1m0s
         tls_timeout            = "30s"
-        connect_timeout        = "60s"
+        connect_timeout        = "1m0s"
         keep_alive_connections = "200"
       }
     }
     warp_routing {
-      enabled = false
+      enabled = var.warp_routing_enabled
     }
     # Catch-all
     ingress_rule {
@@ -89,9 +93,10 @@ resource "cloudflare_access_policy" "bypass" {
   }
 }
 
-# ── Kubernetes resources ──────────────────────────────────────────────────────
+# ── In-cluster access proxy ───────────────────────────────────────────────────
+# cloudflared and ClusterIP service that let the bots reach the partner's Postgres.
 
-resource "kubernetes_namespace_v1" "supamoto_tunnel" {
+resource "kubernetes_namespace_v1" "partner_tunnel" {
   metadata {
     name = var.namespace
     labels = {
@@ -105,7 +110,7 @@ resource "kubernetes_namespace_v1" "supamoto_tunnel" {
 resource "kubernetes_deployment_v1" "cloudflared" {
   metadata {
     name      = "cloudflared"
-    namespace = kubernetes_namespace_v1.supamoto_tunnel.metadata[0].name
+    namespace = kubernetes_namespace_v1.partner_tunnel.metadata[0].name
     labels = {
       app = "cloudflared"
     }
@@ -135,7 +140,7 @@ resource "kubernetes_deployment_v1" "cloudflared" {
 
         container {
           name  = "cloudflared"
-          image = "cloudflare/cloudflared:latest"
+          image = "cloudflare/cloudflared:${var.cloudflared_version}"
           args  = ["access", "tcp", "--hostname", "${var.pg_cname}.${var.domain}", "--url", "0.0.0.0:5432"]
 
           resources {
@@ -163,10 +168,10 @@ resource "kubernetes_deployment_v1" "cloudflared" {
 }
 
 # ClusterIP service — bots connect to <partner_name>-postgres.<namespace>.svc.cluster.local:5432
-resource "kubernetes_service_v1" "supamoto_postgres" {
+resource "kubernetes_service_v1" "partner_postgres" {
   metadata {
     name      = "${var.partner_name}-postgres"
-    namespace = kubernetes_namespace_v1.supamoto_tunnel.metadata[0].name
+    namespace = kubernetes_namespace_v1.partner_tunnel.metadata[0].name
   }
 
   spec {
@@ -185,12 +190,14 @@ resource "kubernetes_service_v1" "supamoto_postgres" {
 }
 
 # Tailscale LoadBalancer — exposes the partner's Postgres on the Tailnet for direct developer access.
-resource "kubernetes_service_v1" "supamoto_postgres_tailscale" {
+resource "kubernetes_service_v1" "partner_postgres_tailscale" {
+  count = var.tailscale_hostname != null ? 1 : 0
+
   metadata {
     name      = "${var.partner_name}-postgres-ts"
-    namespace = kubernetes_namespace_v1.supamoto_tunnel.metadata[0].name
+    namespace = kubernetes_namespace_v1.partner_tunnel.metadata[0].name
     annotations = {
-      "tailscale.com/hostname" = "${var.partner_name}-postgres-${terraform.workspace}"
+      "tailscale.com/hostname" = var.tailscale_hostname
       "tailscale.com/expose"   = "true"
     }
   }

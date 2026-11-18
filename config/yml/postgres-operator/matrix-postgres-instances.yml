@@ -2,12 +2,25 @@
   resources:
     requests:
       cpu: 100m
-      memory: 750Mi
+      memory: ${memory_request}
     limits:
-      memory: 1Gi
+      memory: ${memory_limit}
   dataVolumeClaimSpec:
     accessModes:
       - "ReadWriteOnce"
     resources:
       requests:
-        storage: 40Gi
+        storage: 40Gi%{ if db_pool }
+  tolerations:
+    - key: ixo.world/pool
+      operator: Equal
+      value: db
+      effect: NoSchedule
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: ixo.world/pool
+                operator: In
+                values: ["db"]%{ endif }

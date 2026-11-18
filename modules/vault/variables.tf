@@ -43,10 +43,23 @@ variable "vault_host" {
   type = string
 }
 
-variable "vault_terraform_password" {
-  type = string
-}
-
 variable "org" {
   type = string
+}
+# Creates the raft-snapshot policy and auth role.
+variable "raft_snapshot_enabled" {
+  type    = bool
+  default = false
+}
+
+# True where Vault is already initialized (e.g. by a snapshot restore); skips null_resource.init.
+variable "vault_already_initialized" {
+  type    = bool
+  default = false
+}
+
+# GitHub team slug for the OIDC group aliases and admin bound claims. Defaults to the workspace name.
+variable "oidc_team_segment" {
+  type    = string
+  default = null
 }

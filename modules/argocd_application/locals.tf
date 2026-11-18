@@ -2,15 +2,17 @@ locals {
   isHelm = var.application.helm != null
 
   # develop branch → pre-release tags (e.g. v1.2.3-develop.1), main → stable semver (e.g. v1.2.3)
-  # mainnet is null — ImageUpdater CRD is skipped entirely for mainnet
+  # mainnet is null — ImageUpdater CRD is skipped entirely for mainnet.
+  # A workspace with no entry is skipped too (allow_tags_override included).
   _ws_allow_tags = {
+    # devnet is the only writer to charts/devnet.
     devnet  = "regexp:-(develop|dev)\\."
     testnet = "regexp:^v?[0-9]+\\.[0-9]+\\.[0-9]+$"
     mainnet = null
   }
 
   _allow_tags = (
-    terraform.workspace == "mainnet"
+    lookup(local._ws_allow_tags, terraform.workspace, null) == null
     ? null
     : (
       try(var.image_updater.allow_tags_override, null) != null
