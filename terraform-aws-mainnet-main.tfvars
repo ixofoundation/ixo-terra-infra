@@ -248,11 +248,13 @@ environments = {
         domain    = "ixoworld"
       }
       matrix = {
-        enabled      = true
-        create_kv    = false
-        domain       = "ixoworld"
-        dns_endpoint = "mx.ixo.earth"
-        storage_size = "150Gi"
+        enabled              = true
+        create_kv            = false
+        domain               = "ixoworld"
+        dns_endpoint         = "mx.ixo.earth"
+        storage_size         = "150Gi"
+        synapse_image_tag    = "v1.165.0-ixo.1"
+        synapse_v1165_config = true
       }
       matrix_admin = {
         enabled      = true
