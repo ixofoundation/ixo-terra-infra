@@ -7,8 +7,9 @@ terraform {
 }
 
 module "argocd_release" {
-  source  = "terraform-module/release/helm"
-  version = "2.9.1"
+  depends_on = [kubernetes_secret_v1.dex_github]
+  source     = "terraform-module/release/helm"
+  version    = "2.9.1"
   app = {
     name         = "argocd"
     chart        = "argo-cd"
@@ -24,7 +25,6 @@ module "argocd_release" {
       AVP_VERSION          = "1.16.1"
       HELM_VERSION         = "3.14.2"
       github_client_id     = var.github_client_id
-      github_client_secret = var.github_client_secret
       org                  = var.org
       cert_manager_enabled = var.cert_manager_enabled
     })
@@ -37,7 +37,29 @@ resource "time_sleep" "wait_for_argocd" {
   depends_on      = [module.argocd_release]
   create_duration = "10s"
 
-  # Any plan that includes the argocd release must carry TF_VAR_oidc_argo, or it blanks the GitHub SSO secret.
+  # A blank TF_VAR_oidc_argo blanks the GitHub SSO client. A plan that targets the release skips this resource but
+  # includes dex_github (depends_on), which carries the same check.
+  lifecycle {
+    precondition {
+      condition     = var.github_client_id != "" && var.github_client_secret != ""
+      error_message = "oidc_argo is empty: this plan would blank the ArgoCD GitHub SSO client. Set TF_VAR_oidc_argo, or target only modules that do not depend on module.argocd."
+    }
+  }
+}
+
+# argo-values.yml references this as $argocd-dex-github:clientSecret, keeping the value out of argocd-cm.
+resource "kubernetes_secret_v1" "dex_github" {
+  metadata {
+    name      = "argocd-dex-github"
+    namespace = kubernetes_namespace_v1.app-argocd.metadata[0].name
+    labels = {
+      "app.kubernetes.io/part-of" = "argocd"
+    }
+  }
+  data = {
+    clientSecret = var.github_client_secret
+  }
+
   lifecycle {
     precondition {
       condition     = var.github_client_id != "" && var.github_client_secret != ""

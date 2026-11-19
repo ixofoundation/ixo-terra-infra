@@ -853,12 +853,35 @@ resource "kubernetes_secret_v1" "grafana_admin" {
   }
 }
 
-resource "kubernetes_secret_v1" "alertmanager_slack_webhook" {
-  metadata {
-    name      = "alertmanager-slack-webhook"
-    namespace = kubernetes_namespace_v1.prometheus_stack.metadata[0].name
+# ESO adopts the Secret Terraform used to create; destroy = false avoids a window with no Secret.
+removed {
+  from = kubernetes_secret_v1.alertmanager_slack_webhook
+  lifecycle {
+    destroy = false
   }
-  data = {
-    webhook-url = ""
-  }
+}
+
+# Slack webhook from Vault ixo_core/alertmanager. Alertmanager reads api_url_file on every send, so no restart.
+resource "kubectl_manifest" "alertmanager_slack_webhook" {
+  count = var.environments[terraform.workspace].application_configs["prometheus_stack"].enabled ? 1 : 0
+
+  yaml_body = <<-YAML
+    apiVersion: external-secrets.io/v1
+    kind: ExternalSecret
+    metadata:
+      name: alertmanager-slack-webhook
+      namespace: ${kubernetes_namespace_v1.prometheus_stack.metadata[0].name}
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: vault
+      target:
+        name: alertmanager-slack-webhook
+      data:
+        - secretKey: webhook-url
+          remoteRef:
+            key: alertmanager
+            property: SLACK_WEBHOOK_URL
+  YAML
 }

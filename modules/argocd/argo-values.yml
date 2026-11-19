@@ -88,7 +88,7 @@ configs:
           name: GitHub
           config:
             clientID: ${github_client_id}
-            clientSecret: ${github_client_secret}
+            clientSecret: $argocd-dex-github:clientSecret
             orgs:
               - name: ${org}
   cmp:
