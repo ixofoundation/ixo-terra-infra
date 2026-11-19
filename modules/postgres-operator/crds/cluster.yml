@@ -172,7 +172,7 @@ spec:
 %{ endif ~}
           log_checkpoints: 'on'
           max_connections: '200'
-          log_statement: 'mod'
+          log_statement: 'ddl'
           log_line_prefix: '%t [%p]: host=%h user=%u,db=%d '
           log_lock_waits: 'on'
           logging_collector: 'on'
