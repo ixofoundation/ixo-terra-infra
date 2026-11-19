@@ -253,7 +253,7 @@ environments = {
         domain               = "ixoearth"
         dns_endpoint         = "testmx.ixo.earth"
         storage_size         = "150Gi" # resized by hand from 100Gi; a PVC can only grow
-        synapse_image_tag    = "v1.165.0-ixo.1"
+        synapse_image_tag    = "v1.165.0-ixo.2"
         synapse_v1165_config = true
       }
       matrix_admin = {
