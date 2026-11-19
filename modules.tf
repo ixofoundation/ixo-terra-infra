@@ -749,6 +749,35 @@ module "matrix" {
   vault_mount_path = local.vault_mount_path
 }
 
+# Synapse secrets from Vault ixo_core/matrix; matrix-values.yml substitutes them into secrets.yaml at pod start.
+resource "kubectl_manifest" "matrix_synapse_secrets" {
+  count = var.environments[terraform.workspace].application_configs["matrix"].enabled ? 1 : 0
+
+  yaml_body = <<-YAML
+    apiVersion: external-secrets.io/v1
+    kind: ExternalSecret
+    metadata:
+      name: matrix-synapse-secrets
+      namespace: ${kubernetes_namespace_v1.matrix.metadata[0].name}
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: vault
+      target:
+        name: matrix-synapse-secrets
+      data:
+        - secretKey: MACAROON_SECRET_KEY
+          remoteRef:
+            key: matrix
+            property: MACAROON_SECRET_KEY
+        - secretKey: REGISTRATION_SHARED_SECRET
+          remoteRef:
+            key: matrix
+            property: REGISTRATION_SHARED_SECRET
+  YAML
+}
+
 # Synapse media-store backup.
 #
 # This cannot live in the Synapse container: the ananace chart exposes no sidecar hook,

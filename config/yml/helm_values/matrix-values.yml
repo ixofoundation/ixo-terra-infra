@@ -10,7 +10,10 @@ image:
   tag: ${synapse_image_tag}
 config:
   enableRegistration: true
-  macaroonSecretKey: <path:${kv_mount}/data/${app_name}#MACAROON_SECRET_KEY>
+  # Fixed placeholders, replaced at pod start from the matrix-synapse-secrets ExternalSecret.
+  # A fixed registrationSharedSecret also stops the chart re-rolling it on every render.
+  macaroonSecretKey: "@@MACAROON_SECRET_KEY@@"
+  registrationSharedSecret: "@@REGISTRATION_SHARED_SECRET@@"
 
 wellknown:
   enabled: true
@@ -312,6 +315,16 @@ synapse:
   strategy:
     type: Recreate
   extraEnv:
+    - name: MACAROON_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: matrix-synapse-secrets
+          key: MACAROON_SECRET_KEY
+    - name: REGISTRATION_SHARED_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: matrix-synapse-secrets
+          key: REGISTRATION_SHARED_SECRET
     - name: GOOGLE_APPLICATION_CREDENTIALS
       value: /secrets/gcp/key.json
     # jemalloc was TRIED AND REVERTED 2026-09-15 - do not re-add without re-measuring.
@@ -353,7 +366,8 @@ synapse:
   # extraContainers hook, so that means a CronJob (PVC is RWO - needs node affinity or a
   # volume snapshot) or moving Synapse to a chart that supports a sidecar, as every other
   # matrix service already does via its `backup:` block + gcp-backups sidecar.
-  extraCommands: []
+  extraCommands:
+    - "python3 -c \"import os; p='/synapse/config/conf.d/secrets.yaml'; c=open(p).read(); c=c.replace('@@MACAROON_SECRET_KEY@@',os.environ['MACAROON_SECRET_KEY']).replace('@@REGISTRATION_SHARED_SECRET@@',os.environ['REGISTRATION_SHARED_SECRET']); open(p,'w').write(c)\" || exit 1"
   resources:
     # Keep request == limit; if Synapse needs more, use a bigger node, not a higher limit.
     limits:
@@ -387,7 +401,21 @@ workers:
     replicaCount: 2
   appservice:
     enabled: true
+    # Old and new pods both write appservice state on a rolling update; only one may run.
+    strategy:
+      type: Recreate
   default:
+    extraEnv:
+      - name: MACAROON_SECRET_KEY
+        valueFrom:
+          secretKeyRef:
+            name: matrix-synapse-secrets
+            key: MACAROON_SECRET_KEY
+      - name: REGISTRATION_SHARED_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: matrix-synapse-secrets
+            key: REGISTRATION_SHARED_SECRET
     resources:
       limits:
         memory: 512Mi
@@ -407,6 +435,6 @@ workers:
 %{if matrix_whatsapp_enabled}      - name: matrix-whatsapp
         mountPath: /data/appservice/whatsapp
 %{endif}    extraCommands:
-      - "python3 -c \"import os,glob; c=''.join(open(f).read() for f in glob.glob('/synapse/secrets/*.yaml')); c=c.replace('@@POSTGRES_PASSWORD@@',os.environ.get('POSTGRES_PASSWORD','')).replace('@@REDIS_PASSWORD@@',os.environ.get('REDIS_PASSWORD','')); open('/synapse/config/conf.d/secrets.yaml','w').write(c)\""
+      - "python3 -c \"import os,glob; c=''.join(open(f).read() for f in glob.glob('/synapse/secrets/*.yaml')); c=c.replace('@@POSTGRES_PASSWORD@@',os.environ.get('POSTGRES_PASSWORD','')).replace('@@REDIS_PASSWORD@@',os.environ.get('REDIS_PASSWORD','')).replace('@@MACAROON_SECRET_KEY@@',os.environ['MACAROON_SECRET_KEY']).replace('@@REGISTRATION_SHARED_SECRET@@',os.environ['REGISTRATION_SHARED_SECRET']); open('/synapse/config/conf.d/secrets.yaml','w').write(c)\" || exit 1"
 serviceAccount:
   create: true

@@ -1,6 +1,6 @@
 #
 # Manual Admin user command:
-# register_new_matrix_user http://localhost:8008 -c synapse/secrets/config.yaml -u admin -p <admin_password>
+# register_new_matrix_user http://localhost:8008 -c /synapse/config/conf.d/secrets.yaml -u admin -p <admin_password>
 #
 
 
