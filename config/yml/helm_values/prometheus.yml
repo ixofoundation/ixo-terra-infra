@@ -499,6 +499,42 @@ additionalPrometheusRulesMap:
             annotations:
               summary: "{{ $labels.instance }} {{ $labels.mountpoint }} has {{ $value | humanizePercentage }} inodes free"
 
+      - name: ixo.probes
+        rules:
+          - alert: ProbeDown
+            # http_2xx probe: fails on DNS, connect, TLS or a non-2xx response, not only DNS
+            expr: probe_success{job="blackbox"} == 0
+            for: 5m
+            labels:
+              severity: critical
+              name: ProbeDown
+              # instance is the exporter address on probe series; Slack shows instance
+              instance: "{{ $labels.target }}"
+            annotations:
+              summary: "{{ $labels.target }} is down (blackbox probe failing)"
+
+          - alert: ProbeCertificateExpiring
+            # cert-manager renews 30 days before expiry, so under 14 days means renewal has been failing
+            expr: probe_ssl_earliest_cert_expiry{job="blackbox"} - time() < 14 * 86400
+            for: 1h
+            labels:
+              severity: warning
+              name: ProbeCertificateExpiring
+              instance: "{{ $labels.target }}"
+            annotations:
+              summary: "{{ $labels.target }} TLS certificate expires in {{ $value | humanizeDuration }}"
+
+          - alert: BlackboxScrapeFailing
+            # A failed scrape leaves no probe_success series, so ProbeDown stays silent for that target.
+            # Exporter down fails every target at once: count them into one alert.
+            expr: count by (job, instance) (up{job="blackbox"} == 0) > 0
+            for: 5m
+            labels:
+              severity: warning
+              name: BlackboxScrapeFailing
+            annotations:
+              summary: "{{ $value }} blackbox probe scrapes failing; ProbeDown is blind for those targets"
+
       - name: ixo.loki
         rules:
           - alert: LokiIngestionDropped
