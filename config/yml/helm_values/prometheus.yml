@@ -227,6 +227,34 @@ prometheus:
           # Set label for role
           - source_labels: [ __meta_kubernetes_pod_label_role ]
             target_label: role
+      # Synapse main process and workers, for the ixo.synapse rules. Each pod exposes over
+      # a thousand series; only the few the rules and their diagnosis need are kept.
+      - job_name: 'synapse'
+        metrics_path: /_synapse/metrics
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - matrix-synapse
+            selectors:
+              - role: pod
+                label: app.kubernetes.io/name=matrix-synapse
+        relabel_configs:
+          # The metrics port (9090) of the main process and each worker; drops the well-known server
+          - source_labels: [ __meta_kubernetes_pod_container_port_name ]
+            action: keep
+            regex: metrics
+          # synapse (main process), appservice or generic-worker
+          - source_labels: [ __meta_kubernetes_pod_label_app_kubernetes_io_component ]
+            target_label: component
+          - source_labels: [ __meta_kubernetes_namespace ]
+            target_label: kubernetes_namespace
+          - source_labels: [ __meta_kubernetes_pod_name ]
+            target_label: pod
+        metric_relabel_configs:
+          - source_labels: [ __name__ ]
+            action: keep
+            regex: synapse_appservice_api_(sent|failed)_[a-z]+_total|synapse_event_persisted_position|synapse_event_processing_positions|synapse_background_update_status|process_resident_memory_bytes
     rule_files:
       - /etc/prometheus/alert-rules.d/*.yml
     alerting:
@@ -562,3 +590,93 @@ additionalPrometheusRulesMap:
               name: LokiQueryLatencyHigh
             annotations:
               summary: "Loki query p99 latency is {{ $value | humanizeDuration }}"
+
+      - name: ixo.synapse
+        rules:
+          - alert: SynapseAppserviceDown
+            # Synapse has no metric for the DOWN state, so it is read from the transaction
+            # counters of the appservice worker (one attempt = one sent or one failed).
+            # After a failure Synapse marks the appservice DOWN and retries 2 s later, doubling
+            # up to 512 s; with the 60 s HTTP timeout a long outage still fails at least every
+            # ~9.5 min, which the 11m window bridges. A blip (one failure, the 2 s retry
+            # succeeds) has its success after its failure, so the condition holds at most
+            # 11m - 5m = 6m afterwards and for: 7m never fires on it. A real outage fires about
+            # 12 min after the last successful transaction (sooner on a quiet network) and
+            # resolves on the first success. Before the first failure since the worker started
+            # there is no failed series and the expression is empty.
+            expr: |
+              sum by (kubernetes_namespace, service) (increase(synapse_appservice_api_failed_transactions_total{job="synapse"}[11m])) > 0
+              unless on (kubernetes_namespace, service)
+              sum by (kubernetes_namespace, service) (increase(synapse_appservice_api_sent_transactions_total{job="synapse"}[5m])) > 0
+            for: 7m
+            labels:
+              severity: critical
+              name: SynapseAppserviceDown
+            annotations:
+              summary: "Synapse cannot deliver to appservice {{ $labels.service }}: every transaction fails, none succeed. Check its pod first; if that is healthy, scale deploy/matrix-synapse-appservice to 0 then 1 (not rollout restart)"
+              description: >-
+                Synapse marked appservice {{ $labels.service }} DOWN and its retries keep failing,
+                so room events and to-device messages for it are queued, not delivered.
+                1) Check the appservice itself (ixoroomappservice = deploy/ixo-matrix-appservice-rooms,
+                whatsapp = deploy/ixo-matrix-whatsapp, both in matrix-synapse): it must be running and
+                answering. Synapse retries at least every 8.5 min and drains the queue by itself
+                once it answers. 2) If the appservice is healthy and this keeps firing, run
+                kubectl -n matrix-synapse scale deploy/matrix-synapse-appservice --replicas=0, then
+                --replicas=1. Never kubectl rollout restart it.
+
+          - alert: SynapseAppserviceSenderBehind
+            # The appservice worker reads every persisted event to decide which appservices get
+            # it. Normally its position is 0-2 events behind the main process (the two pods are
+            # scraped at different moments); it works in batches of up to 100. Mainnet persists
+            # ~40 events/min. Events are read and queued even while an appservice is DOWN, so
+            # this catches a stuck worker, not a DOWN appservice.
+            expr: |
+              max by (kubernetes_namespace) (synapse_event_persisted_position{job="synapse"})
+              - on (kubernetes_namespace)
+              max by (kubernetes_namespace) (synapse_event_processing_positions{job="synapse", name="appservice_sender"})
+              > 200
+            for: 10m
+            labels:
+              severity: warning
+              name: SynapseAppserviceSenderBehind
+            annotations:
+              summary: "Synapse appservice worker is {{ $value }} events behind: appservices get new events late"
+              description: >-
+                The appservice_sender position of matrix-synapse-appservice has been more than 200
+                events behind the persisted event position for 10 minutes. Check the worker logs; if
+                it is stuck, scale deploy/matrix-synapse-appservice to 0 then 1 (not rollout restart).
+
+          - alert: SynapseAppserviceWorkerNotScraped
+            # Without this target SynapseAppserviceDown and SynapseAppserviceSenderBehind are blind.
+            expr: |
+              sum by (kubernetes_namespace) (up{job="synapse", component="appservice"}) == 0
+              or absent(up{job="synapse", component="appservice"})
+            for: 10m
+            labels:
+              severity: critical
+              name: SynapseAppserviceWorkerNotScraped
+            annotations:
+              summary: "Synapse appservice worker is down or not scraped: no appservice gets events, and the appservice alerts are blind"
+              description: >-
+                Prometheus has had no successful scrape of the matrix-synapse-appservice worker for
+                10 minutes. Check the pod in matrix-synapse (kubectl -n matrix-synapse get pods -l
+                app.kubernetes.io/component=appservice). If it is crash-looping or stuck, scale
+                deploy/matrix-synapse-appservice to 0 then 1 (not rollout restart).
+
+          - alert: SynapseMemoryNearLimit
+            expr: |
+              max by (namespace, pod) (container_memory_working_set_bytes{namespace="matrix-synapse", container="synapse"})
+              / on (namespace, pod)
+              max by (namespace, pod) (kube_pod_container_resource_limits{namespace="matrix-synapse", container="synapse", resource="memory"})
+              > 0.90
+            for: 15m
+            labels:
+              severity: warning
+              name: SynapseMemoryNearLimit
+            annotations:
+              summary: "Synapse main process memory at {{ $value | humanizePercentage }} of its limit: it will be OOM-killed if it keeps growing"
+              description: >-
+                The working set of the synapse container has been above 90% of its memory limit for
+                15 minutes. Look for a leak (memory growing steadily since the pod started) or a load
+                spike. Restarting the pod frees memory but disconnects clients for about a minute;
+                a lasting fix is a higher limit in matrix-values.yml or a Synapse fix.
