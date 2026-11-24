@@ -484,7 +484,9 @@ EOT
   jqPathExpressions:
     - .spec.rules
 EOT
-  matrix_ignore_differences        = <<EOT
+  # The Ingress entry hides only cert-manager's challenge path, so selfHeal does not strip it. No
+  # RespectIgnoreDifferences here: it would also stop syncs from writing config.yaml and the checksum.
+  matrix_ignore_differences = <<EOT
 - kind: Secret
   name: matrix-synapse
   namespace: matrix-synapse
@@ -496,5 +498,11 @@ EOT
   namespace: matrix-synapse
   jsonPointers:
     - /spec/template/metadata/annotations/checksum~1secrets
+- group: networking.k8s.io
+  kind: Ingress
+  name: matrix-synapse
+  namespace: matrix-synapse
+  jqPathExpressions:
+    - '.spec.rules[]?.http.paths[]? | select((.backend.service.name // "") | startswith("cm-acme-http-solver"))'
 EOT
 }

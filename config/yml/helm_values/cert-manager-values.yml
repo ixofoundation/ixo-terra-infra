@@ -1,3 +1,5 @@
+# Exact challenge paths never match under nginx.org/path-regex (matrix Ingress).
+featureGates: "ACMEHTTP01IngressPathTypeExact=false"
 installCRDs: true
 resources:
   limits:
