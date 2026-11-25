@@ -2289,6 +2289,7 @@ module "ixo_sygnal" {
   kv_defaults = {
     APNS_P8_KEY                   = "" # base64-encoded content of AuthKey_G73NBYKQL3.p8
     FIREBASE_SERVICE_ACCOUNT_JSON = "" # base64-encoded content of ixomobile-6a4b0-firebase-adminsdk-551h8-090e05f791.json
+    LITE_VAPID_PRIVATE_KEY        = "" # base64-encoded content of Portal Lite's VAPID private key PEM (webpush app earth.ixo.lite.web)
   }
   argo_namespace   = module.argocd.argo_namespace
   vault_mount_path = local.vault_mount_path
